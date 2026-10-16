@@ -1,0 +1,13 @@
+---
+description: Learn Tracks repository layout and commit style
+alwaysApply: true
+---
+
+# Repository structure
+
+- `content/` — tracks, topics, source notes, markdown, card items.
+- `app/` — GitHub Pages SPA (theory/practice, list/cards, progress, account, theme, notifications).
+- Placeholders stay visible for later tabs: community, roadmaps, reviews.
+- One topic = one folder: `content/<track>/<topic>/`.
+- Commits: English, no emojis, one logical change per commit (content, then app, then deploy). Do not squash an entire track into a single commit.
+- GitHub Pages base path: `/learn-tracks/`.

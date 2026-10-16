@@ -1,0 +1,43 @@
+---
+description: Unified math notation and Python style for all tracks
+globs: content/**/*.{md,ts,py}
+alwaysApply: true
+---
+
+# Notation and Python
+
+Reuse the same letters in formulas and code across files.
+
+## Math
+
+- Features \(X\), target \(y\), weights \(w\), intercept \(w_0\).
+- Predictions \(y_{\mathrm{pred}}\), true values \(y_{\mathrm{true}}\).
+- Sample size \(N\) in averages, index \(i=1\ldots n\) in sums (as in the source notes).
+- Residuals \(\mathrm{residuals} = y_{\mathrm{true}} - y_{\mathrm{pred}}\).
+- Metrics: \(\mathrm{MSE}\), \(\mathrm{RMSE}\), \(\mathrm{MAE}\), \(R^2\), \(\mathrm{accuracy}\), \(\mathrm{precision}\), \(\mathrm{recall}\).
+- Distances: \(d(a,b)\) Euclidean, \(d_{\cos}(a,b)\) cosine, \(\mathrm{sim}_{\cos}(a,b)\).
+- Logistic: \(y(x)=\frac{1}{1+e^{-x}}\).
+- Confusion: \(\mathrm{TP},\mathrm{TN},\mathrm{FP},\mathrm{FN}\).
+
+KaTeX: `$inline$` and `$$block$$`. Do not mix `sum_(i=1)^n` ASCII once a formula is converted.
+
+## Python
+
+```python
+RANDOM_STATE = 42
+X = df.drop(columns=["price"])
+y = df["price"]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, random_state=RANDOM_STATE
+)
+model_lr = LinearRegression()
+clf = LogisticRegression()
+y_pred = model_lr.predict(X_test)
+y_proba = clf.predict_proba(X_test)
+residuals = y_test - y_pred
+X_train_scaled = scaler.transform(X_train)
+```
+
+- Linear regression estimator: `model_lr`. Logistic: `clf`.
+- Never `predictions`, `X_train_scalled`, or mixed `Y` / `x`.
+- 4-space indent, trailing comma in multiline calls.

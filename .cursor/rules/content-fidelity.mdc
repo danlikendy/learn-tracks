@@ -1,0 +1,24 @@
+---
+description: Keep source study notes verbatim when converting to markdown
+globs: content/**/*.md
+alwaysApply: true
+---
+
+# Content fidelity
+
+When adding material from the user's txt/notes or later MCP sources:
+
+- Do not rewrite, polish, or paraphrase the Russian wording.
+- Transfer sentences as they are. Convert inline ASCII math to KaTeX only.
+- Keep original comments in code. Unify identifiers to the project notation (see notation rule); do not "improve" the algorithm.
+- If the source says «см изображение», keep that phrase. Do not invent figures.
+- Split into theory vs practice cards, but every sentence from the source must appear in the corresponding markdown and in an item body.
+- Original files live under `content/**/source/` unchanged.
+
+```markdown
+<!-- BAD -->
+Линейная регрессия хорошо работает при линейной зависимости.
+
+<!-- GOOD -->
+Чтобы подобрать коэффициенты функции, алгоритм использует метод наименьших квадратов. Это отлично работает, если целевой признак зависит от входных линейно.
+```
