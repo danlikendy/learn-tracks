@@ -38,7 +38,7 @@ export function Layout() {
 
   return (
     <div className="min-h-svh">
-      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[color-mix(in_oklab,var(--bg)_88%,transparent)] backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <NavLink to="/" className="shrink-0 font-serif text-lg tracking-tight">
             Learn Tracks

@@ -1,35 +1,36 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { MarkdownBody } from '../components/MarkdownBody'
-import { allItems, getItem } from '../lib/content'
+import { getItem } from '../lib/content'
 import { loadProgress, markSolved } from '../lib/storage'
 
 export function ItemPage() {
   const { id } = useParams()
-  const item = id ? getItem(id) : undefined
+  const found = id ? getItem(id) : undefined
   const [count, setCount] = useState(
     () => (id ? loadProgress()[id]?.count ?? 0 : 0),
   )
 
   const neighbors = useMemo(() => {
-    if (!item) return { prev: undefined, next: undefined }
-    const list = allItems().filter((entry) => entry.kind === item.kind)
-    const index = list.findIndex((entry) => entry.id === item.id)
+    if (!found) return { prev: undefined, next: undefined }
+    const list = found.topic.items.filter((entry) => entry.kind === found.item.kind)
+    const index = list.findIndex((entry) => entry.id === found.item.id)
     return { prev: list[index - 1], next: list[index + 1] }
-  }, [item])
+  }, [found])
 
-  if (!item) {
+  if (!found) {
     return <p>Карточка не найдена.</p>
   }
 
-  const back = item.kind === 'theory' ? '/?view=theory' : '/?view=practice'
+  const { item, topic } = found
+  const back = `/?topic=${topic.id}&view=${item.kind}`
 
   return (
     <article className="flex flex-col gap-6">
       <Link to={back} className="w-fit text-sm text-[var(--muted)]">
         Назад к {item.kind === 'theory' ? 'теории' : 'практике'}
       </Link>
-      <header className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6">
+      <header>
         <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
           {item.kind === 'theory' ? 'теория' : 'практика'} · {item.tags.join(' · ')}
         </p>
@@ -46,9 +47,7 @@ export function ItemPage() {
           Отметить повторение
         </button>
       </header>
-      <div className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-8">
-        <MarkdownBody source={item.body} />
-      </div>
+      <MarkdownBody source={item.body} />
       <div className="flex justify-between gap-4 text-sm">
         {neighbors.prev ? (
           <Link to={`/item/${neighbors.prev.id}`}>← {neighbors.prev.title}</Link>

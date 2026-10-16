@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MarkdownBody } from '../components/MarkdownBody'
+import { Select } from '../components/Select'
 import {
-  NOTES,
-  TOPIC_TITLE,
   TRACK_TITLE,
-  allItems,
+  TOPICS,
   allTags,
+  getTopic,
   itemsByKind,
   notesToc,
+  type Topic,
 } from '../lib/content'
 import { loadProgress } from '../lib/storage'
 import type { ItemKind } from '../lib/types'
@@ -23,33 +24,42 @@ function asMode(value: string | null): Mode {
 
 export function Learn() {
   const [params, setParams] = useSearchParams()
+  const topic = getTopic(params.get('topic'))
   const mode = asMode(params.get('view'))
-  const items = allItems()
+  const items = topic.items
   const progress = loadProgress()
   const started = items.filter((item) => (progress[item.id]?.count ?? 0) > 0).length
 
-  function setMode(next: Mode) {
+  function patch(next: Record<string, string | null>) {
     const copy = new URLSearchParams(params)
-    if (next === 'notes') copy.delete('view')
-    else copy.set('view', next)
+    for (const [key, value] of Object.entries(next)) {
+      if (!value) copy.delete(key)
+      else copy.set(key, value)
+    }
     setParams(copy, { replace: true })
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-8">
+    <div className="flex flex-col gap-8">
+      <section>
         <p className="text-sm text-[var(--muted)]">{TRACK_TITLE}</p>
-        <h1 className="mt-2 font-serif text-3xl tracking-tight sm:text-4xl">
-          {TOPIC_TITLE}
+        <div className="mt-3">
+          <Select
+            value={topic.id}
+            onChange={(id) => patch({ topic: id, view: null })}
+            options={TOPICS.map((entry) => ({
+              value: entry.id,
+              label: entry.title,
+            }))}
+          />
+        </div>
+        <h1 className="mt-4 font-serif text-3xl tracking-tight sm:text-4xl">
+          {topic.title}
         </h1>
-        <p className="mt-4 max-w-2xl text-[var(--muted)]">
-          Полный конспект исходного файла и карточки для закрепления: теория и
-          практика.
-        </p>
         <p className="mt-3 text-sm text-[var(--muted)]">
           Повторяли {started} из {items.length}
         </p>
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           {(
             [
               ['notes', 'Конспект'],
@@ -61,20 +71,24 @@ export function Learn() {
               key={id}
               type="button"
               className={`rounded-full px-4 py-2 text-sm ${mode === id ? 'bg-[var(--fg)] text-[var(--bg)]' : 'border border-[var(--line)]'}`}
-              onClick={() => setMode(id)}
+              onClick={() => patch({ view: id === 'notes' ? null : id })}
             >
               {label}
             </button>
           ))}
         </div>
       </section>
-      {mode === 'notes' ? <NotesPanel /> : <CardsPanel kind={mode} />}
+      {mode === 'notes' ? (
+        <NotesPanel topic={topic} />
+      ) : (
+        <CardsPanel topic={topic} kind={mode} />
+      )}
     </div>
   )
 }
 
-function NotesPanel() {
-  const toc = notesToc().filter((entry) => entry.level <= 2)
+function NotesPanel({ topic }: { topic: Topic }) {
+  const toc = notesToc(topic.notes).filter((entry) => entry.level <= 2)
 
   return (
     <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -94,24 +108,24 @@ function NotesPanel() {
           ))}
         </nav>
       </aside>
-      <article className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-10">
-        <MarkdownBody source={NOTES} />
+      <article>
+        <MarkdownBody source={topic.notes} />
       </article>
     </div>
   )
 }
 
-function CardsPanel({ kind }: { kind: ItemKind }) {
+function CardsPanel({ topic, kind }: { topic: Topic; kind: ItemKind }) {
   const [view, setView] = useState<'list' | 'cards'>('cards')
   const [tag, setTag] = useState('all')
   const [bucket, setBucket] = useState<number | 'any'>('any')
   const [unsolved, setUnsolved] = useState(false)
   const [sort, setSort] = useState<'title' | 'progress' | 'recent'>('title')
   const progress = loadProgress()
-  const tags = allTags(kind)
+  const tags = allTags(topic, kind)
 
   const items = useMemo(() => {
-    let next = itemsByKind(kind)
+    let next = itemsByKind(topic, kind)
     if (tag !== 'all') next = next.filter((item) => item.tags.includes(tag))
     next = next.filter((item) => {
       const count = progress[item.id]?.count ?? 0
@@ -129,39 +143,30 @@ function CardsPanel({ kind }: { kind: ItemKind }) {
       )
     })
     return next
-  }, [kind, tag, bucket, unsolved, sort, progress])
+  }, [topic, kind, tag, bucket, unsolved, sort, progress])
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        <select
-          className="select-control"
+        <Select
           value={tag}
-          onChange={(e) => setTag(e.target.value)}
-        >
-          <option value="all">Все темы</option>
-          {tags.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <select
-          className="select-control"
+          onChange={setTag}
+          options={[
+            { value: 'all', label: 'Все темы' },
+            ...tags.map((item) => ({ value: item, label: item })),
+          ]}
+        />
+        <Select
           value={bucket === 'any' ? 'any' : String(bucket)}
-          onChange={(e) => {
-            const value = e.target.value
+          onChange={(value) => {
             setBucket(value === 'any' ? 'any' : Number(value))
             setUnsolved(false)
           }}
-        >
-          <option value="any">Любой прогресс</option>
-          {buckets.map((n) => (
-            <option key={n} value={n}>
-              ≥{n}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: 'any', label: 'Любой прогресс' },
+            ...buckets.map((n) => ({ value: String(n), label: `≥${n}` })),
+          ]}
+        />
         <button
           type="button"
           className={`rounded-xl border px-3 py-2 text-sm ${unsolved ? 'border-[var(--accent)]' : 'border-[var(--line)]'}`}
@@ -169,15 +174,15 @@ function CardsPanel({ kind }: { kind: ItemKind }) {
         >
           Не решали
         </button>
-        <select
-          className="select-control"
+        <Select
           value={sort}
-          onChange={(e) => setSort(e.target.value as typeof sort)}
-        >
-          <option value="title">Сортировка: название</option>
-          <option value="progress">Сортировка: повторения</option>
-          <option value="recent">Сортировка: недавно</option>
-        </select>
+          onChange={(value) => setSort(value as typeof sort)}
+          options={[
+            { value: 'title', label: 'Сортировка: название' },
+            { value: 'progress', label: 'Сортировка: повторения' },
+            { value: 'recent', label: 'Сортировка: недавно' },
+          ]}
+        />
         <div className="ml-auto flex overflow-hidden rounded-xl border border-[var(--line)]">
           <button
             type="button"
@@ -196,7 +201,7 @@ function CardsPanel({ kind }: { kind: ItemKind }) {
         </div>
       </div>
       {view === 'list' ? (
-        <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)]">
+        <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)]">
           {items.map((item) => {
             const count = progress[item.id]?.count ?? 0
             return (
@@ -225,7 +230,7 @@ function CardsPanel({ kind }: { kind: ItemKind }) {
               <Link
                 key={item.id}
                 to={`/item/${item.id}`}
-                className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] p-5"
+                className="rounded-2xl border border-[var(--line)] p-5"
               >
                 <h2 className="font-serif text-xl">{item.title}</h2>
                 <p className="mt-3 text-sm text-[var(--muted)]">

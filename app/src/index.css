@@ -45,7 +45,8 @@ html[data-theme="dark"] {
 .select-control {
   appearance: none;
   -webkit-appearance: none;
-  background-color: var(--bg-elev);
+  color: var(--fg);
+  background-color: var(--bg);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2357534e' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.85rem center;
@@ -53,6 +54,7 @@ html[data-theme="dark"] {
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   font-size: 0.875rem;
+  font-family: inherit;
 }
 
 html[data-theme="dark"] .select-control {
@@ -125,8 +127,9 @@ html[data-theme="dark"] .select-control {
   overflow-x: auto;
   padding: 1rem 1.1rem;
   border-radius: 0.75rem;
-  background: #1c1917;
-  color: #f5f0e8;
+  background: color-mix(in oklab, var(--fg) 6%, var(--bg));
+  color: var(--fg);
+  border: 1px solid var(--line);
   font-size: 0.85rem;
   margin: 1rem 0;
 }
@@ -150,5 +153,13 @@ html[data-theme="dark"] .select-control {
 
 .prose-note ul,
 .prose-note ol {
-  padding-left: 1.25rem;
+  padding-left: 1.4rem;
+}
+
+.prose-note ul {
+  list-style: disc;
+}
+
+.prose-note ol {
+  list-style: decimal;
 }

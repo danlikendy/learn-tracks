@@ -6,6 +6,11 @@
       "id": "linear-models",
       "title": "Линейные модели в машинном обучении",
       "kind": ["theory", "practice"]
+    },
+    {
+      "id": "supervised-quality",
+      "title": "Обучение с учителем: качество модели",
+      "kind": ["theory", "practice"]
     }
   ]
 }
