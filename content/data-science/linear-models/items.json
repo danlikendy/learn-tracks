@@ -1,0 +1,509 @@
+{
+  "topicId": "linear-models",
+  "trackId": "data-science",
+  "items": [
+    {
+      "id": "ds-lm-t-01",
+      "kind": "theory",
+      "title": "Задача и модель",
+      "tags": [
+        "введение"
+      ],
+      "body": "Задача — это то, что нужно решить, а модель — то, что решает задачу."
+    },
+    {
+      "id": "ds-lm-t-02",
+      "kind": "theory",
+      "title": "Метод наименьших квадратов",
+      "tags": [
+        "регрессия",
+        "МНК"
+      ],
+      "body": "Чтобы подобрать коэффициенты функции, алгоритм использует метод наименьших квадратов. Это отлично работает, если целевой признак зависит от входных линейно.\n\nМетод наименьших квадратов\n\n$$S = \\sum_{i=1}^{n} (y_{\\mathrm{true},i} - y_{\\mathrm{pred},i})^2 \\to \\min$$\n\n(Он считает сумму квадратов всех ошибок среди предсказанных целевых признаков.)"
+    },
+    {
+      "id": "ds-lm-t-03",
+      "kind": "theory",
+      "title": "Корреляция Пирсона и шкала Чеддока",
+      "tags": [
+        "корреляция"
+      ],
+      "body": "Помимо диаграммы рассеяния, проверить линейную связь между признаками можно по матрице корреляции. Для признаков total_area и price из данных о квартирах в разных городах коэффициент Пирсона составляет 0.027588. Согласно шкале Чеддока, такое значение говорит об отсутствии линейной связи."
+    },
+    {
+      "id": "ds-lm-t-04",
+      "kind": "theory",
+      "title": "MSE",
+      "tags": [
+        "метрики",
+        "регрессия"
+      ],
+      "body": "Среднеквадратичная ошибка (Если разделить сумму квадратов ошибок на число объектов прогноза, то получится средний квадрат ошибки)\n\n$$\\mathrm{MSE} = \\frac{1}{N} \\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^2$$"
+    },
+    {
+      "id": "ds-lm-t-05",
+      "kind": "theory",
+      "title": "RMSE",
+      "tags": [
+        "метрики",
+        "регрессия"
+      ],
+      "body": "Корень среднеквадратичной ошибки\n\n$$\\mathrm{RMSE} = \\sqrt{\\frac{1}{N} \\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^2}$$"
+    },
+    {
+      "id": "ds-lm-t-06",
+      "kind": "theory",
+      "title": "Скалярное произведение",
+      "tags": [
+        "векторы"
+      ],
+      "body": "Скалярное произведение\n\n$$a \\cdot b = \\sum_{i=1}^{n} (a_i \\cdot b_i)$$"
+    },
+    {
+      "id": "ds-lm-t-07",
+      "kind": "theory",
+      "title": "Косинусное сходство и расстояние",
+      "tags": [
+        "векторы"
+      ],
+      "body": "Косинусное сходство\n\n$$\\mathrm{sim}_{\\cos}(a,b) = \\cos(a,b)$$\n\nКосинусное расстояние\n\n$$d_{\\cos}(a,b) = 1 - \\cos(a,b) = 1 - \\frac{a \\cdot b}{|a| \\cdot |b|}$$\n\nготовая функция для расчёта косинусного расстояния хоть и не в numpy, но существует — в библиотеке scipy."
+    },
+    {
+      "id": "ds-lm-t-08",
+      "kind": "theory",
+      "title": "Евклидово расстояние",
+      "tags": [
+        "векторы"
+      ],
+      "body": "Евклидово расстояние. Рассчитать евклидово расстояние можно по теореме Пифагора\n\n$$d(a,b) = \\sqrt{\\sum_{i=1}^{n} (a_i - b_i)^2}$$\n\nЕвклидово расстояние учитывает не только направление векторов, но и длину."
+    },
+    {
+      "id": "ds-lm-t-09",
+      "kind": "theory",
+      "title": "Нормальное уравнение линейной регрессии",
+      "tags": [
+        "регрессия",
+        "линейная алгебра"
+      ],
+      "body": "Вот так можно найти коэффициенты линейной регрессии с помощью линала:\n\n$$w = (X^{T} X)^{-1} X^{T} y$$"
+    },
+    {
+      "id": "ds-lm-t-10",
+      "kind": "theory",
+      "title": "MAE и сравнение с MSE",
+      "tags": [
+        "метрики",
+        "регрессия"
+      ],
+      "body": "Средняя абсолютная ошибка\n\n$$\\mathrm{MAE} = \\frac{1}{N} \\sum_{i=1}^{n} |y_{\\mathrm{true}} - y_{\\mathrm{pred}}|$$\n\nЭту разницу легко увидеть, если построить графики для обеих метрик: параболу для MSE и функцию модуля для MAE. Чем больше разница между фактическим значением и предсказанием, тем больше метрика MSE по сравнению с MAE.\n\nИз этого следует несколько выводов:\n\n- Выбросы негативно влияют на точность модели: из-за них возрастает ошибка предсказания.\n- MSE и RMSE чувствительнее к выбросам, чем MAE. Это связано с формулой расчёта — возведение в квадрат сильно увеличивает итоговые значения метрики модели, особенно из-за выбросов. При взятии модуля такого не происходит."
+    },
+    {
+      "id": "ds-lm-t-11",
+      "kind": "theory",
+      "title": "Коэффициент детерминации R^2",
+      "tags": [
+        "метрики",
+        "регрессия"
+      ],
+      "body": "Коэффициент детерминации $R^2$\n\n$$R^{2} = 1 - \\frac{\\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^{2}}{\\sum_{i=1}^{n} (y_{\\mathrm{true}} - \\overline{y})^{2}} = 1 - \\frac{\\frac{1}{N}\\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^{2}}{\\frac{1}{N}\\sum_{i=1}^{n} (y_{\\mathrm{true}} - \\overline{y})^{2}} = 1 - \\frac{\\mathrm{MSE}}{D}$$\n\nКоэффициент детерминации оценивает обобщающую способность модели. Это значит, что он определяет, насколько хорошо модель «объясняет», предсказывает целевой признак по входным.\n\nКоэффициент детерминации $R^2$ лежит в диапазоне $[-\\infty, 1]$."
+    },
+    {
+      "id": "ds-lm-t-12",
+      "kind": "theory",
+      "title": "Количественные и категориальные признаки",
+      "tags": [
+        "признаки"
+      ],
+      "body": "Количественные, или числовые, содержат действительные числа и принимают любое значение на определённом интервале. Этот тип не делится на другие.\n\nКатегориальные, или качественные, принимают одно из ограниченного числа фиксированных значений. Они делятся на номинальные, порядковые и бинарные, ко всем из них нужен свой подход."
+    },
+    {
+      "id": "ds-lm-t-13",
+      "kind": "theory",
+      "title": "Масштабирование и кодирование",
+      "tags": [
+        "подготовка данных"
+      ],
+      "body": "Масштабирование. Если количественные признаки слишком сильно отличаются масштабом, то нужно привести их к одному. Масштабирование изменяет данные без искажений их структуры и сохраняет все зависимости между признаками при переводе в новый диапазон значений.\n\nКодирование. Оно приводит категориальные признаки к понятным модели стандартам. Большинство моделей не умеет напрямую работать с номинальными, порядковыми и бинарными данными, поэтому их нужно закодировать как количественные."
+    },
+    {
+      "id": "ds-lm-t-14",
+      "kind": "theory",
+      "title": "Стандартизация",
+      "tags": [
+        "подготовка данных"
+      ],
+      "body": "Стандартизация\n\n$$x_{\\mathrm{standart}} = \\frac{x_i - \\overline{x}}{\\sigma(x)}, \\quad \\sigma(x)\\text{ — стандартное отклонение}$$\n\nВажное правило — не масштабируйте тренировочные и тестовые данные одновременно! Если сразу передать `StandardScaler()` весь датасет, то произойдёт утечка данных. Это ситуация, когда из-за масштабирования тренировочная и тестовая выборки будут обладать общими свойствами."
+    },
+    {
+      "id": "ds-lm-t-15",
+      "kind": "theory",
+      "title": "Нормализация",
+      "tags": [
+        "подготовка данных"
+      ],
+      "body": "Нормализация\n\n$$x_{\\mathrm{normaliz}} = \\frac{x_i - x_{\\min}}{x_{\\max} - x_{\\min}}$$"
+    },
+    {
+      "id": "ds-lm-t-16",
+      "kind": "theory",
+      "title": "One-Hot Encoding и дамми-ловушки",
+      "tags": [
+        "кодирование"
+      ],
+      "body": "Самый известный из методов кодирования — One-Hot Encoding.\n\nИзбегание дамми-ловушек позволяет: удалить излишние признаки, которые не добавляют новой информации в данные для модели.\n\nуменьшить количество данных — после кодирования количество признаков будет равно $N-1$, где $N$ — это количество уникальных значений категориального признака.\n\nЕсли выбрать значение `first`, то каждый первый столбец при кодировании качественного признака будет удалён. При значении `'if_binary'` кодировщик удалит только первый столбец в каждом бинарном признаке, а остальные признаки закодирует, не обращая внимания на дамми-ловушки."
+    },
+    {
+      "id": "ds-lm-t-17",
+      "kind": "theory",
+      "title": "Остатки модели",
+      "tags": [
+        "остатки"
+      ],
+      "body": "Остатки модели\n\n$$\\mathrm{residuals} = y_{\\mathrm{true}} - y_{\\mathrm{pred}}$$\n\nОсновное правило анализа остатков: если модель правильно подобрана к исходным данным, то в остатках не должно остаться никаких закономерностей."
+    },
+    {
+      "id": "ds-lm-t-18",
+      "kind": "theory",
+      "title": "Распределение остатков",
+      "tags": [
+        "остатки"
+      ],
+      "body": "Симметричное нормальное распределение, Асимметричное нормальное распределение со смещением влево, Несимметричное нормальное распределение со смещением вправо, Несимметричное мультимодальное распределение, Выбросы.\n\nДля всех случаев ненормального распределения данных подходят два совета:\n\n- Найти и добавить в модель дополнительные признаки. Скорее всего, на этапе сбора данных не была учтена какая-то информация.\n- Трансформировать данные, чтобы изменить взаимосвязь входных признаков с целевым. Этим преобразованиям вы научитесь в следующем курсе."
+    },
+    {
+      "id": "ds-lm-t-19",
+      "kind": "theory",
+      "title": "Постоянство дисперсии остатков",
+      "tags": [
+        "остатки"
+      ],
+      "body": "Постоянство дисперсии.\n\nНормальная дисперсия остатков, Чередование низкой и высокой дисперсии остатков, «Дуга».\n\nЧто делать?\n\nРецепты — те же, что и в случае смещённого распределения на гистограмме:\n\n- Найти и добавить в модель дополнительные признаки. Скорее всего, на этапе сбора данных не учли какие-то признаки.\n- Трансформировать данные, чтобы изменить взаимосвязь входных признаков с целевым. Этим преобразованиям будет посвящён следующий курс."
+    },
+    {
+      "id": "ds-lm-t-20",
+      "kind": "theory",
+      "title": "Этапы подготовки данных",
+      "tags": [
+        "подготовка данных"
+      ],
+      "body": "Основные этапы подготовки данных перед обучением модели:\n\n- разделить датасет на тренировочную и тестовую выборки;\n- выделить категориальные и количественные признаки;\n- отмасштабировать количественные признаки;\n- закодировать категориальные признаки;\n- объединить категориальные и количественные признаки;\n- обучить модель;\n- проверить её качество методом анализа остатков;\n- получить итоговую метрику качества работы модели."
+    },
+    {
+      "id": "ds-lm-t-21",
+      "kind": "theory",
+      "title": "Классификация и регрессия",
+      "tags": [
+        "классификация"
+      ],
+      "body": "Задача классификации. Задачи классификации нельзя путать с задачами регрессии. Вот в чём разница между ними:\n\nЦелевой признак в задачах классификации принимает категориальные значения, в задачах регрессии — количественные.\n\nЦель задачи регрессии — найти функцию, описывающую связь между входными признаками $X_n$ и целевым $y$. Цель задачи классификации — присвоить класс объектам с входными признаками $X_n$. Значение целевого признака $y$, или метка класса, показано цветом точки.\n\nЦелевой признак в задачах бинарной классификации принимает значения 0 и 1."
+    },
+    {
+      "id": "ds-lm-t-22",
+      "kind": "theory",
+      "title": "Accuracy",
+      "tags": [
+        "метрики",
+        "классификация"
+      ],
+      "body": "$$\\mathrm{accuracy} = \\frac{T}{N}$$\n\nпоказывает долю правильных ответов."
+    },
+    {
+      "id": "ds-lm-t-23",
+      "kind": "theory",
+      "title": "Почему логистическая регрессия",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "Проблема линейной регресси в том, что если у нас будут хоть и количественные признаки, но, например, в интервале от 1 до 10 с шагом 1, - то-есть категории в действительности, а линейная регрессия будет воспринимать этот интервл как непрерывный, что неверно, мы не можем смотреть на светофор где показан градиент, а не 1 - зелёный, 2 - жёлтый, 3 - красный, поэтому использую логистическую регрессию.\n\nсм изображение.\n\nЛинейная регрессия не разделяет границей группы объектов, а наоборот, ищет взаимосвязь между ними. Поэтому задачи классификации решают другими методами: например, для бинарной классификации подходит логистическая регрессия."
+    },
+    {
+      "id": "ds-lm-t-24",
+      "kind": "theory",
+      "title": "Логистическая функция",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "Логистическая регрессия — это статистическая модель, которая классифицирует объекты при помощи логистической функции.\n\n$$y(x) = \\frac{1}{1 + e^{-x}}$$\n\nсм изображение.\n\nЛогистическая функция преобразует значения $x$ из интервала $(-\\infty,+\\infty)$ в интервал $(0,1)$.\n\nВеса логистической функции\n\n$$y(x) = \\frac{1}{1 + e^{-(w_0 + w_1 x)}}$$"
+    },
+    {
+      "id": "ds-lm-t-25",
+      "kind": "theory",
+      "title": "Логит и семейство линейных моделей",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "Ситуацию, когда у объекта только один входной признак, называют одномерным случаем.\n\nЕсли взять логарифм в обеих частях уравнения, то формула логистической функции станет похожа на формулу линейной регрессии.\n\nРазница в том, что $y$ логистической функции — это не просто скалярное значение, а натуральный логарифм отношения на основе класса объекта. Это выражение называется логит-функцией, оно позволяет работать с числами 0 и 1 как с метками классов. Для линейной регрессии 0 и 1 — это произвольные числовые значения.\n\nЛогистическая и линейная регрессии входят в семейство линейных моделей. Их объединяет то, что они основаны на регрессионном анализе — методе, которым изучают связи между независимыми переменными и зависимой, или между входными признаками и целевым."
+    },
+    {
+      "id": "ds-lm-t-26",
+      "kind": "theory",
+      "title": "predict_proba",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "`LogisticRegression` использует метод `predict_proba`. Он возвращает оценки вероятностей на промежутке 0 до 1 для всех объектов и каждого класса.\n\nВ левой колонке указана вероятность принадлежности объекта к классу 0, а справа — к классу 1. В задачах бинарной классификации достаточно учесть оценки в одном столбце, ведь сумма оценок в строке всегда равна единице. Обычно берут оценки для класса 1 из второго столбца."
+    },
+    {
+      "id": "ds-lm-t-27",
+      "kind": "theory",
+      "title": "Коэффициенты и отношение шансов",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "Коэффициенты в `coef_` расположены в том же порядке, что и переданные методу `fit` признаки.\n\nЗначение каждого коэффициента определяет, как именно изменение каждого признака на величину от 0 до 1 повлияет на вероятность дефолта. Другие признаки при этом значения не меняют. Математически это влияние выражается логарифмом отношения шансов, $\\mathrm{OR}_i$.\n\nЧТО ЭТО ТАКОЕ? логарифм отношения шансов?!"
+    },
+    {
+      "id": "ds-lm-t-28",
+      "kind": "theory",
+      "title": "Мультиклассовая классификация",
+      "tags": [
+        "классификация"
+      ],
+      "body": "Задачи мультиклассовой классификации. Задачи мультиклассовой классификации нельзя решить теми же средствами, что и задачи бинарной.\n\n«Один против всех» - способ свести мультиклассовую классификацию к бинарной — создать много бинарных классификаторов.\n\nКаждый бинарный классификатор будет предсказывать принадлежность к одному из классов задачи в противовес всем остальным.\n\nКачество мультиклассового классификатора также можно оценивать по метрике accuracy."
+    },
+    {
+      "id": "ds-lm-t-29",
+      "kind": "theory",
+      "title": "Последовательность обучения логистической регрессии",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "Последовательность действий при обучении модели логистической регрессии: Загрузить данные → Выделить целевой признак → Разделить датасет на выборки → Обучить scaler() → Масштабировать обе выборки → Кодировать обе выборки → Обучить модель."
+    },
+    {
+      "id": "ds-lm-t-30",
+      "kind": "theory",
+      "title": "Мультиколлинеарность",
+      "tags": [
+        "корреляция"
+      ],
+      "body": "Прежде чем обучать модель, посмотрите на матрицу корреляций между признаками.\n\nсм изображение.\n\nЦелевой признак default коррелирует с входными credit_amount и loan_annuity, а новый признак all_credits_amount — с credit_amount, loan_annuity и default.\n\nКогда у двух или нескольких признаков высокая корреляция, коэффициенты модели становятся неустойчивыми, и вычислить влияние каждого из них на таргет уже невозможно.\n\nКак правило, о мультиколлинеарности говорят при значении коэффициента корреляции от 0.9 до 0.95 по модулю. В такой ситуации лишние коррелирующие признаки нужно удалять из обучающей выборки."
+    },
+    {
+      "id": "ds-lm-t-31",
+      "kind": "theory",
+      "title": "Факторы мультиколлинеарности и φ_k",
+      "tags": [
+        "корреляция"
+      ],
+      "body": "Учитывайте два фактора, когда анализируете входные признаки на мультиколлинеарность:\n\n- Из всех моделей МО линейная регрессия сильнее всего страдает от корреляции входных признаков (не логистическая!). Из-за мультиколлинеарности матрицы признаков могут стать вырожденными, и тогда у системы линейных уравнений не будет одного решения. Логистическая регрессия также уязвима перед мультиколлинеарностью, но в меньшей степени.\n- Существуют разные коэффициенты корреляции, и не все из них универсальны. Например, корреляция Пирсона не подходит для категориальных признаков. Есть и более гибкие инструменты: так, коэффициент корреляции Фи, $\\phi_k$, находит взаимосвязь между категориальными, порядковыми и интервальными признаками. Чем ближе его значение по модулю к 1, тем сильнее связь.\n\n$\\phi_k$ рассчитывают средствами библиотеки phik для корреляционного анализа. Проще всего вызвать метод `phik_matrix`, чтобы построить матрицу корреляций для всех входных признаков в датасете."
+    },
+    {
+      "id": "ds-lm-t-32",
+      "kind": "theory",
+      "title": "Матрица ошибок",
+      "tags": [
+        "метрики",
+        "классификация"
+      ],
+      "body": "Например, модель расценит ненадёжного клиента как надёжного, банк даст ему кредит — а потом случится дефолт, и агентство понесёт убытки - это сильно хуже, поэтому стоит учитывать цену ошибки.\n\nСама по себе метрика accuracy измеряет только общую точность модели и не позволяет анализировать долю ошибочных прогнозов у каждого класса. Зато с этим справляется другой инструмент — матрица ошибок (англ. confusion matrix).\n\nПредсказание = 0 / Предсказание = 1\n\n- Реальность = 0: Предсказание верно / Предсказание неверно\n- Реальность = 1: Предсказание неверно / Предсказание верно\n\nПредсказание = 0 / Предсказание = 1\n\n- Реальность = 0: True Negative (TN) / False Positive (FP)\n- Реальность = 1: False Negative (FN) / True Positive (TP)\n\nОшибки классификации включают в себя оценки двух видов: False Positive и False Negative. В статистике их называют ошибками первого рода и второго рода.\n\nсм изображение.\n\n$$\\mathrm{accuracy} = \\frac{\\mathrm{TP} + \\mathrm{TN}}{\\mathrm{TP} + \\mathrm{TN} + \\mathrm{FP} + \\mathrm{FN}}$$\n\nС помощью матрицы ошибок вы сможете более точно проанализировать результаты классификации. Однако она просто наглядно демонстрирует ошибки и верные предсказания, а не даёт конкретную оценку качества модели."
+    },
+    {
+      "id": "ds-lm-t-33",
+      "kind": "theory",
+      "title": "Precision",
+      "tags": [
+        "метрики",
+        "классификация"
+      ],
+      "body": "Precision - метрика показывающая точность, с которой модель присваивает объектам класс 1, то есть получает результат типа Positive. Иными словами, precision определяет, не слишком ли часто модель выставляет класс 1 объектам класса 0.\n\n$$\\mathrm{precision} = \\frac{\\mathrm{TP}}{\\mathrm{TP} + \\mathrm{FP}}$$\n\nC precision нужно обращаться осторожно. Вы можете настроить модель так, что она будет проставлять класс 1, только когда полностью будет уверена в этом. Она не будет допускать ошибок первого рода — не выдаст результатов False Positive. Её precision всегда будет равен 100%. Однако такой показатель точности не учитывает, как часто модель присваивает объектам класса 1 класс 0!"
+    },
+    {
+      "id": "ds-lm-t-34",
+      "kind": "theory",
+      "title": "Recall",
+      "tags": [
+        "метрики",
+        "классификация"
+      ],
+      "body": "Recall измеряет, смогла ли модель классификации присвоить класс 1 всем объектам этого класса. Предсказания False Negative рассматриваются метрикой как «неучтённые» True Positive. Чем выше recall, тем больше прогнозов Positive модель смогла дать верно.\n\n$$\\mathrm{recall} = \\frac{\\mathrm{TP}}{\\mathrm{TP} + \\mathrm{FN}}$$\n\nПоэтому модель, которая всегда выставляет объектам класс 1, не вызовет у неё подозрений. Ни одно предсказание True Positive не упустили? Всё в порядке!"
+    },
+    {
+      "id": "ds-lm-t-35",
+      "kind": "theory",
+      "title": "Порог классификации",
+      "tags": [
+        "классификация"
+      ],
+      "body": "Модель классификации можно настроить с помощью изменения порогов. Это меняет чувствительность модели, из-за чего она начинает чаще классифицировать объекты каким-то из классов."
+    },
+    {
+      "id": "ds-lm-t-36",
+      "kind": "theory",
+      "title": "Когда машинное обучение уместно",
+      "tags": [
+        "моделирование"
+      ],
+      "body": "Перед обучением нужно изучить корреляции между целевым и входными признаками, проверить признаки на мультиколлинеарность и очистить данные от выбросов.\n\nAccuracy оценивает только общую точность модели, но этого бывает мало. Иногда важнее найти, какой класс модель предсказывает хуже, чем другой.\n\nМашинное обучение практически не даёт абсолютно точных предсказаний. Если цена ошибки слишком велика, то лучше подумать о математических методах решения задачи.\n\nЕсли в данных отсутствуют причинно-следственные связи между описанием объекта и целевым признаком, модель МО вам никак не поможет.\n\nЕсли вам достаточно получить одно решение и оно раз и навсегда решит возникшую проблему, то другие математические методы могут быть более уместны. Если же с течением времени ответы на задачу точно поменяются, то постоянно решать её заново может оказаться затруднительно и тогда проще донастраивать модель МО.\n\nКачественные данные делают модель точной и надёжной. Они не должны содержать выбросов, аномалий, пропущенных значений и неточностей.\n\nДругая проблема моделирования — ограничения разных моделей. К примеру, знакомые вам линейные модели хорошо работают, когда между признаками есть линейная зависимость. Если же зависимость нелинейная, то обученная модель может предсказывать неточно."
+    },
+    {
+      "id": "ds-lm-p-01",
+      "kind": "practice",
+      "title": "Версия sklearn и shape",
+      "tags": [
+        "sklearn"
+      ],
+      "body": "```python\nimport sklearn\nprint(sklearn.__version__)\n\n# вывод необходимых размерностей\nprint(X_train.shape)\n```"
+    },
+    {
+      "id": "ds-lm-p-02",
+      "kind": "practice",
+      "title": "LinearRegression: fit, coef_, intercept_, predict",
+      "tags": [
+        "регрессия",
+        "sklearn"
+      ],
+      "body": "```python\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\n\nmodel_lr = LinearRegression()\nmodel_lr.fit(X_train, y_train)\n# рассчитанные коэффициенты\nmodel_lr.coef_\n# рассчитанный коэффициент w_0\nmodel_lr.intercept_\ny_pred = model_lr.predict(X_test)\n```"
+    },
+    {
+      "id": "ds-lm-p-03",
+      "kind": "practice",
+      "title": "Тепловая карта корреляций",
+      "tags": [
+        "корреляция"
+      ],
+      "body": "```python\n# импорт библиотеки seaborn\nimport seaborn as sns\n# построение тепловой карты\nsns.heatmap(df.corr(), annot=True, fmt=\".2f\")\n```"
+    },
+    {
+      "id": "ds-lm-p-04",
+      "kind": "practice",
+      "title": "MSE и RMSE в sklearn",
+      "tags": [
+        "метрики"
+      ],
+      "body": "```python\nfrom sklearn.metrics import mean_squared_error\n\nmse = mean_squared_error(y_test, y_pred)\nrmse = mean_squared_error(y_test, y_pred, squared=False)\n```"
+    },
+    {
+      "id": "ds-lm-p-05",
+      "kind": "practice",
+      "title": "Скалярное произведение для цены квартиры",
+      "tags": [
+        "векторы",
+        "numpy"
+      ],
+      "body": "```python\nimport numpy as np\n\n# вектор с коэффициентами\ncoefs = np.array([\n    -472792, 58467, -7652, 387841, 55630, -47147, -49522\n])\n# вектор с константой и характеристиками квартиры\nflat_test = np.array([1, 44, 27, 2.9, 2, 1.7, 2])\n# создание переменной, содержащей скалярное произведение\nprice = np.multiply(coefs, flat_test).sum()\n```\n\nСкалярное произведение с функцией `dot`:\n\n```python\ndot_product = a.dot(b)\ndot_product = np.dot(a, b)\n```"
+    },
+    {
+      "id": "ds-lm-p-06",
+      "kind": "practice",
+      "title": "Косинусное расстояние",
+      "tags": [
+        "векторы",
+        "numpy"
+      ],
+      "body": "Расчёт косинусного расстояния в numpy. Длина вектора `norma_a = np.linalg.norm(a)`.\n\n```python\nimport numpy as np\n\n\ndef get_d_cos(a, b):\n    # скалярное произведение a и b\n    dot_product = np.multiply(a, b)\n    # длина a\n    norma_a = np.linalg.norm(a)\n    # длина b\n    norma_b = np.linalg.norm(b)\n    # косинус угла между a и b\n    cos = norma_a * norma_b\n    # косинусное расстояние\n    d_cos = 1 - a.dot(b) / cos\n    return d_cos\n\n\na = np.array([10, -2, 6, -2])\nb = np.array([0, -4, 8, 1])\nd_cos_a_b = get_d_cos(a, b)\n```\n\n```python\nfrom scipy.spatial.distance import cosine\n\nd_cos = cosine(a, b)\n```"
+    },
+    {
+      "id": "ds-lm-p-07",
+      "kind": "practice",
+      "title": "Евклидово расстояние",
+      "tags": [
+        "векторы",
+        "numpy"
+      ],
+      "body": "```python\nimport numpy as np\n\n\ndef get_d(a, b):\n    # поэлементная разность\n    diff_a_b = a - b\n    # возведение поэлементной разности в квадрат\n    diff_a_b_squared = diff_a_b ** 2\n    # сумма всех значений\n    diff_a_b_squared_sum = diff_a_b_squared.sum()\n    # корень квадратный суммы всех значений, евклидово расстояние\n    d = diff_a_b_squared_sum ** 0.5\n    return d\n\n\na = np.array([5, 8])\nb = np.array([8, 4])\nd_a_b = get_d(a, b)\n```\n\n```python\ndef get_d(a, b):\n    return (((a - b) ** 2).sum()) ** 0.5\n```\n\n```python\nfrom scipy.spatial.distance import euclidean\n\nd_euclid = euclidean(a, b)\n```"
+    },
+    {
+      "id": "ds-lm-p-08",
+      "kind": "practice",
+      "title": "Матрицы numpy и нормальное уравнение",
+      "tags": [
+        "линейная алгебра"
+      ],
+      "body": "```python\ndet_matrix_a = np.linalg.det(matrix_a)\nmatrix_a_inv = np.linalg.inv(matrix_a)\nmatrix = df.to_numpy()\nmatrix.shape\nnp.save(\"matrix.npy\", matrix)\nmatrix = np.load(\"matrix.npy\")\nmatrix = np.insert(matrix, n, c, axis=1)\nw = np.linalg.inv(X.T @ X) @ X.T @ y\n```"
+    },
+    {
+      "id": "ds-lm-p-09",
+      "kind": "practice",
+      "title": "MAE и R^2 в sklearn",
+      "tags": [
+        "метрики"
+      ],
+      "body": "```python\nfrom sklearn.metrics import mean_absolute_error\n\nmae = mean_absolute_error(y_test, y_pred)\n```\n\n```python\nfrom sklearn.metrics import r2_score\n\nr2 = r2_score(y_true, y_pred)\n```"
+    },
+    {
+      "id": "ds-lm-p-10",
+      "kind": "practice",
+      "title": "StandardScaler и MinMaxScaler",
+      "tags": [
+        "подготовка данных"
+      ],
+      "body": "```python\nfrom sklearn.preprocessing import StandardScaler\n\nscaler = StandardScaler()\nscaler.fit(X_train)\nX_train_scaled = scaler.transform(X_train)\nX_test_scaled = scaler.transform(X_test)\n```\n\n```python\nfrom sklearn.preprocessing import MinMaxScaler\n\nscaler = MinMaxScaler()\nscaler.fit(X_train)\nX_train_scaled = scaler.transform(X_train)\nX_test_scaled = scaler.transform(X_test)\n```"
+    },
+    {
+      "id": "ds-lm-p-11",
+      "kind": "practice",
+      "title": "OneHotEncoder",
+      "tags": [
+        "кодирование"
+      ],
+      "body": "```python\nfrom sklearn.preprocessing import OneHotEncoder\n\nencoder = OneHotEncoder()\nencoder.fit(X_train)\nX_train_ohe = encoder.transform(X_train)\nX_test_ohe = encoder.transform(X_test)\n```\n\nОбучение и преобразование данных можно выполнить одной командой:\n\n```python\nX_train_ohe = encoder.fit_transform(X_train)\n```\n\nЕсли вам нужно получить из кодировщика список новых признаков, используйте эту команду:\n\n```python\nencoder.get_feature_names()\nencoder.get_feature_names_out()  # в новых версиях sklearn\n```\n\n```python\nencoder = OneHotEncoder(drop=\"first\", sparse=False)\n# drop может быть {\"first\", \"if_binary\"}\n```\n\n```python\nencoder = OneHotEncoder(sparse=False)\ncat_col_names = [\"building_type\", \"parking_place\"]\nX_train_ohe = encoder.fit_transform(X_train[cat_col_names])\nencoder_col_names = encoder.get_feature_names()\n# создайте датафрейм из закодированных данных\n# передайте названия столбцов из переменной encoder_col_names\ndf_ohe = pd.DataFrame(X_train_ohe, columns=encoder_col_names)\n```\n\nOne-Hot Encoding в pandas:\n\n```python\ndf = pd.get_dummies(df, drop_first=True)\n```"
+    },
+    {
+      "id": "ds-lm-p-12",
+      "kind": "practice",
+      "title": "Пайплайн линейной регрессии и анализ остатков",
+      "tags": [
+        "регрессия",
+        "остатки"
+      ],
+      "body": "## Пример линейной регрессии и анализ остатков\n\n```python\nimport pandas as pd\nfrom matplotlib import pyplot as plt\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import OneHotEncoder\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LinearRegression\n\nRANDOM_STATE = 42\n\ndf = pd.read_csv(\"real_estate_clean_cat.csv\")\nX = df.drop(\"price\", axis=1)\ny = df[\"price\"]\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X,\n    y,\n    random_state=RANDOM_STATE,\n)\n\ncat_col_names = [\"building_type\", \"parking_place\", \"rooms_number\"]\nnum_col_names = [\n    \"total_area\",\n    \"living_area\",\n    \"ceil_height\",\n    \"city_center_distance\",\n    \"years_after_repair\",\n]"
+    },
+    {
+      "id": "ds-lm-p-13",
+      "kind": "practice",
+      "title": "accuracy_score",
+      "tags": [
+        "метрики"
+      ],
+      "body": "```python\nfrom sklearn.metrics import accuracy_score\n\ny_pred = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]\ny_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]\nacc = accuracy_score(y_true, y_pred)\n```"
+    },
+    {
+      "id": "ds-lm-p-14",
+      "kind": "practice",
+      "title": "LogisticRegression и график логистической функции",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "```python\nfrom sklearn.linear_model import LogisticRegression\n\nclf = LogisticRegression()\nclf = clf.fit(X_train, y_train)\ny_pred = clf.predict(X_test)\nacc = accuracy_score(y_test, y_pred)\n```\n\n```python\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n\ndef log_func(x, w0, w1):\n    return 1 / (1 + np.exp(-(w0 + w1 * x)))\n\n\ndef plot_log_func(xmin, xmax, w0, w1):\n    # xmin, xmax: границы интервала X, на котором откладываете график\n    # w0: коэффициент w0\n    # w1: коэффициент w1\n    fig, ax = plt.subplots(figsize=(6, 4))\n    X = np.linspace(xmin, xmax, num=100)\n    y = log_func(X, w0, w1)\n    ax.plot(X, y)\n    ax.grid()\n    ax.set_yticks(np.linspace(0, 1, num=11))\n    ax.axhline(0.5, 0, 1, linestyle=\"-\", color=\"r\", alpha=0.5)\n    ax.axvline(0, 0, 1, linestyle=\"-\", color=\"r\", alpha=0.5)\n    ax.set_title(f\"Линия логистической функции, $w_0$={w0}, $w_1$={w1}\")\n    fig.tight_layout()\n    return fig\n\n\nfig = plot_log_func(xmin=-5, xmax=5, w0=3, w1=2)\n```"
+    },
+    {
+      "id": "ds-lm-p-15",
+      "kind": "practice",
+      "title": "Вероятности дефолта, coef_ и стандартизация",
+      "tags": [
+        "логистическая регрессия"
+      ],
+      "body": "## predict_proba\n\n```python\ny_proba = clf.predict_proba(X)\n```\n\nрезультат:\n\n```text\n[[0.21973247 0.78026753]\n [0.20331072 0.79668928]\n [0.65727478 0.34272522]\n [0.35885642 0.64114358]\n [0.57874368 0.42125632]\n [0.72555623 0.27444377]\n [0.37997208 0.62002792]\n [0.96912223 0.03087777]\n [0.06707868 0.93292132]\n [0.72426058 0.27573942]]\n```\n\n```python\ny_proba_1 = y_proba[:, 1]\n```\n\n```python\nimport pandas as pd\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\n\ndf = pd.read_csv(\"car_loan.csv\")\nRANDOM_STATE = 42\n# Возьмём по k объектов разных классов из данных\nk = 5\ndf = pd.concat([\n    df.query(\"default == 0\").sample(k),\n    df.query(\"default == 1\").sample(k),\n])\nX = df.drop(columns=[\"default\"])\ny = df[\"default\"]\nclf = LogisticRegression()\nclf = clf.fit(X, y)\n# получаем прогнозные метки классов\ny_proba = clf.predict_proba(X)\n# выбираем оценки только для класса \"1\"\ndf[\"default_proba_1\"] = y_proba[:, 1]\nprint(df)\n```\n\n```python\nclf = LogisticRegression(random_state=0)\nclf = clf.fit(X, y)\ny_pred = clf.predict(X)\nprint(clf.coef_)\n```\n\n```text\n[[ 8.66577289e-05 -3.34477636e-04 -2.24456165e-04  2.60637851e-06\n  -3.58808474e-04 -3.80292600e-05]]\n```\n\nКоэффициенты в `coef_` расположены в том же порядке, что и переданные методу `fit` признаки. Поэтому эти данные можно представить в более наглядном виде:\n\n```python\nfor feature_number, feature_name in enumerate(X.columns):\n    weight = clf.coef_[0, feature_number]\n    print(f\"{feature_name:<20}: {weight:+.6f}\")\n```\n\n```text\ncredit_amount       : +0.000087\nloan_annuity        : -0.000334\nage_days            : -0.000224\nemployed_days       : +0.000003\nphone_change        : -0.000359\nregistration_days   : -0.000038\n```\n\n## Сравнение и стандартизация признаков\n\n```python\nimport math\nimport pandas as pd\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\n\nRANDOM_STATE = 42\ndf = pd.read_csv(\"car_loan.csv\")\nX = df.drop(columns=\"default\")\ny = df[\"default\"]\nX_train, X_test, y_train, y_test = train_test_split(\n    X,\n    y,\n    random_state=RANDOM_STATE,\n)\nscaler = StandardScaler()\nX_train_scaled = scaler.fit_transform(X_train)\nX_test_scaled = scaler.transform(X_test)\nclf = LogisticRegression()\nclf = clf.fit(X_train_scaled, y_train)\ny_pred = clf.predict(X_test_scaled)\nfor feature_number, feature_name in enumerate(X.columns):\n    exp_weight = math.exp(clf.coef_[0, feature_number])\n    print(f\"{feature_name:<20}: {exp_weight:+.2f}\")\n```"
+    },
+    {
+      "id": "ds-lm-p-16",
+      "kind": "practice",
+      "title": "OneVsRestClassifier",
+      "tags": [
+        "классификация"
+      ],
+      "body": "```python\nfrom sklearn.multiclass import OneVsRestClassifier\n\nclf = OneVsRestClassifier(LogisticRegression())\nclf = clf.fit(X_train, y_train)\ny_pred = clf.predict(X_test)\nacc = accuracy_score(y_test, y_pred)\n```"
+    },
+    {
+      "id": "ds-lm-p-17",
+      "kind": "practice",
+      "title": "Матрица корреляций, phik, confusion matrix",
+      "tags": [
+        "корреляция",
+        "метрики"
+      ],
+      "body": "```python\nimport phik\ndf.phik_matrix()\n```\n\n```python\nconfusion = np.zeros((2, 2)).astype(np.int64)\nfor i in range(2):\n    for j in range(2):\n        confusion[i][j] = np.sum(np.logical_and(y_test == i, y_pred == j))\nprint(confusion)\n```\n\n```python\nfrom sklearn.metrics import confusion_matrix\ncm = confusion_matrix(y_test, y_pred)\nsns.heatmap(cm, annot=True, fmt=\"d\", cmap=\"Blues_r\")\n```"
+    },
+    {
+      "id": "ds-lm-p-18",
+      "kind": "practice",
+      "title": "Precision, recall и подбор порога",
+      "tags": [
+        "метрики",
+        "классификация"
+      ],
+      "body": "## Precision, recall и порог\n\n```python\nimport pandas as pd\nimport seaborn as sns\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import recall_score, precision_score\n\nRANDOM_STATE = 42\ndf = pd.read_csv(\"car_loan.csv\")\nX = df.drop(columns=\"default\")\ny = df[\"default\"]\nX_train, X_test, y_train, y_test = train_test_split(\n    X,\n    y,\n    random_state=RANDOM_STATE,\n)\nscaler = StandardScaler()\nX_train_scaled = scaler.fit_transform(X_train)\nX_test_scaled = scaler.transform(X_test)\nclf = LogisticRegression()\nclf = clf.fit(X_train_scaled, y_train)\ny_pred = clf.predict(X_test_scaled)\nrecall = recall_score(y_test, y_pred)\nprecision = precision_score(y_test, y_pred)\nprint(\"recall: \", round(recall, 3))\nprint(\"precision: \", round(precision, 3))\n```\n\nДля компактности выведем только пять первых объектов. Вот как их отсортировать:\n\n```python\ny_proba = clf.predict_proba(X_test_scaled)[:, 1]\n\ndata = pd.DataFrame(\n    zip(y_test, y_proba),\n    columns=[\"y_valid\", \"y_proba\"],\n).sort_values(by=\"y_proba\", ascending=False)\n\nprint(data.head())\n```\n\nДобавить пороги поможет функция `linspace`: она разделяет заданный промежуток на несколько более мелких. Посмотрим на то, как модель будет работать при четырёх разных порогах. Для этого укажем в linspace промежуток пороговых значений — от 0.1 до 1:\n\n```python\nthresholds = [round(i, 2) for i in np.linspace(0.1, 1, num=4, endpoint=False)]\nprint(thresholds)\n```\n\n```text\n[0.1, 0.32, 0.55, 0.78]\n```\n\nПодбор порога:\n\n```python\ny_proba = clf.predict_proba(X_test_scaled)[:, 1]\ndata = pd.DataFrame(\n    zip(y_test, y_proba), columns=[\"y_valid\", \"y_proba\"]\n).sort_values(by=\"y_proba\", ascending=False)\n```\n\nВот как применить её к прогнозным значениям при разных порогах:\n\n```python\nthresholds = [round(i, 2) for i in np.linspace(0.1, 1, num=12, endpoint=False)]\nvalues = []\ncolumns = []\nfor i in thresholds:\n    columns.append(\"y_pred_\" + str(i))\n    data[\"y_pred_\"] = data[\"y_proba\"].apply(lambda x: 1 if x >= i else 0)\n    data[\"check\"] = data.apply(lambda x: cost(x.y_valid, x.y_pred_), 1)\n    values.append(data[\"check\"].sum())\ncosts = pd.DataFrame(zip(columns, values), columns=[\"Порог\", \"Потери\"])\nheatmap = sns.lineplot(\n    x=thresholds,\n    y=[i / 1000000 for i in values],\n    size=50,\n    legend=False,\n)\nplt.ylabel(\"Млн рублей\")\nplt.xlabel(\"Порог\")\nplt.title(\"Зависимость потерь в млн рублей от выбранного порога\")\n```"
+    }
+  ]
+}
