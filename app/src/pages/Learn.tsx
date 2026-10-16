@@ -1,19 +1,107 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { allTags, itemsByKind, TOPIC_TITLE } from '../lib/content'
+import { Link, useSearchParams } from 'react-router-dom'
+import { MarkdownBody } from '../components/MarkdownBody'
+import {
+  NOTES,
+  TOPIC_TITLE,
+  TRACK_TITLE,
+  allItems,
+  allTags,
+  itemsByKind,
+  notesToc,
+} from '../lib/content'
 import { loadProgress } from '../lib/storage'
 import type { ItemKind } from '../lib/types'
 
-const buckets = [0, 1, 2, 3, 5, 10] as const
+const buckets = [1, 2, 3, 5, 10] as const
+type Mode = 'notes' | 'theory' | 'practice'
 
-function asKind(value: string | undefined): ItemKind | 'all' {
-  if (value === 'theory' || value === 'practice') return value
-  return 'all'
+function asMode(value: string | null): Mode {
+  if (value === 'theory' || value === 'practice' || value === 'notes') return value
+  return 'notes'
 }
 
 export function Learn() {
-  const { kind: kindParam } = useParams()
-  const kind = asKind(kindParam)
+  const [params, setParams] = useSearchParams()
+  const mode = asMode(params.get('view'))
+  const items = allItems()
+  const progress = loadProgress()
+  const started = items.filter((item) => (progress[item.id]?.count ?? 0) > 0).length
+
+  function setMode(next: Mode) {
+    const copy = new URLSearchParams(params)
+    if (next === 'notes') copy.delete('view')
+    else copy.set('view', next)
+    setParams(copy, { replace: true })
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <section className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-8">
+        <p className="text-sm text-[var(--muted)]">{TRACK_TITLE}</p>
+        <h1 className="mt-2 font-serif text-3xl tracking-tight sm:text-4xl">
+          {TOPIC_TITLE}
+        </h1>
+        <p className="mt-4 max-w-2xl text-[var(--muted)]">
+          Полный конспект исходного файла и карточки для закрепления: теория и
+          практика.
+        </p>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Повторяли {started} из {items.length}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {(
+            [
+              ['notes', 'Конспект'],
+              ['theory', 'Теория'],
+              ['practice', 'Практика'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm ${mode === id ? 'bg-[var(--fg)] text-[var(--bg)]' : 'border border-[var(--line)]'}`}
+              onClick={() => setMode(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+      {mode === 'notes' ? <NotesPanel /> : <CardsPanel kind={mode} />}
+    </div>
+  )
+}
+
+function NotesPanel() {
+  const toc = notesToc().filter((entry) => entry.level <= 2)
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <p className="mb-3 text-xs uppercase tracking-wide text-[var(--muted)]">
+          Содержание
+        </p>
+        <nav className="flex max-h-[70vh] flex-col gap-1 overflow-auto text-sm">
+          {toc.map((entry) => (
+            <a
+              key={entry.id + entry.title}
+              href={`#${entry.id}`}
+              className={entry.level === 1 ? 'text-[var(--fg)]' : 'pl-3 text-[var(--muted)]'}
+            >
+              {entry.title}
+            </a>
+          ))}
+        </nav>
+      </aside>
+      <article className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-10">
+        <MarkdownBody source={NOTES} />
+      </article>
+    </div>
+  )
+}
+
+function CardsPanel({ kind }: { kind: ItemKind }) {
   const [view, setView] = useState<'list' | 'cards'>('cards')
   const [tag, setTag] = useState('all')
   const [bucket, setBucket] = useState<number | 'any'>('any')
@@ -43,18 +131,11 @@ export function Learn() {
     return next
   }, [kind, tag, bucket, unsolved, sort, progress])
 
-  const title =
-    kind === 'theory' ? 'Теория' : kind === 'practice' ? 'Практика' : 'Все карточки'
-
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-[var(--muted)]">{TOPIC_TITLE}</p>
-        <h1 className="font-serif text-3xl">{title}</h1>
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-2">
         <select
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg-elev)] px-3 py-2 text-sm"
+          className="select-control"
           value={tag}
           onChange={(e) => setTag(e.target.value)}
         >
@@ -66,7 +147,7 @@ export function Learn() {
           ))}
         </select>
         <select
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg-elev)] px-3 py-2 text-sm"
+          className="select-control"
           value={bucket === 'any' ? 'any' : String(bucket)}
           onChange={(e) => {
             const value = e.target.value
@@ -75,7 +156,7 @@ export function Learn() {
           }}
         >
           <option value="any">Любой прогресс</option>
-          {buckets.filter(Boolean).map((n) => (
+          {buckets.map((n) => (
             <option key={n} value={n}>
               ≥{n}
             </option>
@@ -89,7 +170,7 @@ export function Learn() {
           Не решали
         </button>
         <select
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg-elev)] px-3 py-2 text-sm"
+          className="select-control"
           value={sort}
           onChange={(e) => setSort(e.target.value as typeof sort)}
         >
@@ -97,7 +178,7 @@ export function Learn() {
           <option value="progress">Сортировка: повторения</option>
           <option value="recent">Сортировка: недавно</option>
         </select>
-        <div className="ml-auto flex rounded-xl border border-[var(--line)]">
+        <div className="ml-auto flex overflow-hidden rounded-xl border border-[var(--line)]">
           <button
             type="button"
             className={`px-3 py-2 text-sm ${view === 'list' ? 'bg-[var(--bg-elev)]' : ''}`}
@@ -115,7 +196,7 @@ export function Learn() {
         </div>
       </div>
       {view === 'list' ? (
-        <ul className="divide-y divide-[var(--line)] rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)]">
+        <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)]">
           {items.map((item) => {
             const count = progress[item.id]?.count ?? 0
             return (
@@ -127,7 +208,6 @@ export function Learn() {
                   <span>
                     <span className="block">{item.title}</span>
                     <span className="text-xs text-[var(--muted)]">
-                      {item.kind === 'theory' ? 'теория' : 'практика'} ·{' '}
                       {item.tags.join(', ')}
                     </span>
                   </span>
@@ -147,10 +227,7 @@ export function Learn() {
                 to={`/item/${item.id}`}
                 className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] p-5"
               >
-                <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
-                  {item.kind === 'theory' ? 'теория' : 'практика'}
-                </p>
-                <h2 className="mt-2 font-serif text-xl">{item.title}</h2>
+                <h2 className="font-serif text-xl">{item.title}</h2>
                 <p className="mt-3 text-sm text-[var(--muted)]">
                   {item.tags.join(' · ')}
                 </p>

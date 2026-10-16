@@ -12,3 +12,8 @@ declare module '@content/data-science/linear-models/items.json' {
   }
   export default value
 }
+
+declare module '*.md?raw' {
+  const source: string
+  export default source
+}

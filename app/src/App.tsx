@@ -1,7 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Account } from './pages/Account'
-import { Home } from './pages/Home'
 import { ItemPage } from './pages/ItemPage'
 import { Learn } from './pages/Learn'
 import { NotificationsPage } from './pages/Notifications'
@@ -11,9 +10,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="learn" element={<Navigate to="/learn/theory" replace />} />
-        <Route path="learn/:kind" element={<Learn />} />
+        <Route index element={<Learn />} />
         <Route path="item/:id" element={<ItemPage />} />
         <Route path="account" element={<Account />} />
         <Route path="notifications" element={<NotificationsPage />} />

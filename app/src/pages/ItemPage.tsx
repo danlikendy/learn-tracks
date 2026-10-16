@@ -22,12 +22,11 @@ export function ItemPage() {
     return <p>Карточка не найдена.</p>
   }
 
+  const back = item.kind === 'theory' ? '/?view=theory' : '/?view=practice'
+
   return (
-    <article className="space-y-6">
-      <Link
-        to={`/learn/${item.kind}`}
-        className="text-sm text-[var(--muted)]"
-      >
+    <article className="flex flex-col gap-6">
+      <Link to={back} className="w-fit text-sm text-[var(--muted)]">
         Назад к {item.kind === 'theory' ? 'теории' : 'практике'}
       </Link>
       <header className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6">
@@ -47,10 +46,10 @@ export function ItemPage() {
           Отметить повторение
         </button>
       </header>
-      <div className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6">
+      <div className="rounded-3xl border border-[var(--line)] bg-[var(--bg-elev)] p-6 sm:p-8">
         <MarkdownBody source={item.body} />
       </div>
-      <div className="flex justify-between text-sm">
+      <div className="flex justify-between gap-4 text-sm">
         {neighbors.prev ? (
           <Link to={`/item/${neighbors.prev.id}`}>← {neighbors.prev.title}</Link>
         ) : (
