@@ -1,0 +1,11 @@
+{
+  "id": "data-science",
+  "title": "Data Science",
+  "topics": [
+    {
+      "id": "linear-models",
+      "title": "Линейные модели в машинном обучении",
+      "kind": ["theory", "practice"]
+    }
+  ]
+}

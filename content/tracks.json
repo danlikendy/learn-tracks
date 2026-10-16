@@ -1,0 +1,10 @@
+{
+  "tracks": [
+    {
+      "id": "data-science",
+      "title": "Data Science",
+      "summary": "Закрепление уже изученных материалов: линейные модели и дальше по мере пополнения.",
+      "status": "in_progress"
+    }
+  ]
+}
