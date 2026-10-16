@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
+
+@theme {
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "IBM Plex Serif", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+html {
+  --bg: #f4efe6;
+  --bg-elev: #fffaf3;
+  --fg: #1c1917;
+  --muted: #57534e;
+  --line: #e7e0d4;
+  --accent: #8b5a2b;
+  --accent-2: #3f5d4a;
+}
+
+html[data-theme="dark"] {
+  --bg: #12110f;
+  --bg-elev: #1c1a17;
+  --fg: #f5f0e8;
+  --muted: #a8a29a;
+  --line: #2a2723;
+  --accent: #d4b483;
+  --accent-2: #8fbfa4;
+}
+
+.prose-note h1,
+.prose-note h2,
+.prose-note h3 {
+  font-family: var(--font-serif);
+  color: var(--fg);
+}
+
+.prose-note a {
+  color: var(--accent);
+}
+
+.prose-note pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #1c1917;
+  color: #f5f0e8;
+  font-size: 0.85rem;
+}
+
+.prose-note code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.prose-note :not(pre) > code {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+}
+
+.prose-note .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
