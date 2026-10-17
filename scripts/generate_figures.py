@@ -45,6 +45,9 @@ plt.rcParams.update(
 
 def save(fig, name: str) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    fig.suptitle("")
+    for ax in fig.get_axes():
+        ax.set_title("")
     try:
         fig.tight_layout()
     except Exception:
@@ -661,6 +664,94 @@ def fig_class_vs_reg() -> None:
     save(fig, "class-vs-reg.png")
 
 
+def fig_stats_venn() -> None:
+    fig, ax = plt.subplots(figsize=(5.2, 3.2))
+    ax.add_patch(Rectangle((0.05, 0.08), 0.9, 0.84, fill=False, lw=1.4, edgecolor=MUTED))
+    c1 = Circle((0.38, 0.5), 0.22, facecolor=ACCENT, alpha=0.25, edgecolor=ACCENT)
+    c2 = Circle((0.62, 0.5), 0.22, facecolor=BLUE, alpha=0.25, edgecolor=BLUE)
+    ax.add_patch(c1)
+    ax.add_patch(c2)
+    ax.text(0.28, 0.5, "A", ha="center", va="center")
+    ax.text(0.72, 0.5, "B", ha="center", va="center")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    save(fig, "stats-venn.png")
+
+
+def fig_stats_normal() -> None:
+    x = np.linspace(-4, 4, 400)
+    y = np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)
+    fig, ax = plt.subplots(figsize=(5.2, 3.1))
+    ax.plot(x, y, color=GREEN, lw=2)
+    ax.fill_between(x, y, color=GREEN, alpha=0.12)
+    ax.axvline(0, color=MUTED, lw=0.8, ls="--")
+    ax.set_xlabel("x")
+    style(ax)
+    save(fig, "stats-normal.png")
+
+
+def fig_stats_sigma() -> None:
+    x = np.linspace(-4, 4, 400)
+    y = np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)
+    fig, ax = plt.subplots(figsize=(5.4, 3.1))
+    ax.plot(x, y, color=FG, lw=1.6)
+    for a, b, c in ((-1, 1, GREEN), (-2, 2, ACCENT), (-3, 3, BLUE)):
+        m = (x >= a) & (x <= b)
+        ax.fill_between(x[m], y[m], color=c, alpha=0.18)
+    ax.set_xticks([-3, -2, -1, 0, 1, 2, 3], [r"$-3\sigma$", r"$-2\sigma$", r"$-\sigma$", r"$\mu$", r"$\sigma$", r"$2\sigma$", r"$3\sigma$"])
+    style(ax)
+    save(fig, "stats-sigma.png")
+
+
+def fig_stats_hist() -> None:
+    rng = np.random.default_rng(3)
+    data = rng.normal(50, 12, 180)
+    fig, ax = plt.subplots(figsize=(5.2, 3.1))
+    ax.hist(data, bins=12, color=ACCENT, alpha=0.85, edgecolor=BG)
+    style(ax)
+    save(fig, "stats-hist.png")
+
+
+def fig_stats_binomial() -> None:
+    from math import comb
+    n, p = 12, 0.45
+    ks = np.arange(0, n + 1)
+    ps = [comb(n, int(k)) * p**k * (1 - p) ** (n - k) for k in ks]
+    fig, ax = plt.subplots(figsize=(5.2, 3.1))
+    ax.bar(ks, ps, color=BLUE, alpha=0.9)
+    style(ax)
+    ax.set_xlabel("k")
+    save(fig, "stats-binomial.png")
+
+
+def fig_biz_funnel() -> None:
+    fig, ax = plt.subplots(figsize=(5.2, 3.2))
+    widths = [0.9, 0.62, 0.38]
+    labels = ["визит", "интерес", "покупка"]
+    y = 0.78
+    for w, lab in zip(widths, labels):
+        ax.add_patch(FancyBboxPatch((0.5 - w / 2, y - 0.14), w, 0.18, boxstyle="round,pad=0.02", facecolor=ACCENT, alpha=0.35, edgecolor=ACCENT))
+        ax.text(0.5, y - 0.05, lab, ha="center", va="center")
+        y -= 0.24
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    save(fig, "biz-funnel.png")
+
+
+def fig_biz_ab() -> None:
+    fig, ax = plt.subplots(figsize=(5.2, 3.0))
+    ax.add_patch(FancyBboxPatch((0.08, 0.25), 0.36, 0.5, boxstyle="round,pad=0.03", facecolor=MUTED, alpha=0.18, edgecolor=MUTED))
+    ax.add_patch(FancyBboxPatch((0.56, 0.25), 0.36, 0.5, boxstyle="round,pad=0.03", facecolor=GREEN, alpha=0.2, edgecolor=GREEN))
+    ax.text(0.26, 0.5, "A\nконтроль", ha="center", va="center")
+    ax.text(0.74, 0.5, "B\nтест", ha="center", va="center")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    save(fig, "biz-ab.png")
+
+
 def main() -> None:
     fig_class_vs_reg()
     fig_ols()
@@ -705,6 +796,13 @@ def main() -> None:
     fig_pipeline("pipe-models.png", ["Tree", "SVM", "kNN", "LogReg"], "Несколько моделей в поиске")
     fig_pipeline("pipe-result.png", ["лучший: LogReg + MinMax"], "Результат поиска")
     fig_pipeline("pipe-rand.png", ["препроцессинг", "модели", "RandomizedSearch"], "Случайный поиск в пайплайне")
+    fig_stats_venn()
+    fig_stats_normal()
+    fig_stats_sigma()
+    fig_stats_hist()
+    fig_stats_binomial()
+    fig_biz_funnel()
+    fig_biz_ab()
     fig_manhattan()
     fig_knn()
     fig_overfit()

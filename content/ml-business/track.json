@@ -1,0 +1,11 @@
+{
+  "id": "ml-business",
+  "title": "Машинное обучение в бизнесе",
+  "topics": [
+    {
+      "id": "overview",
+      "title": "Машинное обучение в бизнесе",
+      "kind": ["theory", "practice"]
+    }
+  ]
+}

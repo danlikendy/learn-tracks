@@ -56,6 +56,17 @@ FORMULAS = [
         r"sum_\(i=1\)\^n\(y_ture_i-y_pred_i\)\^2 -> min",
         NL.join(["$$", r"\sum_{i=1}^{n}(y_{\mathrm{true}, i}-y_{\mathrm{pred}, i})^2 \to \min", "$$"]),
     ),
+    (
+        r"\(f\(w,x_i\)-y\)\^2\+l1_ratioλ\|\|w\|\|\+\(1-l1_ratio\)λ\|\|w\|\|\^2→min",
+        NL.join(
+            [
+                "$$",
+                r"(f(w,x_i)-y)^2 + \mathrm{l1\_ratio}\,\lambda\|w\| + (1-\mathrm{l1\_ratio})\,\lambda\|w\|^2 \to \min",
+                "$$",
+            ]
+        ),
+    ),
+    (r"Fβ=\(β\^2\+1\)\*\(precision\*recall\)/\(β\^2\*precision\+recall\)", NL.join(["$$", r"F_{\beta}=(\beta^2+1)\frac{\mathrm{precision}\cdot\mathrm{recall}}{\beta^2\cdot\mathrm{precision}+\mathrm{recall}}", "$$"])),
     (r"\(f\(w,x_i\)-y\)\^2\+λ\|\|w\|\|\^2 -> min", NL.join(["$$", r"(f(w,x_i)-y)^2 + \lambda \|w\|^2 \to \min", "$$"])),
     (r"\(f\(w,x_i\) -y\)\^2\+λ\|\|w\|\| -> min", NL.join(["$$", r"(f(w,x_i)-y)^2 + \lambda \|w\| \to \min", "$$"])),
     (r"\(f\(w,x_i\)-y\)\^2 -> min", NL.join(["$$", r"(f(w,x_i)-y)^2 \to \min", "$$"])),
@@ -63,8 +74,8 @@ FORMULAS = [
     (r"d\(a,b\)=sum\^n_\(i=1\)\(\|a_i-b_i\|\)", NL.join(["$$", r"d(a,b)=\sum_{i=1}^{n}|a_i-b_i|", "$$"])),
     (r"^\|\|w\|\|\^2 -> min$", NL.join(["$$", r"\|w\|^2 \to \min", "$$"])),
     (r"^w -> min$", NL.join(["$$", r"w \to \min", "$$"])),
-    (r"C=1/λ", r"$C = \frac{1}{\lambda}$"),
-    (r"C=1/c", r"$C = \frac{1}{c}$"),
+    (r"C=1/λ", NL.join(["$$", r"C = \frac{1}{\lambda}", "$$"])),
+    (r"C=1/c", NL.join(["$$", r"C = \frac{1}{c}", "$$"])),
     (r"0\.99\^3 = 0\.97", r"$0.99^{3} = 0.97$"),
     (r"1\.01\^3 = 1\.03", r"$1.01^{3} = 1.03$"),
     (r"0\.99\^10 = 0\.9", r"$0.99^{10} = 0.9$"),
@@ -98,11 +109,17 @@ def cyr_ratio(s: str) -> float:
 
 
 def is_mathy(s: str) -> bool:
+    if s.startswith("|---") or s.startswith("|   |"):
+        return False
     if s.startswith("$$") or "\\frac" in s or "\\sum" in s:
+        return True
+    if re.match(r"^C=1/", s):
         return True
     if re.search(r"(>=|<=|-> min|-> max|sum_\(|sum\^n_|w\^t|w\^T|\|\|w\|\||λ\|\||\\lambda)", s, re.I):
         return True
     if re.search(r"d=\(\||M=y\*|w_0\+|y\(x\)=sign|y\(w", s):
+        return True
+    if re.search(r"(Var\[|E\[X\]|sum_\^n_|P_n=|A\^k_n|C\^k_n|X∼|sigma\^2|\bмю\b|X_ = N\()", s):
         return True
     return False
 
@@ -124,21 +141,25 @@ def is_code_line(line: str, in_code: bool) -> bool:
         return in_code
     if s.lower().startswith("см изображ"):
         return False
+    if s.startswith("|---") or s.startswith("|   |"):
+        return True
     if is_mathy(s):
         return False
     if s.startswith("#") and in_code:
         return True
     ratio = cyr_ratio(s)
     if in_code:
-        if ratio > 0.55 and not s.startswith("#") and not looks_like_code(s):
-            return False
-        if s[0] in ")]},\\":
-            return True
         if raw[:1] in " \t":
             return True
+        if s[0] in "0123456789)]},\\":
+            return True
+        if s.endswith((",", "[", "(", "\\")) or "])" in s or ")]" in s:
+            return True
+        if ratio > 0.55 and not s.startswith("#") and not looks_like_code(s):
+            return False
         if looks_like_code(s):
             return True
-        if re.match(r"^[\d.]+\s+[\d.]+", s) and ratio < 0.1:
+        if re.match(r"^[\d. ,\]]+", s):
             return True
         return ratio < 0.25
     if ratio > 0.4 and not s.startswith("#"):
@@ -162,17 +183,196 @@ def convert_formulas(text: str) -> str:
     text = text.replace("x_i;y_i", r"$x_i$, $y_i$")
     text = text.replace("(x_i;y_i)", r"($x_i$, $y_i$)")
     text = text.replace("объекта x_i", r"объекта $x_i$")
+    xi = "$" + chr(92) + "xi_i$"
+    text = re.sub(r"ξ_i(?=\s*[А-Яа-я])", lambda _m: xi + " ", text)
+    text = re.sub(r"(?<!\$)\bξ_i\b(?!\$)", lambda _m: xi, text)
+    text = text.replace("bias^2(a)", r"$\mathrm{bias}^2(a)$")
+    text = text.replace("variance(a)", r"$\mathrm{variance}(a)$")
+    text = text.replace("16%−15%=1%", r"$16\%-15\%=1\%$")
     return text
 
 
-def to_markdown(raw: str, title: str) -> str:
+def prose_math(text: str) -> str:
+    text = text.replace("мю - среднее, sigma^2 - дисперсия, X_ - оценка среднего", r"$\mu$ — среднее, $\sigma^2$ — дисперсия, $\bar{X}$ — оценка среднего")
+    text = text.replace("D_i = средний чек в B_i - средний чек в A_i", r"$D_i$ = средний чек в $B_i$ − средний чек в $A_i$")
+    text = text.replace("X_ = N(мю, (sigma_2)/n)", r"$\bar{X} \sim \mathcal{N}(\mu, \sigma^2/n)$")
+    text = text.replace("p(x_i)=1/n", r"$p(x_i)=1/n$")
+    text = text.replace("P(A)=k/n", r"$P(A)=k/n$")
+    text = text.replace("P(X=a)", r"$P(X=a)$")
+    text = text.replace("P(X⩽x)", r"$P(X \leqslant x)$")
+    text = re.sub(r"(?<!\$)\bP_n\b(?!\$)", r"$P_n$", text)
+    text = text.replace("A^k_n", r"$A_n^k$")
+    text = text.replace("C^k_n", r"$C_n^k$")
+    text = text.replace("n⋅m", r"$n \cdot m$")
+    text = text.replace("k_1 ⋅ k_2 ⋅ ... ⋅ k_n", r"$k_1 \cdot k_2 \cdot \ldots \cdot k_n$")
+    text = text.replace("n⋅(n−1)⋅(n−2)⋅...⋅(n−k+1)", r"$n(n-1)(n-2)\cdots(n-k+1)$")
+    text = text.replace("(n!)/(n-k)!", r"$\frac{n!}{(n-k)!}$")
+    text = text.replace("(n!)/(k!(n-k)!)", r"$\frac{n!}{k!(n-k)!}$")
+    text = text.replace("H₀", r"$H_0$")
+    text = text.replace("H₁", r"$H_1$")
+    text = text.replace("H_0", r"$H_0$")
+    text = text.replace("H_1", r"$H_1$")
+    text = text.replace(
+        "E[X]=∑^n_(i=1)(P(X=x_i)*x_i),",
+        NL.join(["$$", r"E[X]=\sum_{i=1}^{n} P(X=x_i)\, x_i", "$$"]),
+    )
+    text = text.replace(
+        "Var[X]=∑^n_(i=1)((x_i-E[X])^2*(P(X=x_i)),",
+        NL.join(["$$", r"\mathrm{Var}[X]=\sum_{i=1}^{n}(x_i-E[X])^2 P(X=x_i)", "$$"]),
+    )
+    text = text.replace(
+        "Var[X]=E[X^2]-(E[X])^2=∑^n_(i=1)((x_i-E[X])^2*(P(X=x_i)),",
+        NL.join(["$$", r"\mathrm{Var}[X]=E[X^2]-(E[X])^2=\sum_{i=1}^{n}(x_i-E[X])^2 P(X=x_i)", "$$"]),
+    )
+    text = text.replace("∑^n_(i=1)", r"$\sum_{i=1}^{n}$")
+    text = text.replace("∑^n_(x=1)", r"$\sum_{x=1}^{n}$")
+    text = text.replace("- x_i —", r"- $x_i$ —")
+    text = text.replace("- P(X=x_i) —", r"- $P(X=x_i)$ —")
+    text = text.replace("X∼N(μ,σ²)", r"$X \sim \mathcal{N}(\mu,\sigma^2)$")
+    text = text.replace("X∼N(μ,σ^2)", r"$X \sim \mathcal{N}(\mu,\sigma^2)$")
+    text = text.replace("X∼U_[a,b]", r"$X \sim U_{[a,b]}$")
+    parts = re.split(r"(\$\$[\s\S]*?\$\$)", text)
+    out = []
+    for part in parts:
+        if part.startswith("$$"):
+            out.append(part)
+        else:
+            out.append(re.sub(r"(?<!\$)\bE\[X\](?!\$)", r"$E[X]$", part))
+    return "".join(out)
+
+
+APIS = (
+    "LogisticRegression",
+    "GridSearchCV",
+    "RandomizedSearchCV",
+    "OptunaSearchCV",
+    "StandardScaler",
+    "KNeighborsClassifier",
+    "Pipeline",
+    "SVC",
+    "LinearRegression",
+    "OneHotEncoder",
+    "train_test_split",
+)
+
+STATS_HEADINGS = {
+    "Вероятность: классическое и геометрическое определения",
+    "Классическое определение вероятности",
+    "Геометрическое определение вероятности",
+    "Диаграмма Эйлера-Венна",
+    "Мода",
+    "Медиана",
+    "Выбор характеристики положения",
+    "Вторая формула дисперсии",
+    "Свойства математического ожидания и дисперсии случайной величины",
+    "Биномиальное распределение",
+    "Графики биномиальных распределений",
+    "Непрерывное равномерное и нормальное распределения",
+    "Непрерывное равномерное распределение",
+    "Нормальное распределение",
+    "Вероятности попадания в интервал",
+    "Правило трёх сигм",
+    "Функция нормального распределения",
+    "Вероятность попадания в конечный интервал",
+    "Стандартное нормальное распределение и стандартизация",
+    "Z-значение",
+    "Percent Point Function для нормального распределения",
+    "Распределение Пуассона",
+    "График распределения Пуассона",
+    "Функция распределения Пуассона",
+    "Аппроксимация биномиального распределения распределением Пуассона",
+    "Аппроксимация биномиального распределения нормальным",
+    "Как рассчитывать вероятности с помощью аппроксимации",
+    "Генеральная совокупность. Случайные и стратифицированные выборки",
+    "Оценка параметров генеральной совокупности по выборке",
+    "Стандартная ошибка среднего",
+    "Уровень статистической значимости",
+    "Распределение Стьюдента",
+    "Как проверить одностороннюю гипотезу в Python",
+    "Гипотеза о равенстве средних двух генеральных совокупностей",
+    "Односторонние гипотезы для средних двух генеральных совокупностей",
+    "Гипотеза о равенстве средних для зависимых (парных) выборок",
+}
+
+TABLE_ROW = re.compile(
+    r"^(sklearn\.[\w.]+|feature_engine\.[\w.]+|imblearn\.[\w.]+)\s+(\S+(?:,\s*\S+)*)\s+([А-ЯЁ].+)$"
+)
+
+
+def space_code(code: str) -> str:
+    lines = code.split("\n")
+    out: list[str] = []
+    for i, line in enumerate(lines):
+        s = line.strip()
+        prev = out[-1].strip() if out else ""
+        if s.startswith("#") and prev and not prev.startswith("#"):
+            if out[-1] != "":
+                out.append("")
+        if re.match(r"^(for |if |with |def |class |while |try:)", s) and prev and not prev.endswith((":", "\\")):
+            if out and out[-1] != "":
+                out.append("")
+        out.append(line)
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if (s.startswith("import ") or s.startswith("from ")) and nxt and not nxt.startswith(("import ", "from ")):
+            out.append("")
+        if (s.startswith("print(") or s.endswith(".fit(") or ".fit(" in s) and nxt.startswith(("print(", "y_")):
+            pass
+        if s and not s.startswith(("#", "import ", "from ")) and nxt.startswith("#"):
+            if i + 1 < len(lines) and not nxt.startswith("# ") and False:
+                pass
+    text = "\n".join(out)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip("\n")
+
+
+def emit_prose_line(s: str) -> list[str]:
+    s = s.strip()
+    if not s:
+        return []
+    s = re.sub(r"[\U0001F300-\U0001FAFF💡✅❌⚠️📊📈]", "", s).strip()
+    if not s:
+        return []
+    for name in APIS:
+        s = s.replace(f"{name}()", f"`{name}()`")
+    m_pen = re.match(r"^(penalty\s*=\s*['\"]?[\w]+['\"]?)\s*[—–-]\s*(.+)$", s)
+    if m_pen:
+        return [f"- `{m_pen.group(1)}` — {m_pen.group(2)}", ""]
+    if re.match(r"^penalty\s*=", s, re.I):
+        return [f"- `{s}`", ""]
+    if re.match(r"^[10] — ", s):
+        return [f"- {s}", ""]
+    if ";" in s and s.count("—") >= 2 and len(s) > 140:
+        parts = [p.strip(" ;") for p in s.split(";") if p.strip()]
+        if len(parts) >= 3:
+            return [f"- {p}" for p in parts] + [""]
+    m_def = re.match(r"^([^—\n]{2,90}) — (.+)$", s)
+    if m_def:
+        term = m_def.group(1).strip()
+        rest = m_def.group(2).strip()
+        if (
+            len(term.split()) <= 10
+            and "$" not in term
+            and not term.startswith(("Если", "Чтобы", "Когда", "После", "-", "•"))
+        ):
+            s = f"**{term}** — {rest}"
+    return [s, ""]
+
+
+def markdown_table(header: list[str], rows: list[list[str]]) -> str:
+    body = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in header) + " |"]
+    for row in rows:
+        padded = row + [""] * (len(header) - len(row))
+        body.append("| " + " | ".join(padded[: len(header)]) + " |")
+    return "\n".join(body)
+
+
+def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
     lines = raw.replace("\r\n", "\n").split("\n")
     out: list[str] = [f"# {title}", ""]
     buf: list[str] = []
     mode = "prose"
     seen_headings: set[str] = set()
-    figures = iter(
-        [
+    default_figs = [
             ("svm-hyperplane.png", "Разделяющая гиперплоскость SVM"),
             ("svm-margin.png", "Отступ и опорные векторы"),
             ("svm-nonlinear.png", "Нелинейная граница SVM"),
@@ -219,7 +419,7 @@ def to_markdown(raw: str, title: str) -> str:
             None,
             None,
         ]
-    )
+    figures = iter(figure_specs if figure_specs is not None else default_figs)
 
     def flush() -> None:
         nonlocal buf, mode
@@ -232,15 +432,43 @@ def to_markdown(raw: str, title: str) -> str:
                 out.append(convert_formulas(code))
                 out.append("")
             else:
-                out.append("```python")
-                out.append(convert_formulas(code))
+                lang = "text" if any(ln.strip().startswith("|---") for ln in buf) else "python"
+                out.append(f"```{lang}")
+                out.append(space_code(convert_formulas(code)) if lang == "python" else code)
                 out.append("```")
                 out.append("")
         else:
-            block = "\n".join(buf).strip()
+            block = prose_math(convert_formulas("\n".join(buf).strip()))
             if block:
-                out.append(convert_formulas(block))
-                out.append("")
+                lines = [ln for ln in block.split("\n")]
+                i_l = 0
+                while i_l < len(lines):
+                    line = lines[i_l]
+                    nxts = []
+                    if line.rstrip().endswith(":") and i_l + 1 < len(lines):
+                        j = i_l + 1
+                        while j < len(lines):
+                            cand = lines[j].strip()
+                            if not cand:
+                                j += 1
+                                continue
+                            question = cand.endswith("?") or cand.startswith(("Как ", "Все ", "Что ", "Если "))
+                            short = len(cand) < 180
+                            if question or (short and cand[0].isupper() and j == i_l + 1):
+                                nxts.append(cand)
+                                j += 1
+                                if question or len(nxts) < 3:
+                                    continue
+                            break
+                        if len(nxts) >= 2:
+                            out.extend(emit_prose_line(line))
+                            for item in nxts:
+                                out.append(f"- {item}")
+                                out.append("")
+                            i_l = j
+                            continue
+                    out.extend(emit_prose_line(line))
+                    i_l += 1
         buf = []
 
     i = 0
@@ -257,7 +485,59 @@ def to_markdown(raw: str, title: str) -> str:
                 name, caption = spec
                 out.append(f"![{caption}](figures/{name})")
                 out.append("")
+            else:
+                out.append(stripped)
+                out.append("")
             i += 1
+            continue
+        prefix_heads = {
+            "A/B-тестирование, или сплит-тестирование": "A/B-тестирование",
+            "Главная задача бизнеса": "Метрики бизнеса",
+            "Одна из самых важных метрик — это конверсия": "Конверсия и воронка",
+            "Целевая метрика качества модели": "Онлайн- и офлайн-метрики",
+            "У A/B-теста есть проблема подглядывания": "Проблема подглядывания",
+            "А/В-тест мы провели": "Гипотезы A/B-теста",
+            "Пайплайн — это средство автоматизации": "Пайплайны",
+        }
+        for prefix, heading in prefix_heads.items():
+            if stripped.startswith(prefix):
+                flush()
+                if heading not in seen_headings:
+                    seen_headings.add(heading)
+                    out.append(f"## {heading}")
+                    out.append("")
+                break
+        if stripped in STATS_HEADINGS:
+            flush()
+            if stripped not in seen_headings:
+                seen_headings.add(stripped)
+                out.append(f"## {stripped}")
+                out.append("")
+            i += 1
+            continue
+        if stripped == "Библиотека Инструменты Описание":
+            flush()
+            rows = []
+            i += 1
+            while i < len(lines):
+                row = TABLE_ROW.match(lines[i].strip())
+                if not row:
+                    break
+                rows.append([row.group(1), row.group(2), row.group(3)])
+                i += 1
+            if rows:
+                out.append(markdown_table(["Библиотека", "Инструменты", "Описание"], rows))
+                out.append("")
+            continue
+        if "\t" in stripped and i + 1 < len(lines) and "\t" in lines[i + 1]:
+            flush()
+            table_lines = []
+            while i < len(lines) and "\t" in lines[i]:
+                table_lines.append([c.strip() for c in lines[i].split("\t")])
+                i += 1
+            header, *rest = table_lines
+            out.append(markdown_table(header, rest))
+            out.append("")
             continue
         if stripped in HEADING_REWRITE:
             key = stripped
@@ -272,6 +552,8 @@ def to_markdown(raw: str, title: str) -> str:
             i += 1
             continue
         code = is_code_line(line, mode == "code")
+        if mode == "code" and buf and buf[-1].rstrip().endswith((",", "[", "(", "\\")):
+            code = True
         if stripped == "":
             if mode == "code" and buf:
                 nxt = ""
@@ -300,6 +582,9 @@ def to_markdown(raw: str, title: str) -> str:
                 buf.extend(f"- {p}" for p in parts)
                 i += 1
                 continue
+        if re.fullmatch(r"random_state", stripped, re.I):
+            i += 1
+            continue
         buf.append(text_line)
         i += 1
     flush()
@@ -310,19 +595,44 @@ def to_markdown(raw: str, title: str) -> str:
         "## Сравнение L1 и L2\n": "## Сравнение L1 и L2\n\n![Геометрия L1 и L2](figures/l1-l2.png)\n",
         r"d(a,b)=\sum_{i=1}^{n}|a_i-b_i|" + "\n$$": r"d(a,b)=\sum_{i=1}^{n}|a_i-b_i|"
         + "\n$$\n\n![Евклидово и манхэттенское расстояние](figures/manhattan.png)",
+        "## Диаграмма Эйлера-Венна\n": "## Диаграмма Эйлера-Венна\n\n![Диаграмма Эйлера-Венна](figures/stats-venn.png)\n",
+        "## Нормальное распределение\n": "## Нормальное распределение\n\n![Нормальное распределение](figures/stats-normal.png)\n",
+        "## Правило трёх сигм\n": "## Правило трёх сигм\n\n![Правило трёх сигм](figures/stats-sigma.png)\n",
+        "## Биномиальное распределение\n": "## Биномиальное распределение\n\n![Биномиальное распределение](figures/stats-binomial.png)\n",
+        "## A/B-тестирование\n": "## A/B-тестирование\n\n![A/B-тест: контроль и тест](figures/biz-ab.png)\n",
+        "## Конверсия и воронка\n": "## Конверсия и воронка\n\n![Воронка конверсии](figures/biz-funnel.png)\n",
+        "Для них можно построить гистограмму.\n": "Для них можно построить гистограмму.\n\n![Гистограмма непрерывной величины](figures/stats-hist.png)\n",
     }
     for src, dst in inserts.items():
         text = text.replace(src, dst)
     text = re.sub(r"```python\n(\$\$[\s\S]*?\$\$)\n```", r"\1", text)
-    text = re.sub(r"\$\$,\s*", "$$\n\n", text)
-    text = re.sub(r"([^\n])\n\$\$", r"\1\n\n$$", text)
-    text = re.sub(r"\$\$\n(?!\$)(\S)", r"$$\n\n\1", text)
-    text = text.replace("$$\n$$", "$$\n\n$$")
+    text = re.sub(r"```python\n(\$\$[\s\S]*?\$\$)\n+", r"\1\n\n```python\n", text)
+    text = map_outside_code(text, isolate_display_math)
+    text = map_outside_code(
+        text,
+        lambda part: re.sub(r"(?<!\$)\bw_i\b(?!\$)", r"$w_i$", part),
+    )
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.rstrip() + "\n"
 
 
-def cards_from_notes(md: str, topic_id: str) -> dict:
+def map_outside_code(text: str, fn) -> str:
+    parts = re.split(r"(```[\s\S]*?```)", text)
+    return "".join(part if part.startswith("```") else fn(part) for part in parts)
+
+
+def isolate_display_math(part: str) -> str:
+    part = re.sub(r"\$\$,\s*", "$$\n\n", part)
+    part = re.sub(r"([^\n$])[ \t]*\$\$[ \t]*(?=\n|$)", r"\1\n\n$$", part)
+    part = re.sub(r"\$\$[ \t]+(?=\S)", "$$\n\n", part)
+    part = re.sub(r"([^\n])\n\$\$", r"\1\n\n$$", part)
+    part = re.sub(r"\$\$\n(?!\$)(\S)", r"$$\n\n\1", part)
+    part = part.replace("$$\n$$", "$$\n\n$$")
+    part = re.sub(r"\$\$\s*\.\s*", "$$\n\n", part)
+    return part
+
+
+def cards_from_notes(md: str, topic_id: str, track_id: str = "data-science") -> dict:
     parts = re.split(r"\n## ", md)
     items = []
     n_t = n_p = 0
@@ -333,10 +643,10 @@ def cards_from_notes(md: str, topic_id: str) -> dict:
         kind = "practice" if body.count("```") >= 2 else "theory"
         if kind == "theory":
             n_t += 1
-            iid = f"ds-{topic_id}-t-{n_t:02d}"
+            iid = f"{track_id}-{topic_id}-t-{n_t:02d}"
         else:
             n_p += 1
-            iid = f"ds-{topic_id}-p-{n_p:02d}"
+            iid = f"{track_id}-{topic_id}-p-{n_p:02d}"
         items.append(
             {
                 "id": iid,
@@ -346,19 +656,55 @@ def cards_from_notes(md: str, topic_id: str) -> dict:
                 "body": f"## {title}\n\n{body}",
             }
         )
-    return {"topicId": topic_id, "trackId": "data-science", "items": items}
+    if not items:
+        items.append(
+            {
+                "id": f"{track_id}-{topic_id}-t-01",
+                "kind": "theory",
+                "title": topic_id,
+                "tags": [topic_id],
+                "body": md,
+            }
+        )
+    return {"topicId": topic_id, "trackId": track_id, "items": items}
+
+
+def convert_topic(src: Path, dest: Path, title: str, topic_id: str, track_id: str, figure_specs: list | None) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    raw = src.read_text(encoding="utf-8")
+    notes = to_markdown(raw, title, figure_specs)
+    (dest / "notes.md").write_text(notes)
+    items = cards_from_notes(notes, topic_id, track_id)
+    (dest / "items.json").write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n")
+    print(dest.name, "notes", notes.count("\n"), "items", len(items["items"]))
 
 
 def main() -> None:
-    src = Path("/Users/luvgreyair/learn-tracks/content/data-science/supervised-quality/source/supervised-quality.txt")
-    dest = src.parents[1]
-    raw = src.read_text(encoding="utf-8")
-    title = "Обучение с учителем: качество модели"
-    notes = to_markdown(raw, title)
-    (dest / "notes.md").write_text(notes)
-    items = cards_from_notes(notes, "sq")
-    (dest / "items.json").write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n")
-    print("notes lines", notes.count("\n"), "items", len(items["items"]))
+    root = Path("/Users/luvgreyair/learn-tracks/content")
+    convert_topic(
+        root / "data-science/supervised-quality/source/supervised-quality.txt",
+        root / "data-science/supervised-quality",
+        "Обучение с учителем: качество модели",
+        "sq",
+        "data-science",
+        None,
+    )
+    convert_topic(
+        root / "ml-business/overview/source/ml-business.txt",
+        root / "ml-business/overview",
+        "Машинное обучение в бизнесе",
+        "biz",
+        "ml-business",
+        [],
+    )
+    convert_topic(
+        root / "statistics/overview/source/statistical-analysis.txt",
+        root / "statistics/overview",
+        "Статистический анализ данных",
+        "st",
+        "statistics",
+        [],
+    )
 
 
 if __name__ == "__main__":
