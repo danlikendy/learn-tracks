@@ -9,6 +9,7 @@ dist/
 .python-version
 __pycache__/
 *.pyc
+.venv/
 .idea/
 .vscode/
 *.local

@@ -21,45 +21,80 @@
 Если есть выбросы — лучше SVM, метод опорных векторов как раз обладает свойством робастности, то есть устойчив к выбросам
 
 Главная цель SVM как классификатора — найти коэффициенты линейного уравнения разделяющей гиперплоскости:
-$$w_0 + w_1 x_1 + w_2 x_2 + \ldots + w_n x_n = 0$$
+
+$$
+
+w_0 + w_1 x_1 + w_2 x_2 + \ldots + w_n x_n = 0
+
+$$
+
 Эта гиперплоскость должна разделить два класса наиболее оптимальным образом.
 Скажем сразу: SVM — тоже линейная модель. Но это не значит, что она не работает, если зависимость в данных нелинейная.
 В общем виде функция зависимости целевого признака от входных выглядит так:
-$$y(x) = \mathrm{sign}(w^{T}x + w_0)$$, где sign - функция знака: отрицательный или положительный, x - матрица входных признаков, w - коэффициенты модели
 
-см изображение
+$$
+
+y(x) = \mathrm{sign}(w^{T}x + w_0)
+
+$$
+
+где sign - функция знака: отрицательный или положительный, x - матрица входных признаков, w - коэффициенты модели
+
+![Разделяющая гиперплоскость SVM](figures/svm-hyperplane.png)
 
 Итак, для решения задачи нужно, чтобы выполнялись два условия:
 1. Прямая (или гиперплоскость) должна разделять классы как можно лучше, то есть расстояния от прямой до классов должны быть максимальными.
 2. Модель должна ошибаться как можно реже или не ошибаться вовсе (в лучшем случае).
 
-## 1. УСЛОВИЕ
+## Условие 1. Максимальный зазор
 
 Расстояние от точки до прямой — это длина перпендикуляра, опущенного из этой точки на прямую.
 
-```python
-$$d = \frac{|A x_0 + B y_0 + C|}{\sqrt{A^2+B^2}} = \frac{|w_1 x_1 + w_2 x_2 + w_0|}{\sqrt{w_1^2+w_2^2}} = \frac{|f(w,x)+w_0|}{\|w\|}$$
+$$
+
+d = \frac{|A x_0 + B y_0 + C|}{\sqrt{A^2+B^2}} = \frac{|w_1 x_1 + w_2 x_2 + w_0|}{\sqrt{w_1^2+w_2^2}} = \frac{|f(w,x)+w_0|}{\|w\|}
+
+$$
 
 «Отнормируем» параметры так, что:
-```
 
-$$\max |f(w,x)+w_0| = 1$$
+$$
 
-$$\frac{2}{\|w\|} \to \max$$
-$$w \to \min$$
-$$\|w\|^2 \to \min$$
+\max |f(w,x)+w_0| = 1
 
-## 2. УСЛОВИЕ
+$$
 
-Отступом (англ. margin) объекта x_i от границы классов называется величина M, такая, что:
+$$
 
-```python
-$$M = y (w^{T} x + w_0)$$
-```
+\frac{2}{\|w\|} \to \max
 
-см изображение
+$$
 
-Отступ показывает, насколько «уверенно» модель классифицировала объект (x_i;y_i): чем дальше объект от разделяющей границы, тем выше отступ и тем увереннее модель
+$$
+
+w \to \min
+
+$$
+
+$$
+
+\|w\|^2 \to \min
+
+$$
+
+## Условие 2. Отступ (margin)
+
+Отступом (англ. margin) объекта $x_i$ от границы классов называется величина M, такая, что:
+
+$$
+
+M = y (w^{T} x + w_0)
+
+$$
+
+![Отступ и опорные векторы](figures/svm-margin.png)
+
+Отступ показывает, насколько «уверенно» модель классифицировала объект ($x_i$, $y_i$): чем дальше объект от разделяющей границы, тем выше отступ и тем увереннее модель
 
 Выделим важное:
 1. Если отступ M отрицательный, значит, предсказанное значение y и настоящее не совпадают. То есть наблюдение попало не в свой класс.
@@ -67,18 +102,45 @@ $$M = y (w^{T} x + w_0)$$
 
 Соберём неравенство, которое нам понадобится для правильной классификации:
 
-$$y(w^{T} x + w_0) \ge 1$$
+$$
+
+y(w^{T} x + w_0) \ge 1
+
+$$
 
 Получается система из 1 и 2 условий:
 
-$$\|w\|^2 \to \min$$
-$$y(w^{T} x + w_0) \ge 1$$
+$$
+
+\|w\|^2 \to \min
+
+$$
+
+$$
+
+y(w^{T} x + w_0) \ge 1
+
+$$
 
 Позволим модели допускать ошибки, но сделаем так, чтобы их было как можно меньше, иначе модель будет переобучена
 
-$$\|w\|^2 + c E_i \to \min$$
-$$y(w^{T} x + w_0) \ge 1 - E_i$$
-$$E_i > 0$$
+$$
+
+\|w\|^2 + c E_i \to \min
+
+$$
+
+$$
+
+y(w^{T} x + w_0) \ge 1 - E_i
+
+$$
+
+$$
+
+E_i > 0
+
+$$
 
 Такой зазор называют «мягким» (англ. soft margin). Он зависит от количества объектов-нарушителей: чем больше нарушителей мы допускаем, тем шире зазор, но больше ошибок при обучении. Широкий зазор строят в случае, когда данные сложно разделить линейно. Он помогает модели быть менее чувствительной к выбросам
 
@@ -97,29 +159,17 @@ data = pd.read_csv('orders_seafood.csv')
 X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 # объявляем классификатор и обучаем модель
 clf = SVC()
-```
-
 clf.fit(X_train_scaled, y_train)
-
-```python
 y_pred = clf.predict(X_test_scaled)
 # создаём таблицы для подсчёта средств, которые удалось сэкономить
 predicts = X_test[['summ_']].copy()
-```
-
 predicts['SVM'] = y_pred
 predicts['y_test'] = y_test
-
-```python
 TP = predicts[(predicts['SVM']==1)&(predicts['y_test']==1)]['summ_'].sum()*0.7*0.8
 FP = predicts[(predicts['SVM']==1)&(predicts['y_test']==0)]['summ_'].sum()*0.2
 money = TP-FP
@@ -141,19 +191,14 @@ for i in range(len(all_variants)):
     model = SVC()
     X_new_train = X_train[[all_variants[i][0], all_variants[i][1]]]
     X_new_scaled = scaler.fit_transform(X_new_train)
-```
-
-model.fit(X_new_scaled, y_train)
-
-```python
+    model.fit(X_new_scaled, y_train)
     a = plot_decision_regions(X_new_scaled, y_train.to_numpy(), clf=model, legend=2)
-```
-
-plt.xlabel(all_variants[i][0])
+    plt.xlabel(all_variants[i][0])
     plt.ylabel(all_variants[i][1])
     plt.show()
+```
 
-см изображение
+![Нелинейная граница SVM](figures/svm-nonlinear.png)
 
 Интересное дело: модель линейная, а границы — совсем не линейные. Чтобы разобраться в произошедшем, узнаем больше о классификаторе и выясним причину
 
@@ -161,17 +206,17 @@ plt.xlabel(all_variants[i][0])
 
 В нашем случае данные нельзя разделить линейно. Поэтому если модель может подобрать нелинейную разделяющую границу, то она лучше справится с предсказанием
 
-см изображение
+![Два класса в исходном пространстве](figures/kernel-2d.png)
 
 Посмотрите на эти два класса. Пока сложно даже представить, что их можно разделить линейной плоскостью
 
 Чтобы провести границу в виде линейной плоскости, нужно перейти в пространство большей размерности, например в трёхмерное. Сделаем это и добавим новую переменную. Она «искривит» расположение наблюдений
 
-см изображение
+![Переход в пространство большей размерности](figures/kernel-3d.png)
 
-## Теперь провести линейную границу довольно просто
+Теперь провести линейную границу довольно просто
 
-см изображение
+![Линейная граница в новом пространстве](figures/kernel-3d-plane.png)
 
 Похожим образом работает настройка kernel (англ. «ядро»). Это ядро SVM: оно позволяет перейти в пространство большей размерности и построить разделяющую границу
 
@@ -196,27 +241,18 @@ data = pd.read_csv('orders_seafood.csv')
 X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 # объявляем классификатор и обучаем модель
 clf_sigm = SVC(kernel = 'sigmoid')
-```
-
 clf_sigm.fit(X_train_scaled, y_train)
-
-```python
 y_pred_sigm = clf_sigm.predict(X_test_scaled)
 r = accuracy_score(y_test, y_pred_sigm)
 print(r)
 ```
 
-## Логистическая регрессия Метод опорных векторов
-
+Логистическая регрессия Метод опорных векторов
 Максимизирует вероятность отношения каждого объекта выборки к своему классу. Может допускать ошибки, если в данных есть выбросы. Максимизирует «зазор» разделяющей границы между классами. Меньше подвержен влиянию выбросов, так как в качестве разделяющих векторов использует крайние к гиперплоскости наблюдения.
 Модель решает только задачи классификации. Модель используется для задач и классификации, и регрессии.
 Основана на статистическом подходе: логарифм отношения шансов, вероятностный подход. Основан на геометрическом подходе: расстояния до гиперплоскости.
@@ -238,14 +274,16 @@ print(r)
 
 ## Переобучение и недообучение
 
+![Недообучение и переобучение](figures/overfit.png)
+
 Любые полиномиальные функции, в том числе и полученные с использованием ядра полинома, очень чувствительны к изменениям во входных признаках. Даже небольшие отклонения от привычных значений искажают результаты классификации. Чем выше степень, тем больше риск ошибок
 
 Сравните два близких друг к другу числа: 0.99 и 1.01. Если возвести их в небольшую степень, то разница не сильно возрастёт:
-0.99^3 = 0.97
-1.01^3 = 1.03
+$0.99^{3} = 0.97$
+$1.01^{3} = 1.03$
 Если взять степень 10, то разница станет уже заметна, и чем выше степень, тем дальше друг от друга числа:
-0.99^10 = 0.9
-1.01^10 = 1.1
+$0.99^{10} = 0.9$
+$1.01^{10} = 1.1$
 Так работают и степени полиномиальных ядер: чем они выше, тем вероятнее, что новые данные не впишутся в паттерн классификации модели. Будьте аккуратны, если не хотите сюрпризов во время теста!
 
 SVM со сложными ядрами склонна к переобучению, ведь она должна находить нелинейные закономерности. Из-за этого такие модели часто подстраиваются под выбросы и переобучаются.
@@ -266,27 +304,15 @@ X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 columns = ['confirm_count','summ_']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 scaler = StandardScaler()
 X_new_train = X_train[columns]
 X_new_scaled = scaler.fit_transform(X_new_train)
 model = SVC(kernel='poly', degree=6)
-```
-
 model.fit(X_new_scaled, y_train)
-
-```python
 # постройте разделяющую границу между классами
 sns.set_style(style='white')
-```
-
 plot_decision_regions(X_new_scaled, y_train.to_numpy(), clf=model, legend=2)
-
-```python
 plt.xlabel(columns[1])
 plt.ylabel(columns[0])
 plt.show();
@@ -302,23 +328,16 @@ plt.show();
 ```python
 for i in range(5):
     clf_poly = SVC(kernel = 'poly', degree = i+1)
-```
-
-clf_poly.fit(X_train_scaled, y_train)
-
-```python
+    clf_poly.fit(X_train_scaled, y_train)
     y_pred_poly = clf_poly.predict(X_test_scaled)
     r = accuracy_score(y_test, y_pred_poly)
-```
-
-print(i+1, r)
+    print(i+1, r)
 1 0.6914893617021277
 2 0.7393617021276596
 3 0.7127659574468085
 4 0.7180851063829787
 5 0.723404255319149
 
-```python
 import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
@@ -329,11 +348,7 @@ data = pd.read_csv('orders_seafood.csv')
 X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE )
-
-```python
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -342,16 +357,11 @@ X_test_scaled = scaler.transform(X_test)
 # выведите accuracy для каждой итерации модели
 for i in range(5):
     clf_poly = SVC(kernel = 'poly', degree = i+1)
-```
-
-clf_poly.fit(X_train_scaled, y_train)
-
-```python
+    clf_poly.fit(X_train_scaled, y_train)
     y_pred_poly = clf_poly.predict(X_test_scaled)
     r = accuracy_score(y_test, y_pred_poly)
+    print(i+1, r)
 ```
-
-print(i+1, r)
 
 ## Недообучение
 
@@ -379,20 +389,34 @@ print(i+1, r)
 ## L2-регуляризация
 
 При решении задачи линейной регрессией вы изучали метод наименьших квадратов и минимизацию ошибок модели MSE:
-$$\sum_{i=1}^{n}(y_{\mathrm{true},i}-y_{\mathrm{pred},i})^2 \to \min$$
 
-```python
+$$
+
+\sum_{i=1}^{n}(y_{\mathrm{true}, i}-y_{\mathrm{pred}, i})^2 \to \min
+
+$$
+
 y_pred_i можно заменить на произведение вектора с весами модели и матрицы признаков — получится как раз предсказанное значение целевого признака. Кроме того, разность величин возводится в квадрат, так что вычитаемое и уменьшаемое можно поменять местами
-```
 
-$$(f(w,x_i)-y)^2 \to \min$$
+$$
+
+(f(w,x_i)-y)^2 \to \min
+
+$$
+
 Добавим к этой формуле коэффициент λ (лямбда), который будет регулировать веса и устранять чрезмерное влияние признаков
-(f(w,x_i)-y)^2+λ$$\|w\|^2 \to \min$$
+
+$$
+
+(f(w,x_i)-y)^2 + \lambda \|w\|^2 \to \min
+
+$$
+
 Получилась формула линейной регрессии с ограничением максимального веса каждого признака. Такой способ предотвратить переобучение называется L2-регуляризацией
 
 Здесь использован уже известный вам метод — минимизация непрерывной выпуклой функции. Больший штраф начисляется благодаря свойству полиномов: при возведении в степень даже незначительная разница между признаками сильно увеличивается. Так, разница между близкими к друг другу значениями возрастает, если возвести их в квадрат:
-5.5^2 = 30.25
-6.5^2 = 42.25
+$5.5^{2} = 30.25$
+$6.5^{2} = 42.25$
 Если числа изначально большие, то после возведения в степени они могут различаться в десятки раз.
 L2-регуляризация, или ридж-регуляризация, накладывает на модель штраф за сумму квадратов коэффициентов. Чем выше λ, тем больше второе слагаемое в формуле. Из-за этого сумма весов f(w,x_i) должна стать ещё меньше, поскольку вся функция стремится к минимуму. Так модель не слишком подстраивается под отдельные признаки и меньше реагирует на их изменение.
 
@@ -400,10 +424,18 @@ L2-регуляризация, или ридж-регуляризация, на�
 
 Упростить модель можно иначе: не просто ограничить максимальный вес отдельных признаков, а совсем удалить неинформативные. Когда признаковое описание слишком большое и трудно оценить долю влияния каждого признака, используйте L1-регуляризацию, также известную как лассо-регуляризация
 Она накладывает штраф на основе абсолютных значений коэффициентов модели, не возведённых в квадрат
-$$(f(w,x_i)-y)^2 + \lambda \|w\| \to \min$$
+
+$$
+
+(f(w,x_i)-y)^2 + \lambda \|w\| \to \min
+
+$$
+
 В отличие от ридж-регуляризации, L1 может и вовсе обнулить коэффициенты неинформативных признаков и избавить модель от ненужного балласта.
 
-## L1-регуляризация L2-регуляризация
+## Сравнение L1 и L2
+
+![Геометрия L1 и L2](figures/l1-l2.png)
 
 Штраф основан на абсолютных значениях коэффициентов модели. Штраф основан на квадратах коэффициентов модели.
 Сокращает веса признаков до нуля. Все признаки остаются в модели, но у некоторых уменьшаются коэффициенты.
@@ -417,12 +449,18 @@ L1-регуляризация может обнулить веса, чтобы �
 Оба метода нужно проверять на конкретных данных, во время работы с валидационной выборкой.
 
 Все ошибки алгоритма модели описывает формула:
-$$\mathrm{Error}(a)=\mathrm{bias}^2(a)+\mathrm{variance}(a)+\xi$$
+
+$$
+
+\mathrm{Error}(a)=\mathrm{bias}^2(a)+\mathrm{variance}(a)+\xi
+
+$$
+
 bias^2(a): смещение модели — погрешность предсказания из-за ошибочных предположений модели. Причина: алгоритм пропустил связь между признаками и недообучил модель.
 variance(a): разброс модели — ошибка из-за чувствительности модели к небольшим отклонениям от привычной структуры данных в валидационной или тренировочной выборках. Происходит из-за того, что модель излишне подстраивается под привычные ей данные.
 ξ — шумы, нормально распределённая случайная величина.
 
-см изображение
+![Смещение и разброс](figures/bias-variance-curves.png)
 
 Ваша задача во время обучения модели — минимизировать ошибку так, чтобы значения метрик на тренировочных и валидационных данных практически не различались. Такое соотношение будет достигнуто у точки равновесия графиков смещения и разброса модели. Оба значения должны быть настолько низки, что нельзя ещё сильнее понизить одно без повышения другого
 
@@ -431,7 +469,7 @@ variance(a): разброс модели — ошибка из-за чувств
 Разница между качеством на валидационной и тренировочной выборках равна 16%−15%=1% — это разброс модели.
 Самая известная иллюстрация смещения и разброса модели — это матрица с мишенями:
 
-см изображение
+![Мишени: смещение и разброс](figures/bias-variance-targets.png)
 
 Что можно сделать с высокими значениями ошибок? Если у модели большое смещение, попробуйте увеличить её сложность: добавьте признаки или ищите нелинейные зависимости. Если же вы столкнулись с высоким разбросом, добавьте примеров в тренировочную выборку. Однако эти меры универсальны: сложность модели помогает уменьшить разброс, а новые данные — смещение. Пробуйте разные методы и смотрите, что помогает в вашей ситуации
 
@@ -439,14 +477,10 @@ variance(a): разброс модели — ошибка из-за чувств
 
 Логистическая регрессия — это один из видов линейного уравнения. Чтобы применить к ней L1- и L2-регуляризации, нужно добавить в формулу штрафы за слишком высокие коэффициенты.
 Для этого вы должны во время инициализации модели LogisticRegression() указать в настройке penalty, какой способ регуляризации вам подходит:
-
-```python
 penalty = 'l1' — выбрать лассо-регуляризацию.
 penalty = 'l2' — выбрать ридж-регуляризацию, это значение по умолчанию. Всё это время вы регуляризовывали логистическую регрессию — вот это поворот!
 penalty = 'elasticnet' — комбинировать обе регуляризации по формуле: (f(w,x_i)-y)^2+l1_ratioλ||w||+(1-l1_ratio)λ||w||^2→min. Модель с такой регуляризацией сможет одновременно сильнее занижать коэффициенты и обнулять их при необходимости.
 penalty='none' — не использовать регуляризацию.
-```
-
 Если вы выберете опцию 'l1' или 'elasticnet', то должны поменять ещё одну настройку — solver='saga'. Она меняет поиск решения в модели: из-за L1-регуляризации алгоритмы логистической регрессии не могут вычислять производные, поэтому поиск решения происходит несколько сложнее.
 Опция elasticnet подтягивает за собой дополнительную настройку l1_ratio. Её значение изменяется от нуля до единицы:
 1 — использовать только l1.
@@ -456,7 +490,7 @@ penalty='none' — не использовать регуляризацию.
 В sklearn нужно уменьшить C, чтобы усилить регуляризацию, потому что С обратно пропорциональна λ — коэффициенту, определяющему силу регуляризации:
 
 ```python
-$$C = \frac{1}{\lambda}$$
+$C = \frac{1}{\lambda}$
 
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -468,11 +502,7 @@ data = pd.read_csv('orders_seafood.csv')
 X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -492,21 +522,13 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-```
-
 random_state
-
-```python
 RANDOM_STATE = 77
 data_test = pd.read_csv('orders_seafood_test.csv')
 X = data_test.drop(columns=['target', 'client_id'])
 y = data_test['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -516,16 +538,11 @@ for kernel in kernels:
         svc = SVC(kernel = kernel)
     else:
         svc = SVC(kernel='poly', degree=2)
-```
-
-svc.fit(X_train_scaled, y_train)
-
-```python
+    svc.fit(X_train_scaled, y_train)
     y_pred = svc.predict(X_test_scaled)
     acc = accuracy_score(y_test, y_pred)
+    print(kernel, acc)
 ```
-
-print(kernel, acc)
 
 Модель переобучилась, когда её разброс значительно больше смещения, и недообучилась, когда смещение больше разброса
 
@@ -535,12 +552,17 @@ print(kernel, acc)
 
 Решение метода опорных векторов — это система из трёх неравенств, необходимых для поиска границы между наблюдениями разных классов. Коэффициенты w_i используются в них повсеместно. К примеру, они задают уравнение гиперплоскости, определяют расстояние между опорными векторами и гиперплоскостью, а также составляют вектор w, который задаёт направление гиперплоскости. Поэтому их нельзя сократить или обнулить
 
-Напомним формулу, с помощью которой модель ищет максимальный зазор между гиперплоскостью и опорными векторами: $$\|w\|^2 + c E_i \to \min$$
+Напомним формулу, с помощью которой модель ищет максимальный зазор между гиперплоскостью и опорными векторами: $$
+
+\|w\|^2 + c E_i \to \min
+
+$$
+
 Параметр ξ_iотвечает за классификацию наблюдений-нарушителей. Рядом с ним находится коэффициент c, он регулирует допустимое количество таких нарушителей — и тем самым настраивает регуляризацию!
 Чем больше величина c, тем меньше ошибок вы позволяете модели и тем уже будет зазор.
-Как и в случае регрессий, коэффициент регуляризации нельзя настраивать напрямую. В методе SVC() библиотеки sklearn вы можете выбрать значение C («сила» модели), которое обратно пропорционально штрафу. Чем больше C, тем меньше штраф: $$C = \frac{1}{c}$$
+Как и в случае регрессий, коэффициент регуляризации нельзя настраивать напрямую. В методе SVC() библиотеки sklearn вы можете выбрать значение C («сила» модели), которое обратно пропорционально штрафу. Чем больше C, тем меньше штраф: $C = \frac{1}{c}$
 
-см изображение
+![Коэффициент C и ширина зазора](figures/svm-c.png)
 
 SVM c линейным ядром здесь точно не поможет. Стоит попробовать инструмент посильнее — например, 'rbf'.
 
@@ -556,21 +578,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-```
-
 random_state
-
-```python
 RANDOM_STATE = 77
 data = pd.read_csv('orders_seafood.csv')
 X = data.drop(columns=['target', 'client_id'])
 y = data['target']
 X_train, X_valid, y_train, y_valid = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_valid_scaled = scaler.transform(X_valid)
@@ -583,29 +597,25 @@ gamma_ = [0.1,1,10,100]
 for C in C_:
     for gamma in gamma_:
         clf_poly = SVC(kernel = 'poly', degree = 2, C = C, gamma = gamma)
-```
-
-clf_poly.fit(X_train_scaled, y_train)
-
-```python
+        clf_poly.fit(X_train_scaled, y_train)
         y_pred_valid = clf_poly.predict(X_valid_scaled)
         y_pred_test = clf_poly.predict(X_test_scaled)
         accuracy_train = accuracy_score(y_train, clf_poly.predict(X_train_scaled))
         accuracy_valid = accuracy_score(y_valid, y_pred_valid)
         accuracy_test = accuracy_score(y_test, y_pred_test)
+        print(C,gamma, round(accuracy_train,2), round(accuracy_valid,2), round(accuracy_test,2))
 ```
-
-print(C,gamma, round(accuracy_train,2), round(accuracy_valid,2), round(accuracy_test,2))
 
 Сравнив старый и новый датасет, можно узнать, что же поменялось. Для этого не нужно изучать все наблюдения — достаточно изучить описательные статистики
 
 ```python
 data_train = data.drop(columns=['client_id'])
+data_train.describe()
 ```
 
-data_train.describe()
-
 ## Модель kNN
+
+![kNN: класс по ближайшим соседям](figures/knn.png)
 
 У каждой из моделей есть то, чего нет у другой: решение логистической регрессии проще понять, а метод опорных векторов подойдёт для нелинейных данных. Но бывает и так: заказчик не просто предоставит данные с нелинейными зависимостями, но ещё и потребует доступно интерпретировать модель. Что делать?
 Тогда вам поможет метод k-ближайших соседей, или kNN (англ. k-nearest neighbors).
@@ -641,19 +651,11 @@ def prepare_data(fname):
     df = pd.read_csv(fname)
     X = df.drop(columns='music_genre')
     y = df.music_genre
-```
-
-X_train, X_test, y_train, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
-
-```python
         random_state=RANDOM_STATE
-```
-
-)
-
-```python
+    )
     cat_col_names = X_train.select_dtypes(exclude='number').columns.tolist()
     num_col_names = X_train.select_dtypes(include='number').columns.tolist()
     ohe = OneHotEncoder(sparse=False, drop='first')
@@ -666,11 +668,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_test = X_test.reset_index()
     X_train = pd.concat([X_train[num_col_names], X_train_ohe], axis=1)
     X_test = pd.concat([X_test[num_col_names], X_test_ohe], axis=1)
-```
-
-return X_train, X_test, y_train, y_test
-
-```python
+    return X_train, X_test, y_train, y_test
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 print(X_train.shape)
 ```
@@ -694,18 +692,10 @@ X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_
 results = []
 for k in range(1,1001, 100):
     model = KNeighborsClassifier(n_neighbors=k)
-```
-
-model.fit(X_train, y_train)
-
-```python
+    model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
-```
-
-results.append(acc)
-
-```python
+    results.append(acc)
 plt.plot(list(range(1,1001, 100)), results)
 plt.title('Зависимость Accuracy и k-ближайших соседей')
 plt.xlabel('k-ближайших соседей')
@@ -729,11 +719,7 @@ sample = X_test.sample(1, random_state=RANDOM_STATE)
 X_train['euclidean'] = X_train.apply(
     lambda row: euclidean(row.values, sample.iloc[0].values),
     axis=1
-```
-
 )
-
-```python
 result_df = pd.concat((X_train['euclidean'], y_train), axis=1)
 print(result_df.sort_values(by='euclidean')[['euclidean', 'music_genre']].head(10))
 ```
@@ -742,7 +728,14 @@ print(result_df.sort_values(by='euclidean')[['euclidean', 'music_genre']].head(1
 Расчёт манхэттенского расстояния можно сравнить с тем, какой путь проезжает такси по прямоугольным кварталам города. У вас будто бы нет возможности срезать, поэтому вы передвигаетесь по основным магистралям города, перпендикулярным друг другу.
 
 Манхэттенское расстояние между векторами a и b в многомерном пространстве признаков вычисляют по формуле:
-d(a,b)=sum^n_(i=1)(|a_i-b_i|)
+
+$$
+
+d(a,b)=\sum_{i=1}^{n}|a_i-b_i|
+
+$$
+
+![Евклидово и манхэттенское расстояние](figures/manhattan.png)
 
 В Python для этого есть готовая реализация из библиотеки scipy. Вот как её импортировать:
 
@@ -754,11 +747,8 @@ from scipy.spatial.distance import cityblock
 
 ```python
 def manhattan(a, b):
-```
+    return (np.abs(a - b)).sum()
 
-return (np.abs(a - b)).sum()
-
-```python
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -770,11 +760,7 @@ sample = X_test.sample(1, random_state=RANDOM_STATE)
 X_train['manhattan'] = X_train.apply(
     lambda x: cityblock(x.values, sample.values[0]),
     axis=1
-```
-
 )
-
-```python
 result_df = pd.concat((X_train['manhattan'], y_train), axis=1)
 print(result_df.sort_values(by='manhattan')[['manhattan', 'music_genre']].head(10))
 ```
@@ -811,19 +797,11 @@ def prepare_data(fname):
     df = pd.read_csv(fname)
     X = df.drop(columns='music_genre')
     y = df.music_genre
-```
-
-X_train, X_test, y_train, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
-
-```python
         random_state=RANDOM_STATE
-```
-
-)
-
-```python
+    )
     cat_col_names = X_train.select_dtypes(exclude='number').columns.tolist()
     num_col_names = X_train.select_dtypes(include='number').columns.tolist()
     ohe = OneHotEncoder(sparse=False, drop='first')
@@ -833,23 +811,15 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_train_ohe = pd.DataFrame(X_train_ohe, columns=encoder_col_names)
     X_test_ohe = pd.DataFrame(X_test_ohe, columns=encoder_col_names)
     scaler = StandardScaler()
-```
-
-X_train[num_col_names] = scaler.fit_transform(X_train[num_col_names])
+    X_train[num_col_names] = scaler.fit_transform(X_train[num_col_names])
     X_test[num_col_names] = scaler.transform(X_test[num_col_names])
-
-```python
     X_train = X_train.reset_index(drop=True)
     X_test = X_test.reset_index(drop=True)
     y_train = y_train.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
     X_train = pd.concat((X_train[num_col_names], X_train_ohe), axis=1)
     X_test = pd.concat((X_test[num_col_names], X_test_ohe), axis=1)
-```
-
-return X_train, X_test, y_train, y_test
-
-```python
+    return X_train, X_test, y_train, y_test
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 sample = X_test.sample(1, random_state=RANDOM_STATE)
 euclidean_df = X_train.apply(lambda x: euclidean(x.values, sample.values[0]), axis=1).rename('euclidean')
@@ -872,19 +842,11 @@ from sklearn.neighbors import KNeighborsClassifier
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 model = KNeighborsClassifier(n_neighbors=300, metric='euclidean')
-```
-
 model.fit(X_train, y_train)
-
-```python
 preds = model.predict(X_test)
 euclidean_accuracy = accuracy_score(y_test, preds)
 model = KNeighborsClassifier(n_neighbors=300, metric='manhattan')
-```
-
 model.fit(X_train, y_train)
-
-```python
 preds = model.predict(X_test)
 cityblock_accuracy = accuracy_score(y_test, preds)
 print('Accuracy (euclidean distance) =', euclidean_accuracy)
@@ -914,12 +876,8 @@ from sklearn.metrics import f1_score
 ```
 
 Функция f1_score() принимает на вход два обязательных аргумента:
-
-```python
 y_true — истинные значения классов;
 y_pred — предсказанные моделью значения классов.
-```
-
 И один дополнительный:
 pos_label — метка положительного класса, по умолчанию равна 1. Если ваш целевой бинарный признак содержит категориальные значения, обязательно укажите в этом аргументе значение класса, который нужно считать положительным. Например, pos_label='Rock'.
 
@@ -940,12 +898,8 @@ from sklearn.metrics import fbeta_score
 ```
 
 У fbeta_score() три обязательных аргумента:
-
-```python
 y_true — истинные значения классов;
 y_pred — предсказанные моделью значения классов;
-```
-
 beta — распределение важности между precision и recall.
 И один дополнительный:
 pos_label — метка положительного класса, по умолчанию равна 1.
@@ -961,11 +915,7 @@ from sklearn.neighbors import KNeighborsClassifier
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 model = KNeighborsClassifier()
-```
-
 model.fit(X_train, y_train)
-
-```python
 preds = model.predict(X_test)
 print(f"F1 = {f1_score(y_test, preds, pos_label='Jazz'):.2f}")
 print(f"F1_beta = {fbeta_score(y_test, preds, beta=10, pos_label='Jazz'):.2f}")
@@ -1005,11 +955,7 @@ from sklearn.metrics import roc_curve
 ```
 
 Она принимает на вход два аргумента:
-
-```python
 y_true — реальные значения классов
-```
-
 preds[:,1] — вероятности старшего класса, предсказанные моделью.
 Функция создаст три списка — список выбранных функцией порогов вероятностей, для которых она рассчитала значения метрик, и списки метрик TPR и FPR для этих порогов. В качестве порогов roc_curve() выбирает все уникальные значения вероятностей принадлежности объектов к классу 1.
 
@@ -1024,18 +970,10 @@ from sklearn.neighbors import KNeighborsClassifier
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 model = KNeighborsClassifier()
-```
-
 model.fit(X_train, y_train)
-
-```python
 # получите предсказания вероятностей на тестовых данных
 preds = model.predict_proba(X_test)
-```
-
 fpr, tpr, threshold = roc_curve(y_test, preds[:,1], pos_label='Jazz')
-
-```python
 # постройте график зависимости FPR от TPR
 plt.plot(fpr, tpr)
 plt.title("График зависимости FPR от TPR")
@@ -1044,7 +982,7 @@ plt.ylabel('True Positive Rate (TPR)')
 plt.show()
 ```
 
-см изображение
+![ROC-кривая](figures/roc-curve.png)
 
 В хорошей модели порог вероятности устанавливают так, чтобы доля верных предсказаний класса 1, TPR, была как можно ближе к единице, при этом сохраняя долю неверно предсказанных объектов класса 0, FPR, на самом нижнем из возможных уровней
 
@@ -1069,11 +1007,7 @@ from sklearn.metrics import roc_auc_score
 ```
 
 Функция roc_auc_score() на вход принимает два аргумента:
-
-```python
 y_true — реальные значения классов;
-```
-
 preds[:,1] — вероятности старшего класса, предсказанные вашей моделью.
 ROC-AUC — это всеохватывающая метрика качества классификации. Она учитывает работу модели при всех возможных значениях порогов и поэтому не зависит от одного конкретного
 
@@ -1089,20 +1023,12 @@ RANDOM_STATE
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('music_genre_2_classes_balanced_v2_exp.csv')
 model = KNeighborsClassifier()
-```
-
 model.fit(X_train, y_train)
-
-```python
 preds = model.predict_proba(X_test)[:,1]
 roc_auc = roc_auc_score(y_test, preds)
 print('ROC-AUC = ', roc_auc.round(2))
-```
-
 from_estimator()
 RocCurveDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.plot([0,1], [0,1], linestyle='dashed', label='Random prediction')
 plt.title("График ROC-AUC")
 plt.legend()
@@ -1125,11 +1051,7 @@ from_estimator() — строит матрицу ошибок, использу�
 ```python
 from sklearn.metrics import ConfusionMatrixDisplay
 # получаем предсказания и строим матрицу ошибок
-```
-
 ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.show()
 
 import pandas as pd
@@ -1142,16 +1064,12 @@ from sklearn.neighbors import KNeighborsClassifier
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('music_genre_3_classes_balanced.csv')
 model = KNeighborsClassifier(n_neighbors=100)
-```
-
 model.fit(X_train, y_train)
 ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.show()
 ```
 
-см изображение
+![Матрица ошибок](figures/confusion-multi.png)
 
 Для примера подробно рассмотрим рок-музыку. Взгляните на столбец Rock: модель верно предсказала класс для 1005 объектов — для каждого из них предсказанная метка класса совпала с истинной. Это ответы типа True Positive. При этом модель отнесла к жанру также 338 наблюдений с истинным значением Electronic и 80 с истинным значением Classical. Все эти ошибки — False Positive.
 
@@ -1160,10 +1078,9 @@ plt.show()
 ```python
 from yellowbrick.classifier.rocauc import roc_auc
 model = KNeighborsClassifier(n_neighbors=100)
-```
-
 model.fit(X_train, y_train)
 roc_auc(model, X_test, y_test)
+```
 
 При выборе способа усреднения метрик руководствуйтесь правилами:
 Если в ваших данных примерно одинаковое количество объектов каждого класса, то макро- и микро-усреднение дадут одинаковый результат.
@@ -1178,26 +1095,22 @@ roc_auc(model, X_test, y_test)
 Посчитать сумму всех False Negative — это сумма всех значений в строке i кроме значения на диагонали.
 Посчитать сумму всех False Positive — это сумма всех значений в столбце j кроме значения на диагонали.
 
-см изображение
+![True Positive, False Positive по классу](figures/confusion.png)
 
 Существует два подхода для подсчёта метрик качества решений в задачах мультиклассовой классификации:
 1. Макро-усреднение. Это логичное продолжение предыдущего раздела. Зная метрики для каждого класса, вы можете получить их среднее арифметическое. Так вы получите итоговую метрику с помощью обобщения более частных метрик.
 2. Микро-усреднение. В этом случае вы подойдёте к получению итоговой метрики на более глубоком уровне. Сначала вы должны рассчитать средние значения TP, FP и FN, а уже из них выводить precision и recall. В этом случае вы будете оперировать более детальными данными о каждом классе.
 
-см изображение
-
 Аналогично можно рассчитать и F1-меру. Микро-подход подразумевает усреднение на этапе подсчёта количества разных ответов модели, а макро-подход — подсчёта средних значений precision и recall. Есть ещё третий вариант: рассчитать на основе precision и recall F1-меру для каждого класса и найти среднее от всех F1-мер
-
-см изображение
 
 Как вы знаете, в библиотеке sklearn есть функции для расчёта метрик:
 
 ```python
 precision_score(),
 recall_score(),
+f1_score().
 ```
 
-f1_score().
 По умолчанию метрики настроены для бинарной классификации. Если классов больше двух, то нужно поменять настройку average. Она регулирует метод усреднения метрики для многоклассовой классификации и принимает такие значения:
 binary — значение по умолчанию, для бинарной классификации.
 None — возвращает список значений метрики для каждого класса в отдельности. Из полученных значений можно вручную получить среднюю F1-меру и макро-усреднённые precision и recall.
@@ -1228,38 +1141,45 @@ y — истинные значения классов для тестовой �
 
 Данные называются несбалансированными, когда соотношение объектов разных классов в них далеко от 1:1.
 Вот как в Data Science называют классы при дисбалансе:
-• мажорный класс — класс, представленный значительно бóльшим числом наблюдений по сравнению с остальными;
-• минорный класс — класс или один из классов, представленный значительно меньшим числом наблюдений в сравнении с мажорным.
+- мажорный класс — класс, представленный значительно бóльшим числом наблюдений по сравнению с остальными;
+- минорный класс — класс или один из классов, представленный значительно меньшим числом наблюдений в сравнении с мажорным.
 
 Дисбаланс нужно выявлять на этапе исследовательского анализа датасета, чтобы корректно провести подготовку данных, обучение модели и оценку её качества. Для этого проанализируйте датасет уже известными средствами библиотеки pandas. Для начала — воспользуйтесь методом value_counts() на бинарном датасете.
+
+```python
 df.music_genre.value_counts()
+```
+
 К value_counts() можно применить настройку normalize=True и увидеть процентное соотношение классов:
+
+```python
 df.music_genre.value_counts(normalize=True)
+```
+
 Пропорцию объектов разного класса можно визуализировать. Для этого подойдёт метод plot(kind='bar')
+
+```python
 df.music_genre.value_counts(normalize=True).plot(kind='bar')
+```
 
 Чаще всего дисбаланс классов возникает по трём причинам:
-• Специфика задачи. Иногда дисбаланс классов неизбежен. Например, если вы предсказываете поломки новой модели смартфона, то сломанных образцов в выборке будет заметно меньше, чем исправных. Нельзя устранить такой дисбаланс, не нарушив закономерности данных. Его нужно учитывать во время подготовки данных и обучения модели.
-• Ошибка при разметке данных. Возможно, при создании датасета была поставлена некорректная задача. Решение — собрать данные заново, акцентировав внимание на пропорциональности объектов всех классов.
-• Дубликаты в данных. Очевидная проблема, которая тянется со сбора датасета. Её нужно устранить во время предобработки данных.
+- Специфика задачи. Иногда дисбаланс классов неизбежен. Например, если вы предсказываете поломки новой модели смартфона, то сломанных образцов в выборке будет заметно меньше, чем исправных. Нельзя устранить такой дисбаланс, не нарушив закономерности данных. Его нужно учитывать во время подготовки данных и обучения модели.
+- Ошибка при разметке данных. Возможно, при создании датасета была поставлена некорректная задача. Решение — собрать данные заново, акцентировав внимание на пропорциональности объектов всех классов.
+- Дубликаты в данных. Очевидная проблема, которая тянется со сбора датасета. Её нужно устранить во время предобработки данных.
 
 Модели, обученные на несбалансированных данных, склонны гораздо лучше предсказывать мажорный класс и игнорировать остальные. Чтобы узнать, не предвзята ли ваша модель, сравните её с такой, которая всегда присваивает объектам мажорный класс. Такая процедура называется проверкой модели на адекватность
 
 Для этого создан класс DummyClassifier библиотеки sklearn. Он предсказывает классы по стратегии, указанной в настройке strategy.
 Чтобы проверить модели классификации на адекватность, подойдут стратегии ‘most_frequent’ и ‘prior’. У обеих метод predict() всегда присваивает наблюдениям самую частую метку класса в аргументе y, переданном в fit() для обучения. В чём между ними разница?
-• При стратегии ‘most_frequent’ метод predict_proba() предскажет вероятность принадлежности к старшему классу, равную 1. Вероятность принадлежности к другим классам будет равна 0.
-• При стратегии ‘prior’, которая выбрана по умолчанию, метод predict_proba() предскажет вероятности распределения классов в датасете. К примеру, если к классу 0 принадлежит 20 процентов наблюдений, а к классу 1 — 80, то predict_proba() вернёт значения 0.2 и 0.8 каждому наблюдению в выборке.
+- При стратегии ‘most_frequent’ метод predict_proba() предскажет вероятность принадлежности к старшему классу, равную 1. Вероятность принадлежности к другим классам будет равна 0.
+- При стратегии ‘prior’, которая выбрана по умолчанию, метод predict_proba() предскажет вероятности распределения классов в датасете. К примеру, если к классу 0 принадлежит 20 процентов наблюдений, а к классу 1 — 80, то predict_proba() вернёт значения 0.2 и 0.8 каждому наблюдению в выборке.
 
 DummyClassifier работает так же, как и другие модели sklearn:
 
 ```python
 from sklearn.dummy import DummyClassifier
 dummy_model = DummyClassifier(random_state=RANDOM_STATE)
-```
-
 dummy_model.fit(X_train, y_train)
-
-```python
 dummy_model_preds = dummy_model.predict(X_test)
 dummy_acc = accuracy_score(y_test, dummy_model_preds)
 print('Model Accuracy =', round(dummy_acc, 2))
@@ -1278,25 +1198,13 @@ df = pd.read_csv('music_genre_2_classes_imbalanced_v2.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
+    X,
     y,
-
-```python
     random_state=RANDOM_STATE, stratify=y
-```
-
 )
-
-```python
 X_train, X_test = prepare_data(X_train, X_test)
 dummy_model = DummyClassifier(strategy='prior', random_state=RANDOM_STATE)
-```
-
 dummy_model.fit(X_train, y_train)
-
-```python
 dummy_model_preds = dummy_model.predict(X_test)
 rock_idx = list(dummy_model.classes_).index('Rock')
 dummy_model_probas = dummy_model.predict_proba(X_test)[:, rock_idx]
@@ -1308,24 +1216,15 @@ dummy_f1  = f1_score(y_test, dummy_model_preds, pos_label='Rock')
 print('F1-score =', round(dummy_f1,2))
 ```
 
-## Accuracy -Покажет неадекватно высокое качество модели
-
+Accuracy -Покажет неадекватно высокое качество модели
 Для accuracy важно только общее количество правильных ответов, поэтому она не обращает внимания на то, что модель плохо предсказывает принадлежность к минорным классам. Поэтому эту метрику нельзя использовать при дисбалансе.
-
-## Precision -Не зависит от дисбаланса
-
+Precision -Не зависит от дисбаланса
 Precision отдельно рассматривает ответы True Positive и False Positive, поэтому корректно работает при любом соотношении классов.
-
-## Recall - Не зависит от дисбаланса
-
+Recall - Не зависит от дисбаланса
 Recall отдельно рассматривает ответы True Positive и False Negative, поэтому корректно работает при любом соотношении классов.
-
-## F1-мера - Покажет низкое качество модели
-
+F1-мера - Покажет низкое качество модели
 F1-мера — это среднее гармоническое precision и recall, поэтому она будет показывать низкое качество модели, если хотя бы одна из его составляющих даёт низкую оценку.
-
-## ROC-AUC - Не зависит от дисбаланса
-
+ROC-AUC - Не зависит от дисбаланса
 ROC-AUC — это площадь под ROC-кривой, которая показывает зависимость TPR и FPR, поэтому она всегда даёт адекватную оценку качества модели.
 
 ## Стратификация выборок
@@ -1336,10 +1235,9 @@ ROC-AUC — это площадь под ROC-кривой, которая пок
 ```python
 # разбейте данные на выборки с учётом стратификации по целевому признаку
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X, y, random_state=RANDOM_STATE, stratify=y
+    X, y, random_state=RANDOM_STATE, stratify=y
 )
+```
 
 Чтобы корректно разбить несбалансированный датасет на тренировочную и тестовую выборки, нужно использовать стратификацию данных.
 При формировании тестовой и тренировочной выборок важно сохранить исходное распределение целевого признака. Для этого нужно указать значения целевого признака в настройке stratify функции train_test_split().
@@ -1359,11 +1257,7 @@ Undersampling, downsampling — это искусственное уменьше
 
 ```python
 df = pd.read_csv('music_genre_2_classes_imbalanced_v2.csv')
-```
-
 train_df, test_df = train_test_split(df, random_state=RANDOM_STATE, stratify=df["music_genre"])
-
-```python
 print(f'Тренировочные данные до сэмплирования:\n{train_df.music_genre.value_counts()}')
 delta = train_df.music_genre.value_counts()['Classical'] - train_df.music_genre.value_counts()['Rock']
 sampled_rock = train_df.query("music_genre=='Rock'").sample(delta, replace=True)
@@ -1385,19 +1279,11 @@ df = pd.read_csv('music_genre_2_classes_imbalanced_v2.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
+    X,
     y,
-
-```python
     random_state=RANDOM_STATE,
     stratify=y
-```
-
 )
-
-```python
 sampler = RandomOverSampler(random_state=RANDOM_STATE)
 X_train_sampled, y_train_sampled = sampler.fit_resample(X_train, y_train)
 print(f'Тренировочные данные до сэмплирования:\n{y_train.value_counts()}')
@@ -1428,30 +1314,18 @@ df = pd.read_csv('music_genre_4_classes_imbalanced.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X, y, random_state=RANDOM_STATE, stratify=y
+    X, y, random_state=RANDOM_STATE, stratify=y
 )
-
-```python
 X_train, X_test = prepare_data(X_train, X_test)
 model = LogisticRegression(random_state=RANDOM_STATE)
-```
-
 model.fit(X_train, y_train)
-
-```python
 y_pred = model.predict(X_test)
 probas = model.predict_proba(X_test)
 roc = roc_auc_score(y_test, probas, multi_class='ovo')
 print('ROC-AUC =', round(roc,2))
 f1 = f1_score(y_test, y_pred, average='macro')
 print('F1-score =', round(f1,2))
-```
-
 ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.show()
 ```
 
@@ -1513,39 +1387,23 @@ df = pd.read_csv('music_genre_4_classes_imbalanced.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
+    X,
     y,
-
-```python
     random_state=RANDOM_STATE,
     stratify=y
-```
-
 )
-
-```python
 X_train, X_test = prepare_data(X_train, X_test)
 sampler = SMOTE(random_state=RANDOM_STATE, k_neighbors=50)
 X_train_sampled, y_train_sampled = sampler.fit_resample(X_train, y_train)
 model = LogisticRegression(random_state=RANDOM_STATE)
-```
-
 model.fit(X_train_sampled, y_train_sampled)
-
-```python
 y_pred = model.predict(X_test)
 probas = model.predict_proba(X_test)
 roc = roc_auc_score(y_test, probas, multi_class='ovo')
 print('ROC-AUC =', round(roc,2))
 f1 = f1_score(y_test, y_pred, average='macro')
 print('F1-score =', round(f1,2))
-```
-
 ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.show()
 ```
 
@@ -1559,24 +1417,16 @@ Oversampling не всегда выигрышная стратегия: иног
 Можно настроить модель так, чтобы она пристальнее изучала объекты недостающего класса
 
 Обратная оверсэмплингу операция — это андерсэмплинг. Он случайным образом удаляет из выборки объекты мажорного класса, пока не сбалансирует классы. Вручную андерсэмплинг можно выполнить почти так же, как и его собрата:
-
-```python
 1 разделите датасет на выборки, далее работайте с тренировочной выборкой,
 2 найдите разницу в количестве объектов разных классов,
 3 удалите лишние наблюдения,
-```
-
 4 проверьте результат.
 
 ```python
 df = pd.read_csv('music_genre_2_classes_imbalanced_v2.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
-```
-
 train_df, test_df = train_test_split(df, random_state=RANDOM_STATE, stratify=df["music_genre"])
-
-```python
 print(f'Тренировочные данные до сэмплирования:\n{train_df.music_genre.value_counts()}')
 delta = train_df.music_genre.value_counts()['Classical'] - train_df.music_genre.value_counts()['Rock']
 deleted_index = train_df.query("music_genre=='Classical'").sample(delta).index
@@ -1597,23 +1447,21 @@ X_resample, y_resample = sampler.fit_resample(X, y)
 Более продвинутый способ андерсэмплинга — это не совсем андерсэмплинг. Это смесь андерсэмплинга с оверсэмплингом — SMOTETomek! Это комбо двух алгоритмов:
 SMOTE — увеличивает количество объектов минорного класса.
 TomekLinks — удаляет объекты мажорного класса, которые слишком близки к объектам минорного класса.
-Метод Tomek Links — это модификация kNN. Он формирует пары объектов X_a-X_b по трём условиям:
-
-```python
-X_a — ближайший сосед X_b.
-X_b — ближайший сосед X_a.
-X_a и X_bпринадлежат к разным классам.
-```
-
+Метод Tomek Links — это модификация kNN. Он формирует пары объектов $X_a$–$X_b$ по трём условиям:
+$X_a$ — ближайший сосед $X_b$.
+$X_b$ — ближайший сосед $X_a$.
+$X_a$ и $X_b$ принадлежат к разным классам.
 Такие пары объектов образуют связи Томека — Tomek Links. И здесь подключается андерсэмплинг: алгоритм удаляет из каждой пары наблюдения мажорного класса.
 
-см изображение
+![Tomek Links](figures/tomek.png)
 
 Алгоритм работы SMOTETomek:
-SMOTE
+
+## SMOTE
+
 a. Выполняет оверсэмплинг минорных объектов методом SMOTE.
 
-## TOMEK Links
+## Tomek Links
 
 a. Выбирает случайные объекты мажорного класса.
 b. Если ближайшим соседом случайных объектов выступают данные из минорного класса, то создаётся связь Томека и из набора данных удаляется объект мажорного класса, входящий в образованную связь Томека.
@@ -1624,11 +1472,7 @@ b. Если ближайшим соседом случайных объекто�
 ```python
 from imblearn.combine import SMOTETomek
 sampler = SMOTETomek(random_state=42)
-```
-
 sampler.fit(X, y)
-
-```python
 X_resample, y_resample = sampler.resample(X, y)
 ```
 
@@ -1671,36 +1515,20 @@ df = pd.read_csv('music_genre_4_classes_imbalanced.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
+    X,
     y,
-
-```python
     random_state=RANDOM_STATE, stratify=y
-```
-
 )
-
-```python
 X_train, X_test = prepare_data(X_train, X_test)
 model = LogisticRegression(random_state=RANDOM_STATE, class_weight='balanced')
-```
-
 model.fit(X_train, y_train)
-
-```python
 y_pred = model.predict(X_test)
 probas = model.predict_proba(X_test)
 roc = roc_auc_score(y_test, probas, multi_class='ovo')
 print('ROC-AUC =', round(roc,2))
 f1 = f1_score(y_test, y_pred, average='macro')
 print('F1-score =', round(f1,2))
-```
-
 ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-
-```python
 plt.show()
 ```
 
@@ -1715,18 +1543,16 @@ recalls = []
 f1 = []
 for p in threshold:
     predicted = np.where(probas>p, 'Rock', 'Classical').tolist()
-```
-
-precisions.append(precision_score(y_test, predicted, pos_label='Rock'))
+    precisions.append(precision_score(y_test, predicted, pos_label='Rock'))
     recalls.append(recall_score(y_test, predicted, pos_label='Rock'))
     f1.append(f1_score(y_test, predicted, pos_label='Rock'))
-
-```python
 max_f1_idx = np.argmax(np.array(f1))
 best_threshold = threshold[max_f1_idx]
-predicted = np.where(probas>=best_threshold, 'Rock', 'Classical').tolist()
 ```
 
+predicted = np.where(probas>=best_threshold, 'Rock', 'Classical').tolist()
+
+```python
 fig, axes = plt.subplots(nrows=1, ncols=2)
 axes[0].plot(threshold, precisions, label='Precision')
 axes[0].plot(threshold, recalls, label='Recall')
@@ -1740,31 +1566,29 @@ axes[0].set_ylabel('Precision & Recall')
 axes[1].set_ylabel('F1-score')
 axes[0].set_xlabel('Probability threshold')
 axes[1].set_xlabel('Probability threshold')
-
-```python
 plt.show()
 ```
 
-см изображение
+![Precision, recall и F1 при разных порогах](figures/threshold.png)
 
 Подобрать порог в задачах мультиклассовой классификации гораздо сложнее, ведь вам придётся учитывать, как модель предсказывает каждый класс.
 
-• Базовые подходы к андерсэмплингу — провести его вручную средствами pandas или применить метод RandomUnderSampler библиотеки imblearn. Используя их, вы рискуете слишком сильно сократить выборку, будьте осторожны.
-• SMOTETomek совмещает оверсэмплинг и андерсэмплинг, чтобы избежать излишнего сокращения выборки. Сначала он создаёт новые наблюдения, а потом удаляет лишние пограничные объекты мажорного класса.
-• В большинство моделей sklearn встроена настройка для взвешивания классов модели. Это удобный способ справиться с дисбалансом, поскольку для него достаточно изменить одно значение при инициализации и не нужно сэмплировать датасет.
-• Сдвиг порога классификации также может исправить проблемы, вызванные дисбалансом классов.
-• Сложно заранее узнать, какой метод лучше всего решит проблему дисбаланса. Нужно экспериментировать и смотреть на значения метрик после проверки каждого подхода.
+- Базовые подходы к андерсэмплингу — провести его вручную средствами pandas или применить метод RandomUnderSampler библиотеки imblearn. Используя их, вы рискуете слишком сильно сократить выборку, будьте осторожны.
+- SMOTETomek совмещает оверсэмплинг и андерсэмплинг, чтобы избежать излишнего сокращения выборки. Сначала он создаёт новые наблюдения, а потом удаляет лишние пограничные объекты мажорного класса.
+- В большинство моделей sklearn встроена настройка для взвешивания классов модели. Это удобный способ справиться с дисбалансом, поскольку для него достаточно изменить одно значение при инициализации и не нужно сэмплировать датасет.
+- Сдвиг порога классификации также может исправить проблемы, вызванные дисбалансом классов.
+- Сложно заранее узнать, какой метод лучше всего решит проблему дисбаланса. Нужно экспериментировать и смотреть на значения метрик после проверки каждого подхода.
 
-• Accuracy склонна не замечать проблемы модели из-за дисбаланса классов, поскольку учитывает только общую точность модели и не смотрит на классы по отдельности. Поэтому старайтесь избегать её, если в ваших данных заметный дисбаланс.
-• ROC-AUC не чувствительна к дисбалансу классов.
-• F1-мера снижается, когда модель из-за дисбаланса плохо предсказывает минорный класс. Поэтому смотрите на неё в первую очередь, когда работаете с несбалансированными данными.
+- Accuracy склонна не замечать проблемы модели из-за дисбаланса классов, поскольку учитывает только общую точность модели и не смотрит на классы по отдельности. Поэтому старайтесь избегать её, если в ваших данных заметный дисбаланс.
+- ROC-AUC не чувствительна к дисбалансу классов.
+- F1-мера снижается, когда модель из-за дисбаланса плохо предсказывает минорный класс. Поэтому смотрите на неё в первую очередь, когда работаете с несбалансированными данными.
 
 Перед тестированием модель должна быть отлажена. И здесь на выручку приходит валидационная выборка: на ней настраивают и проверяют модели. Её важно выделить до обучения, чтобы модель не знала истинных значений заранее
 Этап работы с валидационной выборкой называют валидацией модели машинного обучения. При валидации вы проводите «первые испытания» разных моделей, подбирая настройки и подходы к решению задачи. Выбрав самый удачный вариант и получив хорошие оценки качества, можно перейти к финальному этапу — проверить модель на тестовых данных
 
-• Валидация помогает выявить переобучение модели.
+- Валидация помогает выявить переобучение модели.
 Она показывает, как модель поведёт себя с незнакомыми данными. Если метрики на валидации падают — модель переобучена.
-• Валидационная выборка похожа на тестовую — обе нужны для оценки качества решений моделей.
+- Валидационная выборка похожа на тестовую — обе нужны для оценки качества решений моделей.
 Единственное отличие: валидационную можно использовать для всех моделей, а тестовую — только для самой лучшей.
 
 Чтобы разделить датасет на три части, достаточно использовать функцию train_test_split несколько раз. Рассмотрим ситуацию, когда у вас есть только исходный датасет df без отдельной тестовой выборки.
@@ -1772,16 +1596,19 @@ plt.show()
 
 ```python
 from sklearn.model_selection import train_test_split
+df_train, df_test = train_test_split(df, test_size=0.25, random_state=42)
 ```
 
-df_train, df_test = train_test_split(df, test_size=0.25, random_state=42)
 Напомним: в random_state можно указать что угодно, главное — не None.
 Прежде чем разделить набор данных, укажите два параметра:
-• название исходного набора данных.
-• размер тестовой выборки, test_size, принимает значения от 0 до 1. Если указать в параметре test_size=0.25, в df_test будет 25% исходных данных.
+- название исходного набора данных.
+- размер тестовой выборки, test_size, принимает значения от 0 до 1. Если указать в параметре test_size=0.25, в df_test будет 25% исходных данных.
 
 Далее делим тренировочную выборку ещё раз — уже на тренировочную и валидационную.
+
+```python
 df_train, df_valid = train_test_split(df_train, test_size=0.25, random_state=42)
+```
 
 Прежде чем формировать выборки, проверьте, сбалансированы ли они. Если вы найдёте дисбаланс классов — не игнорируйте это и разделите данные, передав параметру stratify значение целевого признака:
 
@@ -1789,11 +1616,7 @@ df_train, df_valid = train_test_split(df_train, test_size=0.25, random_state=42)
 df_train, df_test_valid = train_test_split(df, test_size=0.4, \
    random_state=42, \
    stratify=df['target'])
-```
-
 df_test, df_valid = train_test_split(df_test_valid, test_size=0.5, \
-
-```python
    random_state=42, \
    stratify=df_test_valid['target'])
 ```
@@ -1802,71 +1625,45 @@ df_test, df_valid = train_test_split(df_test_valid, test_size=0.5, \
 
 ```python
 def prepare_data(X_train, X_valid, X_test):
-```
-
-# создание списков с количественными и категориальными признаками
-
-```python
+        # создание списков с количественными и категориальными признаками
         cat_col_names = X_train.select_dtypes(exclude='number').columns.tolist()
         num_col_names = X_train.select_dtypes(include='number').columns.tolist()
-```
 
-# создание класса OneHotEncoder() для кодирования
-
-```python
+        # создание класса OneHotEncoder() для кодирования
         ohe = OneHotEncoder(sparse=False, drop='first')
-```
 
-# кодирование категориальных признаков из трёх выборок
-
-```python
+        # кодирование категориальных признаков из трёх выборок
         X_train_ohe = ohe.fit_transform(X_train[cat_col_names])
         X_valid_ohe = ohe.transform(X_valid[cat_col_names])
         X_test_ohe = ohe.transform(X_test[cat_col_names])
-```
 
-# создание класса StandartScaler() для масштабирования
-
-```python
+        # создание класса StandartScaler() для масштабирования
         scaler = StandardScaler()
-```
 
-# масштабирование количественных признаков из трёх выборок
+        # масштабирование количественных признаков из трёх выборок
         X_train[num_col_names] = scaler.fit_transform(X_train[num_col_names])
         X_valid[num_col_names] = scaler.transform(X_valid[num_col_names])
         X_test[num_col_names] = scaler.transform(X_test[num_col_names])
 
-# сохранение в переменной encoder_col_names списка названий новых столбцов
-
-```python
+        # сохранение в переменной encoder_col_names списка названий новых столбцов
         encoder_col_names = ohe.get_feature_names_out()
-```
 
-# создание датафрейма из закодированных данных
-
-```python
+        # создание датафрейма из закодированных данных
         X_train_ohe = pd.DataFrame(X_train_ohe, columns=encoder_col_names)
         X_valid_ohe = pd.DataFrame(X_valid_ohe, columns=encoder_col_names)
         X_test_ohe = pd.DataFrame(X_test_ohe, columns=encoder_col_names)
-```
 
-# обнуление индексов строк в перед объединением количественных и категориальных признаков в датафрейм
-
-```python
+        # обнуление индексов строк в перед объединением количественных и категориальных признаков в датафрейм
         X_train = X_train.reset_index()
         X_valid = X_valid.reset_index()
         X_test = X_test.reset_index()
-```
 
-# объединение датафреймов
-
-```python
+        # объединение датафреймов
         X_train = pd.concat((X_train[num_col_names], X_train_ohe), axis=1)
         X_valid = pd.concat((X_valid[num_col_names], X_valid_ohe), axis=1)
         X_test = pd.concat((X_test[num_col_names], X_test_ohe), axis=1)
+        return X_train, X_valid, X_test
 ```
-
-return X_train, X_valid, X_test
 
 Разделите данные для бинарной классификации на тренировочную, валидационную и тестовую выборки. При делении данных на части нужно использовать параметр test_size. Сэмплируйте тренировочные и валидационные данные методом RandomOverSampler
 
@@ -1881,48 +1678,28 @@ df = pd.read_csv('music_genre_2_classes_imbalanced_v2.csv')
 X = df.drop(columns='music_genre')
 y = df.music_genre
 X_train, X_test_valid, y_train, y_test_valid = train_test_split(
-```
-
-X, y, test_size=0.4, random_state=RANDOM_STATE, stratify=y
+    X, y, test_size=0.4, random_state=RANDOM_STATE, stratify=y
 )
-
-```python
 X_valid, X_test, y_valid, y_test = train_test_split(
-```
-
-X_test_valid, y_test_valid, test_size=0.5, random_state=RANDOM_STATE, stratify=y_test_valid
+    X_test_valid, y_test_valid, test_size=0.5, random_state=RANDOM_STATE, stratify=y_test_valid
 )
-
-```python
 X_train, X_valid, X_test = prepare_data(X_train, X_valid, X_test)
 sampler = RandomOverSampler(random_state=RANDOM_STATE)
 X_train_sampled, y_train_sampled = sampler.fit_resample(X_train, y_train)
 X_valid_sampled, y_valid_sampled = sampler.fit_resample(X_valid, y_valid)
-```
-
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
-
-```python
 pd.Series(y).value_counts().plot(kind='bar', rot=0, ax=axes[0])
 pd.Series(y_train_sampled).value_counts().plot(kind='bar', rot=0, ax=axes[1])
 pd.Series(y_valid_sampled).value_counts().plot(kind='bar', rot=0, ax=axes[2])
-```
-
 axes[0].set_title('Исходные данные')
 axes[1].set_title('train после сэмплирования')
 axes[2].set_title('valid после сэмплирования')
-
-```python
 plt.show()
 ```
 
 Обучите модель kNN на данных для бинарной классификации и оцените F1-мерой её качество на:
-
-```python
 сэмплированной валидационной выборке,
 несэмплированной валидационной выборке,
-```
-
 тестовой выборке.
 
 ```python
@@ -1950,11 +1727,7 @@ sampler = RandomOverSampler(random_state=RANDOM_STATE)
 X_train_sampled, y_train_sampled = sampler.fit_resample(X_train, y_train)
 X_valid_sampled, y_valid_sampled = sampler.fit_resample(X_valid, y_valid)
 model = KNeighborsClassifier()
-```
-
 model.fit(X_train_sampled, y_train_sampled)
-
-```python
 # посчитайте F1-меру на валидационной сэмплированной выборке
 y_pred_valid_sampled = model.predict(X_valid_sampled)
 f1_valid_sampled = f1_score(y_valid_sampled, y_pred_valid_sampled, pos_label='Rock')
@@ -1980,7 +1753,7 @@ print('Проверка модели на тестовой выборке: F1 ='
 
 На русском языке фрагменты тренировочной выборки для кросс-валидации называют не только блоками. В ходу также термины «фолды» и «подвыборки».
 
-см изображение
+![Кросс-валидация](figures/kfold.png)
 
 Модель будто «скользит» по данным, каждый раз принимая новый блок за валидационный. В конце алгоритм кросс-валидации возвращает список оценок качества для каждого блока валидации.
 Этот метод подходит не для всех данных. К примеру, если ваш целевой признак содержит временные ряды, то простую кросс-валидацию использовать нельзя.
@@ -2001,9 +1774,8 @@ kfold = KFold(n_splits=5)
 
 ```python
 print(type(kfold.split(X)))
-```
-
 <class 'generator'>
+```
 
 Чтобы увидеть распределение объектов по их индексам после того, как split() поделит исходные данные, используйте цикл for ... in для каждой из полученных выборок:
 
@@ -2012,9 +1784,8 @@ from sklearn.model_selection import KFold
 X = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 kfold = KFold(n_splits=5)
 for train_split, test_split in kfold.split(X):
+    print(f"Тренировочные: {X[train_split]}, Валидационные: {X[test_split]}")
 ```
-
-print(f"Тренировочные: {X[train_split]}, Валидационные: {X[test_split]}")
 
 У класса KFold есть параметр shuffle, его значение по умолчанию False. Если изменить его на True, то данные перед разбиением на блоки будут перемешаны. Из-за этого в тренировочной выборке объекты могут несколько раз оказаться в одном и том же блоке. Валидационные данные не будут совпадать, если в данных нет дубликатов.
 
@@ -2023,9 +1794,8 @@ from sklearn.model_selection import KFold
 X = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 kfold = KFold(n_splits=5, shuffle=True, random_state=42)
 for train_split, test_split in kfold.split(X):
+    print(f"Тренировочные: {X[train_split]}, Валидационные: {X[test_split]}")
 ```
-
-print(f"Тренировочные: {X[train_split]}, Валидационные: {X[test_split]}")
 
 Тренировочные: [0 2 3 4 5 6 7 9], Валидационные: [1 8]
 Тренировочные: [1 2 3 4 6 7 8 9], Валидационные: [0 5]
@@ -2036,16 +1806,15 @@ print(f"Тренировочные: {X[train_split]}, Валидационные
 Не забывайте — метод возвращает не сами объекты, а их индексы!
 
 Как вы думаете, можно ли использовать KFold при дисбалансе классов?
-• Нет, KFold формирует блоки без учёта стратификации по целевому признаку.
+- Нет, KFold формирует блоки без учёта стратификации по целевому признаку.
 Да, и это проблема, потому что модели для качественного обучения нужны выборки с одинаковой структурой, чтобы ухватить все закономерности. Поэтому в каждом блоке должно быть такое же распределение, как и в исходном датасете.
 
 Поэтому для несбалансированных данных создан отдельный метод — StratifiedKFold. Он работает так же, как и KFold, но при его использовании методу split() нужно передать целевой признак y. Тогда генератор учтёт распределение по классам при формировании блоков данных.
 
 ```python
 s_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-```
-
 s_kfold.split(X, y)
+```
 
 Проведите кросс-валидацию методом StratifiedKFold. Оцените среднее качество модели на пяти блоках кросс-валидации.
 
@@ -2068,26 +1837,14 @@ s_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 # список для сохранения оценок точности
 f1 = []
 for train_index, test_index in s_kfold.split(X_train, y_train):
-```
-
-X_train_cv, X_test_cv = X_train.iloc[train_index], X_train.iloc[test_index]
+    X_train_cv, X_test_cv = X_train.iloc[train_index], X_train.iloc[test_index]
     y_train_cv, y_test_cv = y_train.iloc[train_index], y_train.iloc[test_index]
-
-```python
     model = KNeighborsClassifier()
-```
-
-model.fit(X_train_cv, y_train_cv)
-
-```python
+    model.fit(X_train_cv, y_train_cv)
     y_pred = model.predict(X_test_cv)
     f1_metric = f1_score(y_test_cv, y_pred, pos_label='Rock')
-```
-
-f1.append(f1_metric)
+    f1.append(f1_metric)
 model.fit(X_train, y_train)
-
-```python
 y_pred = model.predict(X_test)
 f1_test = f1_score(y_test, y_pred, pos_label='Rock')
 # усредните оценки качества после кросс-валидации
@@ -2101,14 +1858,13 @@ print(f"[Тестовая выборка] F1-score: {f1_test:.2f}")
 
 ```python
 from sklearn.model_selection import cross_val_score
+cross_val_score(model, features, target, cv=5)
 ```
 
-cross_val_score(model, features, target, cv=5)
-
 На вход функция принимает несколько обязательных аргументов:
+model — модель для кросс-валидации. Она обучается при перекрёстной проверке, поэтому на вход подаётся необученной. Достаточно передать «пустую» модель:
 
 ```python
-model — модель для кросс-валидации. Она обучается при перекрёстной проверке, поэтому на вход подаётся необученной. Достаточно передать «пустую» модель:
 from sklearn.neighbors import KNeighborsClassifier
 model = KNeighborsClassifier()
 ```
@@ -2142,9 +1898,9 @@ result = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
 ```
 
 Оценка качества модели при кросс-валидации складывается из оценок работы на каждом валидационном блоке. Поэтому нужно обращать внимание не только на финальное значение метрики, но и на разброс промежуточных. Для этого полезно рассчитать стандартное отклонение оценок модели.
-• Стандартное отклонение — это мера центральной тенденции. Она показывает, насколько данные сгруппированы вокруг среднего значения. Чем меньше стандартное отклонение, тем ближе все исходные значения к среднему.
+- Стандартное отклонение — это мера центральной тенденции. Она показывает, насколько данные сгруппированы вокруг среднего значения. Чем меньше стандартное отклонение, тем ближе все исходные значения к среднему.
 Чем меньше стандартное отклонение — тем плотнее распределены данные.
-• Стандартное отклонение — это квадратный корень из дисперсии.
+- Стандартное отклонение — это квадратный корень из дисперсии.
 В отличие от дисперсии, стандартное отклонение измеряется в тех же единицах, что и сами данные.
 
 ```python
@@ -2177,13 +1933,12 @@ print(f"Стандартное отклонение предсказаний: {r
 
 Если вы используете кросс-валидацию, то не все методы сэмплирования вам подойдут. Так, RandomOverSampler, в отличие от RandomUnderSampler, создаёт дубликаты объектов. Из-за этого идентичные наблюдения попадут и в тренировочные, и в валидационный блоки данных. Модель нельзя проверять на данных, на которых она обучалась, поэтому RandomOverSampler нельзя использовать для решения проблемы дисбаланса вместе с кросс-валидацией.
 
-• Кросс-валидация — это процесс проверки качества модели, для которого используют все доступные данные, кроме отложенной тестовой выборки.
-• Во время кросс-валидации модель несколько раз обучается и проверяется. Для этого тренировочные данные делят на несколько блоков. Каждый из них выступит в качестве валидационной выборки на одном из циклов проверки модели. Количество циклов равно числу выделенных блоков. В конце алгоритм кросс-валидации возвращает список оценок качества для каждого блока валидации.
-• Помимо среднего арифметического, полезно рассчитать стандартное отклонение оценок качества модели, чтобы узнать, насколько стабильны её предсказания на любых данных.
-• Вы можете разбить данные на блоки самостоятельно с помощью KFold и StratifiedKFold или же довериться cross_val_score() для кросс-валидации модели.
+- Кросс-валидация — это процесс проверки качества модели, для которого используют все доступные данные, кроме отложенной тестовой выборки.
+- Во время кросс-валидации модель несколько раз обучается и проверяется. Для этого тренировочные данные делят на несколько блоков. Каждый из них выступит в качестве валидационной выборки на одном из циклов проверки модели. Количество циклов равно числу выделенных блоков. В конце алгоритм кросс-валидации возвращает список оценок качества для каждого блока валидации.
+- Помимо среднего арифметического, полезно рассчитать стандартное отклонение оценок качества модели, чтобы узнать, насколько стабильны её предсказания на любых данных.
+- Вы можете разбить данные на блоки самостоятельно с помощью KFold и StratifiedKFold или же довериться cross_val_score() для кросс-валидации модели.
 
-## Название метрики Функция для расчёта
-
+Название метрики Функция для расчёта
 RMSE mean_squared_error(y_true, y_pred, squared=False)
 MAE mean_absolute_error(y_true, y_pred)
 R² r2_score(y_true, y_pred)
@@ -2209,16 +1964,12 @@ print(metric)
 
 Как создать свою метрику?
 Для этого в модуле sklearn.metrics создана функция make_scorer(). У неё один обязательный аргумент — функция для расчёта пользовательской метрики:
-
-```python
 score_func — произвольное название функции. У неё тоже есть свои обязательные аргументы:
-```
-
-• y — истинные значения целевого признака.
-• y_pred — предсказания модели.
+- y — истинные значения целевого признака.
+- y_pred — предсказания модели.
 У make_scorer() есть две необязательные настройки:
-• greater_is_better — определяет, будет ли значение метрики расти или уменьшаться при повышении качества модели. Если вы захотите уменьшать метрику, функция make_scorer() поменяет знак значения score_func на противоположный.
-• **kwargs — прочие настройки, которые make_scorer() передаст в пользовательскую функцию. Если их будет обрабатывать исходная функция score_func, то нужно добавить настройки и туда.
+- greater_is_better — определяет, будет ли значение метрики расти или уменьшаться при повышении качества модели. Если вы захотите уменьшать метрику, функция make_scorer() поменяет знак значения score_func на противоположный.
+- **kwargs — прочие настройки, которые make_scorer() передаст в пользовательскую функцию. Если их будет обрабатывать исходная функция score_func, то нужно добавить настройки и туда.
 
 При создании своей метрики не забывайте указать, увеличивается она или уменьшается при росте качества модели. Это важно, потому что в будущем вы станете использовать алгоритмы по подбору настроек модели. Они должны понимать, какие значения означают «модель работает лучше», а какие — «модель работает хуже».
 
@@ -2232,22 +1983,14 @@ from sklearn.metrics import make_scorer, f1_score
 class_weights = {0: 1, 1: 10}
 # создаём функцию для оценки качества модели
 def custom_metric(y_true, y_pred, class_weights):
-```
-
-# вычисляем F1-score с учётом весов классов
-
-```python
+    # вычисляем F1-score с учётом весов классов
     metric = f1_score(y_true, y_pred, sample_weight=[class_weights[y] for y in y_true])
-```
-
-return metric
-
-```python
+    return metric
 # создаём пользовательскую метрику
 scorer = make_scorer(custom_metric, class_weights=class_weights)
 ```
 
-## Своя метрика при обучении модели
+Своя метрика при обучении модели
 
 ```python
 # создаём объект пользовательской метрики
@@ -2289,29 +2032,13 @@ test_size=0.25, random_state=RANDOM_STATE, stratify=y)
 X_train, X_test = prepare_data(X_train, X_test)
 # создаём функцию для расчёта точности предсказаний каждого класса
 def custom_metric(y_true, y, label):
-```
-
-# выделяем все объекты нужного класса в датасете
-
-```python
+ # выделяем все объекты нужного класса в датасете
  mask = y_true==label
-```
-
-# сравниваем фактические и предсказанные значения
-
-```python
+  # сравниваем фактические и предсказанные значения
  correct = y_true[mask] == y[mask]
-```
-
-# вычисляем долю верных ответов к числу наблюдений в классе
-
-```python
+  # вычисляем долю верных ответов к числу наблюдений в классе
  metric = correct.sum()/mask.sum()
-```
-
-return metric
-
-```python
+ return metric
 model_lr = LogisticRegression(class_weight='balanced', random_state=RANDOM_STATE)
 model_knn = KNeighborsClassifier(n_neighbors=100)
 model_svm = SVC(class_weight='balanced', random_state=RANDOM_STATE)
@@ -2324,37 +2051,36 @@ scorer_classical = make_scorer(custom_metric, label='Classical')
 for model in models:
     result_rock = cross_val_score(model, X_train, y_train, cv=3, scoring=scorer_rock)
     result_classical = cross_val_score(model, X_train, y_train, cv=3, scoring=scorer_classical)
-```
-
-print(f"==={type(model).__name__}===")
+    print(f"==={type(model).__name__}===")
     print(f"Среднее значение Accuracy для класса 'Classical': {result_classical.mean():.2f}")
     print(f"Среднее значение Accuracy для класса 'Rock': {result_rock.mean():.2f}")
     print()
+```
 
 На самом деле настройки модели делятся на два типа:
-• Параметры — это настройки модели, которые подбираются в процессе обучения модели на данных. Их подбирает сама модель, когда вы вызываете метод fit().
-• Гиперпараметры — настройки модели, которые фиксируются вручную до начала обучения и в процессе обучения никак не меняются.
+- Параметры — это настройки модели, которые подбираются в процессе обучения модели на данных. Их подбирает сама модель, когда вы вызываете метод fit().
+- Гиперпараметры — настройки модели, которые фиксируются вручную до начала обучения и в процессе обучения никак не меняются.
 На параметры специалисты не могут явно повлиять: модель сама их подбирает так, как хочет. А вот за гиперпараметры отвечают только специалисты — это их зона ответственности, а теперь и ваша.
 
 Инициализируем модель дерева решений с базовыми настройками:
-DecisionTreeClassifier(
 
 ```python
+DecisionTreeClassifier(
     max_depth=None,
     min_samples_split=2,
     min_samples_leaf=1,
     random_state=None,
     max_leaf_nodes=None
+)
 ```
 
-)
 Все указанные здесь значения — это гиперпараметры. Их можно менять при инициализации модели, за исключением одного знакомого вам random_state — он фиксируется один раз, и больше его трогать не стоит.
 Гиперпараметр max_depth ограничивает максимальную глубину дерева, а max_leaf_nodes — ограничивает число листьев.
 
 Выполните действия:
-• Создайте и обучите базовую модель дерева решений.
-• Посчитайте метрику качества accuracy на тренировочной и тестовой выборках.
-• Визуализируйте схему дерева решений с наименованиями признаков и сделайте узлы цветными.
+- Создайте и обучите базовую модель дерева решений.
+- Посчитайте метрику качества accuracy на тренировочной и тестовой выборках.
+- Визуализируйте схему дерева решений с наименованиями признаков и сделайте узлы цветными.
 
 ```python
 import pandas as pd
@@ -2367,39 +2093,23 @@ df = pd.read_csv('progulka_extended.csv')
 X = df.drop('гулять?', axis=1)
 y = df['гулять?']
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
-
-```python
+    X,
     y,
     test_size=TEST_SIZE,
     random_state=RANDOM_STATE
-```
-
 )
-
-```python
 model = DecisionTreeClassifier(random_state=RANDOM_STATE)
-```
-
 model.fit(X_train, y_train)
-
-```python
 accuracy_train = model.score(X_train, y_train)
 accuracy_test = model.score(X_test, y_test)
 print('Train:', accuracy_train)
 print('Test:', accuracy_test)
 plt.figure(figsize=(10, 8))
-```
-
 plot_tree(model, feature_names=X.columns, class_names=model.classes_, filled=True)
-
-```python
 plt.show()
 ```
 
-• На тренировочной выборке значение метрики идеально. На тестовой — оно меньше. Кажется, это переобучение. Стоит поменять гиперпараметры модели, чтобы метрика на тесте стала больше.
+- На тренировочной выборке значение метрики идеально. На тестовой — оно меньше. Кажется, это переобучение. Стоит поменять гиперпараметры модели, чтобы метрика на тесте стала больше.
 
 Чтобы улучшить качество, будем экспериментировать с гиперпараметрами max_depth, min_samples_split, min_samples_leaf — они больше всего влияют на построение дерева решений.
 Гиперпараметр max_depth фиксирует количество уровней с правилами. В модели с базовыми настройками этот параметр равен None. Это значит, что глубина дерева может быть какой угодно, из-за чего модель переобучается. Если зададим этот гиперпараметр целым числом, ниже этого уровня дерево строиться не будет.
@@ -2422,11 +2132,7 @@ df = df.set_index('id')
 X = df.drop(['Удовлетворён предоставленной услугой'], axis=1)
 y = df['Удовлетворён предоставленной услугой']
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
-
-```python
+    X,
     y,
     test_size=TEST_SIZE,
     random_state=RANDOM_STATE,
@@ -2434,11 +2140,7 @@ X,
 # создаём список со строковыми категориями для кодирования
 cols_ohe = X_train.select_dtypes(include='object').columns.tolist()
 oh_encoder = OneHotEncoder(drop='first', sparse=False)
-```
-
 oh_encoder.fit(X_train[cols_ohe])
-
-```python
 encoder_col_names = oh_encoder.get_feature_names()
 X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
 X_test[encoder_col_names] = oh_encoder.transform(X_test[cols_ohe])
@@ -2451,49 +2153,25 @@ start = time.time()
 cv_results = []
 # переберите значения min_samples_split в диапазоне от 2 до 6 (не включительно)
 for min_samples_split in range(2, 6):
-```
-
-# переберите значения min_samples_leaf в диапазоне от 1 до 6 (не включительно)
-
-```python
+    # переберите значения min_samples_leaf в диапазоне от 1 до 6 (не включительно)
     for min_samples_leaf in range(1, 6):
-```
-
-# переберите значения max_depth в диапазоне от 2 до 6 (не включительно)
-
-```python
+        # переберите значения max_depth в диапазоне от 2 до 6 (не включительно)
         for max_depth in range(2, 6):
-```
-
-# инициализируйте модель дерева решений с этими гиперпараметрами
-
-```python
+            # инициализируйте модель дерева решений с этими гиперпараметрами
             model = DecisionTreeClassifier(
                 min_samples_split=min_samples_split,
                 min_samples_leaf=min_samples_leaf,
                 max_depth=max_depth,
                 random_state=RANDOM_STATE
-```
-
-)
+            )
             # посчитайте метрику roc-auc при кросс-валидации
-
-```python
             roc_auc_cv = cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=5).mean()
-```
-
-# добавляем метрику и гиперпараметры в список
-
-```python
+            # добавляем метрику и гиперпараметры в список
             cv_results.append((roc_auc_cv, {
                 'min_samples_split': min_samples_split,
                 'min_samples_leaf': min_samples_leaf,
-```
-
-'max_depth': max_depth
+                'max_depth': max_depth
             }))
-
-```python
 # считаем, сколько секунд прошло с начала запуска
 loop_search_time = time.time() - start
 print(f'Search time:{loop_search_time}')
@@ -2513,32 +2191,32 @@ print(loop_search_cv_results[:10])
 В названии класса неслучайно есть “CV”, то есть кросс-валидация. Как мы уже говорили, метрика моделей, которые обучаются на разных комбинациях гиперпараметров, будет считаться при кросс-валидации.
 
 Теперь к коду — так выглядит класс GridSearchCV:
-GridSearchCV(
 
 ```python
+GridSearchCV(
   estimator,
   param_grid,
   scoring=None,
   n_jobs=None,
   cv=None
+)
 ```
 
-)
 Параметры класса:
-• estimator (обязательный) — инициализированная модель.
+- estimator (обязательный) — инициализированная модель.
+- param_grid (обязательный) — словарь со значениями гиперпараметров. Ключи — названия гиперпараметров, а по ключам хранятся списки значений гиперпараметров. Пример словаря:
 
 ```python
-• param_grid (обязательный) — словарь со значениями гиперпараметров. Ключи — названия гиперпараметров, а по ключам хранятся списки значений гиперпараметров. Пример словаря:
 parameters = {
     'min_samples_leaf': range(1, 5),
     'min_samples_split': range(2, 7),
+    'max_depth': range(2, 5)
+}
 ```
 
-'max_depth': range(2, 5)
-}
-• scoring — метрика, которая будет считаться на обученных моделях.
-• n_jobs — количество вычислительных мощностей. Чтобы считалось быстрее, указывают -1.
-• cv — тип кросс-валидации.
+- scoring — метрика, которая будет считаться на обученных моделях.
+- n_jobs — количество вычислительных мощностей. Чтобы считалось быстрее, указывают -1.
+- cv — тип кросс-валидации.
 Чтобы запустить поиск лучших значений гиперпараметров, нужно вызвать метод fit():
 
 ```python
@@ -2546,21 +2224,16 @@ from sklearn.model_selection import GridSearchCV
 # инициализируем класс для поиска гиперпараметров
 gs = GridSearchCV(
     model,
-```
-
-parameters
+    parameters
 )
-
-```python
 # запускаем поиск лучших гиперпараметров
-```
-
 gs.fit(X_train, y_train)
+```
 
 Несколько важных особенностей GridSearchCV:
-• Модель, которую будем передавать GridSearchCV, должна быть инициализирована. Некоторые гиперпараметры можно зафиксировать, чтобы они не менялись при переборе. Сделать это нужно при инициализации модели.
-• Названия и значения гиперпараметров указывают в словаре. Название хранится в ключе, а по ключу — список значений гиперпараметров для перебора. Это должен быть именно список, иначе код выдаст ошибку.
-• У GridSearchCV есть два обязательных аргумента — это инициализированная модель и словарь с гиперпараметрами. Остальное — по желанию.
+- Модель, которую будем передавать GridSearchCV, должна быть инициализирована. Некоторые гиперпараметры можно зафиксировать, чтобы они не менялись при переборе. Сделать это нужно при инициализации модели.
+- Названия и значения гиперпараметров указывают в словаре. Название хранится в ключе, а по ключу — список значений гиперпараметров для перебора. Это должен быть именно список, иначе код выдаст ошибку.
+- У GridSearchCV есть два обязательных аргумента — это инициализированная модель и словарь с гиперпараметрами. Остальное — по желанию.
 
 Автоматизируйте поиск гиперпараметров с помощью GridSearchCV на примере данных о прогулках.
 
@@ -2574,45 +2247,28 @@ df = pd.read_csv('progulka_extended.csv')
 X = df.drop('гулять?', axis=1)
 y = df['гулять?']
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
-
-```python
+    X,
     y,
     test_size=TEST_SIZE,
     random_state=RANDOM_STATE
-```
-
 )
-
-```python
 model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 parameters = {
     'min_samples_split': range(2, 6),
     'min_samples_leaf': range(1, 3),
-```
-
-'max_depth': range(2, 4)
+    'max_depth': range(2, 4)
 }
-
-```python
 gs = GridSearchCV(model, parameters, n_jobs=-1, cv=5, scoring='accuracy')
-```
-
 gs.fit(X_train, y_train)
-
-```python
 print(gs.best_params_)
 ```
 
 Пока мы вас вскользь познакомили с одним атрибутом GridSearchCV — best_params_. Что ещё вам может пригодиться:
-• best_estimator_ — лучшая обученная модель;
-• best_score_ — лучшая метрика при кросс-валидации;
-• cv_results_ — общие результаты поиска гиперпараметров.
+- best_estimator_ — лучшая обученная модель;
+- best_score_ — лучшая метрика при кросс-валидации;
+- cv_results_ — общие результаты поиска гиперпараметров.
 
-## Разберём атрибут cv_results_
-
+Разберём атрибут cv_results_
 Атрибут выдаёт информацию в словаре, но в таком виде неудобно сравнивать модели. Обернём словарь в датафрейм:
 
 ```python
@@ -2636,22 +2292,14 @@ df = df.set_index('id')
 X = df.drop(['Удовлетворён предоставленной услугой'], axis=1)
 y = df['Удовлетворён предоставленной услугой']
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
-
-```python
+    X,
     y,
     test_size=TEST_SIZE,
     random_state=RANDOM_STATE,
     stratify=y)
 cols_ohe = X_train.select_dtypes(include='object').columns.tolist()
 oh_encoder = OneHotEncoder(drop='first', sparse=False)
-```
-
 oh_encoder.fit(X_train[cols_ohe])
-
-```python
 encoder_col_names = oh_encoder.get_feature_names()
 X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
 X_test[encoder_col_names] = oh_encoder.transform(X_test[cols_ohe])
@@ -2662,25 +2310,17 @@ model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 parameters = {
     'min_samples_split': range(2, 6),
     'min_samples_leaf': range(1, 6),
-```
-
-'max_depth': range(2, 6)
+    'max_depth': range(2, 6)
 }
-
-```python
 gs = GridSearchCV(model, parameters, n_jobs=-1, cv=5, scoring='roc_auc')
-```
-
 gs.fit(X_train, y_train)
-
-```python
 gs_search_time = time.time() - start
 print(f'Search time:{gs_search_time}')
 print('Гиперпараметры', gs.best_params_)
 print('ROC-AUC', gs.best_score_)
 ```
 
-## В функции для расчёта FPR используйте матрицу ошибок из sklearn
+В функции для расчёта FPR используйте матрицу ошибок из sklearn
 
 ```python
 # напишите функцию для подсчёта метрики FPR
@@ -2689,11 +2329,7 @@ def get_false_positive_rate(y_true, y_pred):
     fp = conf_matrix[0][1]
     tn = conf_matrix[0][0]
     fpr = fp / (fp + tn)
-```
-
-return fpr
-
-```python
+    return fpr
 # посчитайте метрику FPR на тестовых данных и выведите результат
 fpr_value = get_false_positive_rate(y_test, y_pred)
 ```
@@ -2704,17 +2340,13 @@ fpr_value = get_false_positive_rate(y_test, y_pred)
 from sklearn.metrics import make_scorer, confusion_matrix
 def get_false_positive_rate(y_true, y_pred):
     conf_matrix = confusion_matrix(y_true, y_pred)
-```
-
-return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
-
-```python
+    return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
 fpr_score = make_scorer(
     get_false_positive_rate,
     greater_is_better=False
+)
 ```
 
-)
 Метрика False Positive Rate должна быть минимальна: чем меньше ложноположительных ответов, тем лучше. Поэтому для FPR параметру greater_is_better передают значение False.
 
 Посчитайте метрику FPR с помощью функции make_scorer(). Затем рассчитайте среднее значение метрики при кросс-валидации
@@ -2730,11 +2362,7 @@ X_train, X_test, y_train, y_test = prepare_data('train_satisfaction.csv')
 model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 def get_false_positive_rate(y_true, y_pred):
     conf_matrix = confusion_matrix(y_true, y_pred)
-```
-
-return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
-
-```python
+    return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
 fpr_score = make_scorer(get_false_positive_rate, greater_is_better=False)
 fpr_cv = cross_val_score(model, X_train, y_train, scoring=fpr_score, cv=5).mean()
 print(fpr_cv)
@@ -2748,10 +2376,9 @@ print(fpr_cv)
 ```python
 scoring = {
     'accuracy_score': 'accuracy',
-```
-
-'false_positive_rate': my_function
+    'false_positive_rate': my_function
 }
+```
 
 Инициализируем класс GridSearchCV и передадим ему метрики из словаря scoring:
 
@@ -2762,14 +2389,13 @@ gs_multiscoring = GridSearchCV(
     n_jobs=-1,
     cv=5,
     scoring=scoring
-```
-
 )
+```
 
 Запускать поиск пока рано: если оставим всё как есть, получим ошибку ValueError. Чтобы решить проблему, используем параметр класса refit — он позволяет в конце обучить модель заново на лучших найденных гиперпараметрах.
 Есть два варианта:
-• Передать GridSearchCV аргумент refit=False. Тогда на выходе получим cv_results_ со всеми показателями, но атрибуты best_score_, best_params_, best_estimator_ будут недоступны.
-• Передать параметру refit интересующую нас метрику — одну из тех, что указали в словаре. На выходе получим cv_results_ со всеми показателями. Атрибуты best_score_, best_params_, best_estimator_ выдадут результаты для выбранной метрики.
+- Передать GridSearchCV аргумент refit=False. Тогда на выходе получим cv_results_ со всеми показателями, но атрибуты best_score_, best_params_, best_estimator_ будут недоступны.
+- Передать параметру refit интересующую нас метрику — одну из тех, что указали в словаре. На выходе получим cv_results_ со всеми показателями. Атрибуты best_score_, best_params_, best_estimator_ выдадут результаты для выбранной метрики.
 
 Создайте словарь с метриками ROC-AUC и FPR.
 Запустите автоматизированный поиск с мультискорингом. В конце обучите модель заново на метрике FPR.
@@ -2787,35 +2413,19 @@ model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 parameters = {
     'min_samples_split': range(2, 6),
     'min_samples_leaf': range(1, 6),
-```
-
-'max_depth': range(2, 6)
+    'max_depth': range(2, 6)
 }
-
-```python
 def get_false_positive_rate(y_true, y_pred):
     conf_matrix = confusion_matrix(y_true, y_pred)
-```
-
-return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
-
-```python
+    return conf_matrix[0][1] / (conf_matrix[0][1] + conf_matrix[0][0])
 fpr_score = make_scorer(
     get_false_positive_rate,
     greater_is_better=False
-```
-
 )
-
-```python
 scoring = {
     'roc_auc_score': 'roc_auc',
-```
-
-'false_positive_rate': fpr_score
+    'false_positive_rate': fpr_score
 }
-
-```python
 gs_multiscoring = GridSearchCV(
     estimator=model,
     param_grid=parameters,
@@ -2823,12 +2433,8 @@ gs_multiscoring = GridSearchCV(
     refit='false_positive_rate',
     cv=5,
     n_jobs=-1
-```
-
 )
 gs_multiscoring.fit(X_train, y_train)
-
-```python
 y_pred = gs_multiscoring.best_estimator_.predict(X_test)
 print(get_false_positive_rate(y_test, y_pred))
 ```
@@ -2844,31 +2450,19 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 gs_multiscoring_results = pd.read_csv('cv_results.csv')
 # избавьтесь от отрицательных значений метрики FPR
-```
-
 gs_multiscoring_results['mean_test_false_positive_rate'] = -1 * gs_multiscoring_results['mean_test_false_positive_rate']
-
-```python
 # сделайте сортировку по рейтингу модели: сначала FPR, затем ROC-AUC
 gs_multiscoring_results_fpr = gs_multiscoring_results.sort_values(
     by=['rank_test_false_positive_rate', 'rank_test_roc_auc_score'],
     ascending=[True, True]
-```
-
 )
-
-```python
 # отобразим первые три строки таблицы и несколько столбцов
 print(gs_multiscoring_results_fpr[[
     'params',
     'mean_test_roc_auc_score',
     'rank_test_roc_auc_score',
     'mean_test_false_positive_rate',
-```
-
-'rank_test_false_positive_rate'
-
-```python
+    'rank_test_false_positive_rate'
 ]].head(3))
 ```
 
@@ -2878,16 +2472,15 @@ print(gs_multiscoring_results_fpr[[
 Как бы ни был хорош GridSearchCV, у него есть недостатки. Перебирать большой диапазон гиперпараметров пришлось бы очень долго.
 У этой проблемы есть решение — рандомизированный (случайный) поиск гиперпараметров. С помощью RandomizedSearchCV можно перебирать не все значения гиперпараметров, а только фиксированное случайное количество.
 
-см изображение
+![GridSearch и RandomizedSearch](figures/grid-vs-random.png)
 
 GridSearchCV — это так называемый поиск по сетке. При таком поиске будут перебираться все возможные комбинации, и ни одно значение не останется без внимания. Однако такой поиск занимает много времени.
 При рандомизированном поиске RandomizedSearchCV перебираться будет только ограниченное число значений. Это займёт меньше времени, но не все возможные комбинации будут проверены. Такой поиск лучше всего применять при широких диапазонах.
 
 Так выглядит класс RandomizedSearchCV и значения его параметров по умолчанию:
 
-RandomizedSearchCV(
-
 ```python
+RandomizedSearchCV(
     estimator,
     param_distributions,
     scoring=None,
@@ -2895,30 +2488,29 @@ RandomizedSearchCV(
     cv=None,
     n_iter=10,
     random_state=None
+)
 ```
 
-)
 Описание параметров:
 estimator (обязательный) — инициализированная модель.
+param_distributions (обязательный) — это может быть словарь со значениями гиперпараметров (сами значения в списке):
 
 ```python
-param_distributions (обязательный) — это может быть словарь со значениями гиперпараметров (сами значения в списке):
 parameters = {
     'min_samples_split': range(2, 7),
-```
-
-'max_depth': range(2, 5)
+    'max_depth': range(2, 5)
 }
+```
 
 Также можно передавать распределение:
 
 ```python
 from scipy.stats import uniform
 parameters = {
+    'C': uniform(loc=0, scale=1)
+}
 ```
 
-'C': uniform(loc=0, scale=1)
-}
 В этом случае гиперпараметры не ограничиваются только значениями из списка. Они выбираются случайно из указанного распределения.
 scoring — метрика, которая будет считаться на обученных моделях. По умолчанию — accuracy.
 n_jobs — количество вычислительных мощностей. Чтобы считалось быстрее, указывают -1.
@@ -2956,12 +2548,9 @@ model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 parameters = {
     'min_samples_split': range(2, 6),
     'min_samples_leaf': range(1, 6),
-```
-
-'max_depth': range(2, 6)
+    'max_depth': range(2, 6)
 }
 
-```python
 # Инициализируйте класс для автоматизированного случайного поиска:
 # значение кросс-валидации 5, метрика roc-auc и n_jobs=-1.
 rs = RandomizedSearchCV(
@@ -2971,17 +2560,11 @@ rs = RandomizedSearchCV(
     cv=5,
     scoring='roc_auc',
     random_state=RANDOM_STATE
-```
-
 )
 
-```python
 # запустите поиск гиперпараметров
-```
-
 rs.fit(X_train, y_train)
 
-```python
 # считаем, сколько секунд прошло с начала запуска
 rs_search_time = time.time() - start
 print(f'Search time:{rs_search_time}')
@@ -2996,39 +2579,38 @@ print('ROC-AUC', rs.best_score_)
 
 Хочется иметь инструмент, который не будет обучать все возможные модели на всех значениях гиперпараметров, как GridSearchCV, и не будет каждый раз случайно выбирать комбинации гиперпараметров, как RandomizedSearchCV. Такой инструмент есть — это OptunaSearchCV, который использует байесовскую оптимизацию.
 
-см изображение
+![Байесовская оптимизация](figures/bayes-1.png)
 
 Можно копать в случайном порядке, но это непродуктивно и медленно. Или воспользоваться байесовской оптимизацией — при такой оптимизации отслеживаются прошлые результаты расчёта функции.
 
 В качестве первой точки для раскопок можем взять любую — вероятность найти максимальное количество золота везде одинаковая. Это показывает зелёный прямоугольник с прямой. Он также показывает неопределённость, или дисперсию результатов:
 
-см изображение
+![Суррогатная функция](figures/bayes-1.png)
 
 Зелёная прямая на графике называется суррогатной (временной, промежуточной) для целевой функции, которая на графике обозначена фиолетовой кривой. Суррогатная модель сейчас вообще не похожа на фиолетовую кривую, но наша задача это исправить.
 Начинаем раскопки: берём случайную первую точку, которая на графике отображена чёрным. Копаем, но золота не так много, поэтому пересчитываем вероятности найти золото в других местах.
 В чёрной точке неопределённости, или дисперсии, уже нет. Теперь мы точно знаем, сколько золота там есть. Суррогатная функция тем временем изменилась. Мы точно знаем, что в чёрной точке суррогатная функция равна целевой, но про другие точки мы всё ещё ничего не знаем.
 
-см изображение
+![После первой точки](figures/bayes-2.png)
 
 Сделаем ещё пару попыток: суррогатная функция становится чуть ближе к целевой:
 
-см изображение
+![Суррогат ближе к целевой](figures/bayes-3.png)
 
 Копаем снова, и суррогатная функция стала ещё больше похожа на целевую:
 
-см изображение
+![Ещё ближе](figures/bayes-4.png)
 
-## Как узнать, какой
-
+Как узнать, какой
 x
 x выбирать для раскопок? Для этого потребуется функция сбора (англ. acquisition function). Это функция, с помощью которой исследуется пространство поиска новой оптимальной точки. Функция сбора помогает улучшить суррогатную модель и выбрать следующее значение.
 На схеме ниже функция сбора — это красная кривая под основным графиком с целевой и суррогатной функциями. Наибольшее значение функции сбора означает, что неопределённость в этой точке максимальна, а значит, максимальна вероятность выбрать эту точку следующей.
 
-см изображение
+![Функция сбора](figures/bayes-5.png)
 
 Хотелось бы ещё больше позаниматься золотодобычей, но перейдём к гиперпараметрам:
-• w — гиперпараметры модели;
-• функция g(w) — значение метрики качества при кросс-валидации модели.
+- w — гиперпараметры модели;
+- функция g(w) — значение метрики качества при кросс-валидации модели.
 Распишем алгоритм байесовской оптимизации:
 1 Указываем диапазон или распределение гиперпараметров.
 2 Строим суррогатную функцию распределения.
@@ -3065,23 +2647,20 @@ oscv = OptunaSearchCV(
     cv=None,
     n_trials=None,
 random_state=RANDOM_STATE
-```
-
 )
+```
 
 Параметры класса:
 estimator (обязательный) — инициализированная модель.
-
-```python
 param_distributions (обязательный) — распределение гиперпараметров. Его можно взять из модуля distributions в optuna. Будем пользоваться распределением с целыми числами:
 
+```python
 from optuna import distributions
 parameters = {
     'max_depth': distributions.IntDistribution(1, 10),
-```
-
-'min_samples_split': distributions.IntDistribution(2, 10)
+    'min_samples_split': distributions.IntDistribution(2, 10)
 }
+```
 
 Все числа диапазона включаются в распределение (значение 10 тоже включено).
 
@@ -3105,12 +2684,11 @@ from optuna import visualization
 fig = visualization.plot_contour(
     oscv.study_,
 params=['min_samples_split', 'max_depth']
-```
-
 )
 fig.show()
+```
 
-см изображение
+![История Optuna](figures/optuna-history.png)
 
 Подберите гиперпараметры с помощью байесовской оптимизации для задачи про пассажирские перевозки.
 
@@ -3129,12 +2707,8 @@ model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 parameters = {
     'min_samples_split': distributions.IntDistribution(2, 5),
     'min_samples_leaf': distributions.IntDistribution(1, 5),
-```
-
-'max_depth': distributions.IntDistribution(2, 5)
+    'max_depth': distributions.IntDistribution(2, 5)
 }
-
-```python
 oscv = OptunaSearchCV(
     estimator=model,
     param_distributions=parameters,
@@ -3143,12 +2717,8 @@ oscv = OptunaSearchCV(
     n_trials=20,
     n_jobs=-1,
     random_state=RANDOM_STATE
-```
-
 )
 oscv.fit(X_train, y_train)
-
-```python
 oscv_search_time = time.time() - start
 print(f'Search time:{oscv_search_time}')
 print('Гиперпараметры', oscv.best_params_)
@@ -3159,11 +2729,9 @@ print('ROC-AUC', oscv.best_score_)
 Байесовская оптимизация — это итерационный метод. На каждой итерации определяется, в какой следующей точке с наибольшей вероятностью можно получить лучший результат.
 Применять байесовскую оптимизацию можно с помощью инструмента OptunaSearchCV из модуля optuna.integration. У класса почти те же уже знакомые атрибуты, только информация о подборе выводится методом trials_dataframe().
 
-## GridSearchCV - поиск по сетке
-
-## RandomizedSearchCV - случайный поиск
-
-## OptunaSearchCV - байесовская оптимизация
+GridSearchCV - поиск по сетке
+RandomizedSearchCV - случайный поиск
+OptunaSearchCV - байесовская оптимизация
 
 Способ Суть способа Диапазон значений гиперпараметров Скорость работы Ускорение вычислений и воспроизводимость
 GridSearchCV Осуществляет перебор по сетке, все указанные значения гиперпараметров будут перебираться Лучше перебирать небольшие диапазоны значений Занимает больше времени по сравнению с другими способами Можно ускорить вычисления с помощью n_jobs=-1
@@ -3176,15 +2744,9 @@ OptunaSearchCV Осуществляет перебор гиперпарамет�
 import pandas as pd
 from sklearn.model_selection import (
     train_test_split,
-```
-
-GridSearchCV,
-
-##     RandomizedSearchCV
-
+    GridSearchCV,
+    RandomizedSearchCV
 )
-
-```python
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
 import time
@@ -3198,19 +2760,11 @@ model = DecisionTreeClassifier(random_state=RANDOM_STATE)
 gs_rs_parameters = {
     'min_samples_split': range(2, 6),
     'min_samples_leaf': range(1, 6),
-```
-
-'max_depth': range(2, 6)
+    'max_depth': range(2, 6)
 }
-
-```python
 start = time.time()
 gs = GridSearchCV(model, gs_rs_parameters, cv=5, scoring='roc_auc', n_jobs=-1)
-```
-
 gs.fit(X_train, y_train)
-
-```python
 gs_search_time = time.time() - start
 start = time.time()
 rs = RandomizedSearchCV(
@@ -3220,22 +2774,14 @@ rs = RandomizedSearchCV(
     scoring='roc_auc',
     n_jobs=-1,
     random_state=RANDOM_STATE
-```
-
 )
 rs.fit(X_train, y_train)
-
-```python
 rs_search_time = time.time() - start
 oscv_parameters = {
     'min_samples_split': distributions.IntDistribution(2, 5),
     'min_samples_leaf': distributions.IntDistribution(1, 5),
-```
-
-'max_depth': distributions.IntDistribution(2, 5)
+    'max_depth': distributions.IntDistribution(2, 5)
 }
-
-```python
 start = time.time()
 oscv = OptunaSearchCV(
     estimator=model,
@@ -3244,33 +2790,25 @@ oscv = OptunaSearchCV(
     cv=5,
     scoring='roc_auc',
     random_state=RANDOM_STATE
-```
-
 )
 oscv.fit(X_train, y_train)
-
-```python
 oscv_search_time = time.time() - start
 result = pd.DataFrame([
     [gs.best_score_, gs.best_params_, gs_search_time],
     [rs.best_score_, rs.best_params_, rs_search_time],
-```
-
-[oscv.best_score_, oscv.best_params_, oscv_search_time]
+    [oscv.best_score_, oscv.best_params_, oscv_search_time]
 ])
-
-```python
 result.index = ['GridSearchCV', 'RandomizedSearchCV', 'OptunaSearchCV']
 result.columns = ['best_score_', 'best_params_', 'Search time']
 print(result)
 ```
 
 Вспомните, какие модели из тех, что вы изучили, можно интерпретировать?
-• Метод k-ближайших соседей
+- Метод k-ближайших соседей
 Интерпретировать результат kNN не так сложно: достаточно изучить признаковое описание ближайших соседей.
-• Логистическая регрессия
+- Логистическая регрессия
 Коэффициенты модели можно интерпретировать как степень влияния каждого признака на изменение целевой переменной.
-• Линейная регрессия
+- Линейная регрессия
 Коэффициенты модели можно интерпретировать как степень влияния каждого признака на изменение целевой переменной.
 
 Чтобы оценить вклад каждого признака в предсказание, возьмём обученную модель дерева решений и вызовем атрибут feature_importances_ (англ. «важности признаков»):
@@ -3287,22 +2825,14 @@ model = DecisionTreeClassifier(
     min_samples_leaf=1,
     min_samples_split=2,
     random_state=RANDOM_STATE
-```
-
 )
 model.fit(X_train, y_train)
-
-```python
 # сформируйте таблицу важности признаков
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     })
-
-```python
 # отсортируйте таблицу от большего значения важности к меньшему и выведите результат
 feature_importances = feature_importances.sort_values(by='Importance', ascending=False)
 print(feature_importances)
@@ -3324,35 +2854,23 @@ model = DecisionTreeClassifier(
     min_samples_leaf=1,
     min_samples_split=2,
     random_state=RANDOM_STATE
-```
-
 )
 model.fit(X_train, y_train)
-
-```python
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     }).sort_values('Importance', ascending=False)
-
-```python
 plt.figure(figsize=(12, 6))
 ax = sns.barplot(
     x='Importance',
     y='Feature',
     data=feature_importances,
     palette='viridis'
-```
-
 )
 ax.set_title('Важность признаков', fontsize=16)
 ax.set_xlabel('Важность (доля)', fontsize=14)
 ax.set_ylabel('Признак', fontsize=14)
-
-```python
 plt.show()
 ```
 
@@ -3364,11 +2882,7 @@ text_representation = export_text(
     model,
     feature_names=list(X_train.columns),
     max_depth=3
-```
-
 )
-
-```python
 print(text_representation)
 ```
 
@@ -3393,27 +2907,26 @@ print(text_representation)
 from sklearn.tree import plot_tree
 import matplotlib.pyplot as plt
 plt.figure(figsize=(60, 8))
-```
-
 plot_tree(model, max_depth=3, filled=True, impurity=False, feature_names=X_train.columns)
+```
 
 GridSearchCV — поиск по сетке, находит лучшую модель на всех комбинациях гиперпараметров; RandomizedSearchCV — случайный поиск, находит лучшую модель на случайном количестве комбинаций гиперпараметров; OptunaSearchCV — байесовская оптимизация, находит лучшую модель в той области значений гиперпараметров, в которой большая метрика вероятнее.
 
-• len(df_new['id'].unique())
+- len(df_new['id'].unique())
 Методом unique() получим список уникальных id, а с помощью функции len() посчитаем их.
-• df_new['id'].nunique()
+- df_new['id'].nunique()
 Методом nunique() получим количество уникальных id.
 
-• df['id'][~df['id'].isin(df_new['id'])]
+- df['id'][~df['id'].isin(df_new['id'])]
 Методом isin() получим id из датасета df, которые также встречаются в df_new. Чтобы «перевернуть» условие — найти id, которые не встречаются в df_new, — используем оператор ~.
 
-• pd.concat()
+- pd.concat()
 Функция concat() позволяет соединять таблицы вдоль заданной оси.
-• pd.merge()
+- pd.merge()
 Функция merge() позволяет соединять таблицы по заданным столбцам или индексам.
-• merge()
+- merge()
 Метод merge() позволяет соединять таблицы по заданным столбцам или индексам.
-• join()
+- join()
 Метод join() позволяет соединять таблицы по индексам.
 
 Теперь соедините таблицы методом join():
@@ -3447,29 +2960,21 @@ df_full = pd.read_csv('railway_full.csv')
 X = df_full.drop(['Удовлетворён предоставленной услугой'], axis=1)
 y = df_full['Удовлетворён предоставленной услугой']
 X_train, X_test, y_train, y_test = train_test_split(
-```
-
-X,
-
-```python
+    X,
     y,
     test_size=TEST_SIZE,
     random_state=RANDOM_STATE,
     stratify=y)
 cols_ohe = [
-    'Пол', 'Путешествует с детьми', 'Путешествует по работе',
 ```
 
-'Тип', 'Оценка качества питания'
+'Пол', 'Путешествует с детьми', 'Путешествует по работе',
+    'Тип', 'Оценка качества питания'
 ]
 
 ```python
 oh_encoder = OneHotEncoder(handle_unknown='ignore', drop='first', sparse=False)
-```
-
 oh_encoder.fit(X_train[cols_ohe])
-
-```python
 encoder_col_names = oh_encoder.get_feature_names_out()
 X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
 X_test[encoder_col_names] = oh_encoder.transform(X_test[cols_ohe])
@@ -3506,46 +3011,33 @@ def prepare_data(filename):
     df_full = pd.read_csv(filename)
     X = df_full.drop(['Удовлетворён предоставленной услугой'], axis=1)
     y = df_full['Удовлетворён предоставленной услугой']
-```
-
-X_train, X_test, y_train, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X,
-
-```python
         y,
         test_size=TEST_SIZE,
         random_state=RANDOM_STATE,
         stratify=y)
     cols_ohe = [
-        'Пол', 'Путешествует с детьми', 'Путешествует по работе',
 ```
 
-'Тип', 'Оценка качества питания'
+'Пол', 'Путешествует с детьми', 'Путешествует по работе',
+        'Тип', 'Оценка качества питания'
     ]
 
 ```python
     oh_encoder = OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False)
-```
-
-oh_encoder.fit(X_train[cols_ohe])
-
-```python
+    oh_encoder.fit(X_train[cols_ohe])
     encoder_col_names = oh_encoder.get_feature_names_out()
-```
-
-X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
+    X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
     X_test[encoder_col_names] = oh_encoder.transform(X_test[cols_ohe])
     # удаляем преобразованные признаки
-
-```python
     X_train = X_train.drop(cols_ohe, axis=1)
     X_test = X_test.drop(cols_ohe, axis=1)
+    return X_train, X_test, y_train, y_test
 ```
 
-return X_train, X_test, y_train, y_test
-
 Правильный способ справиться с ошибкой, которая вызвана появлением новой категории в признаке:
-• Изменить параметр handle_unknown в OrdinalEncoder.
+- Изменить параметр handle_unknown в OrdinalEncoder.
 Параметр handle_unknown по умолчанию равен 'error', значит, при появлении новых категорий будет ошибка. Нужно поменять это значение, чтобы ошибок не было.
 
 Если использовать аргумент handle_unknown='use_encoded_value' (англ. «использовать закодированное значение»), то параметру unknown_value нужно также передать значение, которым будет закодирована неизвестная категория. При этом новое значение не должно пересекаться с преобразованными категориями. Самые распространённые значения — -1 и np.nan.
@@ -3555,7 +3047,7 @@ example_test['ordinal'] = ordinal_encoder.transform(example_test)
 print(example_test)
 ```
 
-## Проведите кодирование с помощью OrdinalEncoder
+Проведите кодирование с помощью OrdinalEncoder
 
 ```python
 import pandas as pd
@@ -3573,11 +3065,7 @@ cols_ordinal = [
 ordinal_encoder = OrdinalEncoder(
     handle_unknown='use_encoded_value',
     unknown_value=np.nan
-```
-
 )
-
-```python
 X_train[cols_ordinal] = ordinal_encoder.fit_transform(X_train[cols_ordinal])
 X_test[cols_ordinal] = ordinal_encoder.transform(X_test[cols_ordinal])
 # выводим пропуски в данных
@@ -3590,21 +3078,24 @@ print(X_test.isna().sum())
 simple_imputer = SimpleImputer(
     missing_values=np.nan,
     strategy='most_frequent'
+)
 ```
 
-)
 missing_values — указываем, что считать пропуском, например np.nan.
 strategy — стратегия заполнения пропусков: среднее mean, медиана median, мода most_frequent или константа constant. В случае с категориальным признаком логичнее использовать моду — самое частотное значение в выборке.
 
 Чтобы обучить модель, нужно вызвать метод fit() и передать ему тренировочные данные, на которых посчитается мода:
+
+```python
 simple_imputer.fit(example_train)
+```
+
 Посчитанную моду можно узнать с помощью атрибута statistics_:
 
 ```python
 print(simple_imputer.statistics_)
-```
-
 array(['нормально', 0.0], dtype=object)
+```
 
 Чтобы перезаписать признаки, потребуются наименования столбцов, которые передали SimpleImputer, — их можно узнать с помощью атрибута feature_names_in_:
 
@@ -3621,7 +3112,7 @@ example_test[simple_imputer.feature_names_in_] = simple_imputer.transform(exampl
 print(example_test)
 ```
 
-## Заполните пропуски в датасете
+Заполните пропуски в датасете
 
 ```python
 import pandas as pd
@@ -3640,27 +3131,15 @@ cols_ordinal = [
 ordinal_encoder = OrdinalEncoder(
     handle_unknown='use_encoded_value',
     unknown_value=np.nan
-```
-
 )
-
-```python
 X_train[cols_ordinal] = ordinal_encoder.fit_transform(X_train[cols_ordinal])
 X_test[cols_ordinal] = ordinal_encoder.transform(X_test[cols_ordinal])
 imputer = SimpleImputer(
     missing_values=np.nan,
     strategy='most_frequent'
-```
-
 )
-
-```python
 # посчитайте моду на тренировочной выборке
-```
-
 imputer.fit(X_train)
-
-```python
 # заполните пропуск в тестовых данных на моду
 X_test[imputer.feature_names_in_] = imputer.transform(X_test)
 print(X_test.isna().sum())
@@ -3680,10 +3159,10 @@ print(X_test.isna().sum())
 ```python
 ordinal_encoder_ordered = OrdinalEncoder(
     categories=[
-        ['плохо', 'хорошо'],
 ```
 
-['нормально', 'хорошо']
+['плохо', 'хорошо'],
+        ['нормально', 'хорошо']
     ]
 )
 Список ['плохо', 'хорошо'] относится к первому признаку Оценка комфортности времени отправления/прибытия. В нашем упрощённом примере у признака всего два уникальных значения категорий, и в списке они расположены по возрастанию. Список ['нормально', 'хорошо'] тоже отсортирован. Он относится к признаку Общая оценка качества предоставленной услуги.
@@ -3697,29 +3176,25 @@ from sklearn.preprocessing import OrdinalEncoder
 RANDOM_STATE = 42
 X_train, X_test, y_train, y_test = prepare_data('railway_full.csv')
 ordered_cols = [
-    'Оценка комфортности времени отправления/прибытия',
 ```
 
-'Общая оценка качества предоставленной услуги'
+'Оценка комфортности времени отправления/прибытия',
+    'Общая оценка качества предоставленной услуги'
 ]
 
 ```python
 ordered_encoder = OrdinalEncoder(
     categories=[
-        ['плохо', 'нормально', 'хорошо'],
 ```
 
-['плохо', 'нормально', 'хорошо']
+['плохо', 'нормально', 'хорошо'],
+        ['плохо', 'нормально', 'хорошо']
+    ],
 
 ```python
-    ],
     handle_unknown='use_encoded_value',
     unknown_value=np.nan
-```
-
 )
-
-```python
 X_train[ordered_cols] = ordered_encoder.fit_transform(X_train[ordered_cols])
 X_test[ordered_cols] = ordered_encoder.transform(X_test[ordered_cols])
 print(X_test.isna().sum())
@@ -3745,31 +3220,23 @@ parameters = {
     'min_samples_split': range(2, 11),
     'min_samples_leaf': range(1, 11),
     'max_depth': range(2, 11),
-```
-
 }
-
-```python
 rs_no_leak = RandomizedSearchCV(
     model,
     parameters,
     n_jobs=-1,
     scoring='roc_auc',
     random_state=RANDOM_STATE
-```
-
 )
 rs_no_leak.fit(X_train_no_leak, y_train)
-
-```python
 print(f'Best score: {rs_no_leak.best_score_}, best params: {rs_no_leak.best_params_}')
 ```
 
 Утечка данных предполагает то, что во время обучения мы используем информацию, которая не будет доступна во время прогнозирования
 
 Приведём ещё несколько примеров утечки целевого признака:
-• По характеристикам человека мы хотим предсказать, воспользуется ли он или она путёвкой на море. Это задача бинарной классификации: 0 — не воспользуется, 1 — воспользуется. Допустим, при обучении мы используем признак Количество экскурсий. Если в этом признаке 0, человек точно не ездил на море. Однако информацию об этом признаке мы можем получить только после поездки. Поэтому использовать признак Количество экскурсий при прогнозировании нет смысла — это утечка данных.
-• По поведению пользователя на сайте хотим прогнозировать отток на следующий месяц: перестанет клиент пользоваться сайтом или нет. Задача бинарной классификации: 1 — перестанет пользоваться, 0 — не перестанет. Допустим, мы делаем прогноз на июнь и при обучении используем признак Количество лайков за июнь. Все клиенты, которые поставили хотя бы один лайк в июне, не перестали пользоваться сайтом в этом месяце. Значит, такие пользователи будут отнесены к классу 0. Получается, что нельзя использовать признак Количество лайков за июнь для предсказания оттока в июне — это утечка данных.
+- По характеристикам человека мы хотим предсказать, воспользуется ли он или она путёвкой на море. Это задача бинарной классификации: 0 — не воспользуется, 1 — воспользуется. Допустим, при обучении мы используем признак Количество экскурсий. Если в этом признаке 0, человек точно не ездил на море. Однако информацию об этом признаке мы можем получить только после поездки. Поэтому использовать признак Количество экскурсий при прогнозировании нет смысла — это утечка данных.
+- По поведению пользователя на сайте хотим прогнозировать отток на следующий месяц: перестанет клиент пользоваться сайтом или нет. Задача бинарной классификации: 1 — перестанет пользоваться, 0 — не перестанет. Допустим, мы делаем прогноз на июнь и при обучении используем признак Количество лайков за июнь. Все клиенты, которые поставили хотя бы один лайк в июне, не перестали пользоваться сайтом в этом месяце. Значит, такие пользователи будут отнесены к классу 0. Получается, что нельзя использовать признак Количество лайков за июнь для предсказания оттока в июне — это утечка данных.
 
 Обнаружить проблему утечки можно ещё одним способом — изучив матрицу корреляции.
 Используем библиотеку phik для подсчёта корреляции между признаками разных типов данных. Установим библиотеку:
@@ -3781,9 +3248,9 @@ import phik
 interval_cols = ['Возраст', 'Расстояние']
 phik_overview = X_train.join(y_train).phik_matrix(interval_cols=interval_cols)
 print(phik_overview.shape)
+(21, 21)
 ```
 
-(21, 21)
 Код выведет размер получившейся матрицы: столько признаков у нас было (один из них целевой).
 Построить матрицу корреляции можно также с помощью функции phik_matrix():
 
@@ -3814,11 +3281,10 @@ plot_correlation_matrix(
     title=r'correlation $\phi_K$',
     fontsize_factor=1.5,
     figsize=(20, 15)
+)
 ```
 
-)
-
-см изображение
+![Матрица корреляций](figures/corr-heatmap.png)
 
 Видно, что у целевого признака Удовлетворён предоставленной услугой и признака Общая оценка качества предоставленной услуги корреляция равна 1.00. Теперь никто не оспорит тот факт, что признак с оценкой содержит всю информацию из целевого признака. Выход есть — нужно его удалить и не обучать на нём модель.
 
@@ -3835,21 +3301,13 @@ model = DecisionTreeClassifier(
     min_samples_leaf=10,
     max_depth=7,
     random_state=RANDOM_STATE
-```
-
 )
 model.fit(X_train, y_train)
-
-```python
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     })
-
-```python
 print(feature_importances.sort_values('Importance', ascending=False))
 ```
 
@@ -3868,9 +3326,8 @@ plot_correlation_matrix(
     title=r'correlation $\phi_K$',
     fontsize_factor=1.5,
     figsize=(20, 15)
-```
-
 )
+```
 
 Итак, есть три пары признаков с высокой корреляцией:
 Оценка качества питания_отсутствует и Питание включено,
@@ -3890,18 +3347,10 @@ model = DecisionTreeClassifier(
     min_samples_leaf=10,
     min_samples_split=9,
     random_state=RANDOM_STATE
-```
-
 )
-
-```python
 score = cross_val_score(
     model,
-```
-
-X_train,
-
-```python
+    X_train,
     y_train,
     scoring='roc_auc',
     n_jobs=-1).mean()
@@ -3911,34 +3360,18 @@ X_train = X_train.drop(columns_to_drop, axis=1)
 X_test = X_test.drop(columns_to_drop, axis=1)
 score = cross_val_score(
     model,
-```
-
-X_train,
-
-```python
+    X_train,
     y_train,
     scoring='roc_auc',
     n_jobs=-1
-```
-
 ).mean()
-
-```python
 print('После удаления признаков с высокой корреляцией', score)
-```
-
 model.fit(X_train, y_train)
-
-```python
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     })
-
-```python
 print(feature_importances.sort_values('Importance', ascending=False))
 ```
 
@@ -3958,18 +3391,10 @@ model = DecisionTreeClassifier(
     min_samples_leaf=10,
     min_samples_split=9,
     random_state=RANDOM_STATE
-```
-
 ).fit(X_train, y_train)
-
-```python
 score = cross_val_score(
     model,
-```
-
-X_train,
-
-```python
+    X_train,
     y_train,
     scoring='roc_auc',
     n_jobs=-1).mean()
@@ -3977,19 +3402,11 @@ print('На всех признаках', score)
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     })
-
-```python
 features_to_drop = feature_importances[
-```
-
-feature_importances['Importance'] < 0.02
+    feature_importances['Importance'] < 0.02
 ]['Feature'].to_list()
-
-```python
 X_train_less_features = X_train.drop(features_to_drop, axis=1)
 X_test_less_features = X_test.drop(features_to_drop, axis=1)
 model = DecisionTreeClassifier(
@@ -3997,26 +3414,14 @@ model = DecisionTreeClassifier(
     min_samples_leaf=10,
     min_samples_split=9,
     random_state=RANDOM_STATE
-```
-
 )
-
-```python
 score = cross_val_score(
     model,
-```
-
-X_train_less_features,
-
-```python
+    X_train_less_features,
     y_train,
     scoring='roc_auc',
     n_jobs=-1
-```
-
 ).mean()
-
-```python
 print('На признаках с важностью более 0.02', score)
 ```
 
@@ -4030,132 +3435,99 @@ from sklearn.impute import SimpleImputer
 RANDOM_STATE = 42
 TEST_SIZE = 0.25
 def prepare_data(X, y):
-```
-
-X_train, X_test, y_train, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X,
-
-```python
         y,
         test_size=TEST_SIZE,
         random_state=RANDOM_STATE,
         stratify=y)
+    # создаём список со строковыми категориями для кодирования OHE
+    cols_ohe = [
 ```
 
-# создаём список со строковыми категориями для кодирования OHE
+'Пол', 'Путешествует с детьми', 'Путешествует по работе',
+        'Тип', 'Оценка качества питания'
+    ]
 
 ```python
-    cols_ohe = [
-        'Пол', 'Путешествует с детьми', 'Путешествует по работе',
-```
-
-'Тип', 'Оценка качества питания'
-    ]
     # создаём экземпляр класса OneHotEncoder для кодирования
     # игнорируем неизвестные категории
-
-```python
     oh_encoder = OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False)
-```
-
-# обучаем OneHotEncoder на категориальных признаках из тренировочной выборки
+    # обучаем OneHotEncoder на категориальных признаках из тренировочной выборки
     oh_encoder.fit(X_train[cols_ohe])
     # сохраняем в переменной encoder_col_names список названий новых столбцов
-
-```python
     encoder_col_names = oh_encoder.get_feature_names_out()
-```
-
-# преобразовываем категориальные переменные в тренировочной и тестовой выборках
+    # преобразовываем категориальные переменные в тренировочной и тестовой выборках
     X_train[encoder_col_names] = oh_encoder.transform(X_train[cols_ohe])
     X_test[encoder_col_names] = oh_encoder.transform(X_test[cols_ohe])
     # удаляем преобразованные признаки
-
-```python
     X_train = X_train.drop(cols_ohe, axis=1)
     X_test = X_test.drop(cols_ohe, axis=1)
-```
-
-# создаём список со строковыми категориями для кодирования OrdinalEncoder
-
-```python
+    # создаём список со строковыми категориями для кодирования OrdinalEncoder
     cols_ordinal = [
 ```
 
 'Оценка комфортности покупки билета онлайн', 'Оценка качества wifi'
     ]
-    # создаём экземпляр класса OrdinalEncoder для кодирования
-    # кодируем неизвестные категории пропусками
 
 ```python
+    # создаём экземпляр класса OrdinalEncoder для кодирования
+    # кодируем неизвестные категории пропусками
     ordinal_encoder = OrdinalEncoder(
         handle_unknown='use_encoded_value',
         unknown_value=np.nan
-```
-
-)
+    )
     # обучаем OrdinalEncoder на выбранных признаках на тренировочной выборке
     # преобразовываем тренировочную выборку
     X_train[cols_ordinal] = ordinal_encoder.fit_transform(X_train[cols_ordinal])
     # преобразовываем тестовую выборку
     X_test[cols_ordinal] = ordinal_encoder.transform(X_test[cols_ordinal])
     # создаём экземпляр класса для заполнения пропусков на моду
-
-```python
     imputer = SimpleImputer(
         missing_values=np.nan,
         strategy='most_frequent'
-```
-
-)
+    )
     # считаем моду на тренировочной выборке
     imputer.fit(X_train)
     # заполняем пропуск в тестовых данных на моду
     X_test[imputer.feature_names_in_] = imputer.transform(X_test)
     # создаём список с ранговыми категориями для кодирования OrdinalEncoder
-
-```python
     ordered_cols = [
 ```
 
 'Оценка комфортности времени отправления/прибытия'
     ]
-    # создаём экземпляр класса OrdinalEncoder для упорядоченного кодирования
-    # кодируем неизвестные категории пропусками
 
 ```python
+    # создаём экземпляр класса OrdinalEncoder для упорядоченного кодирования
+    # кодируем неизвестные категории пропусками
     ordered_encoder = OrdinalEncoder(
         categories=[
 ```
 
 ['плохо', 'нормально', 'хорошо']
+        ],
 
 ```python
-        ],
         handle_unknown='use_encoded_value',
         unknown_value=np.nan
-```
-
-)
+    )
     # обучаем OrdinalEncoder на выбранных признаках на тренировочной выборке
     # преобразовываем тренировочную выборку
     X_train[ordered_cols] = ordered_encoder.fit_transform(X_train[ordered_cols])
     X_test[ordered_cols] = ordered_encoder.transform(X_test[ordered_cols])
     # создаём список столбцов с высокой корреляцией
-
-```python
     columns_to_drop = ['Питание включено', 'Наличие wifi',
 ```
 
 'Покупка билета онлайн', 'Удовлетворён предоставленной услугой']
-    # удаляем признаки с высокой корреляцией
 
 ```python
+    # удаляем признаки с высокой корреляцией
     X_train = X_train.drop(columns_to_drop, axis=1)
     X_test = X_test.drop(columns_to_drop, axis=1)
+    return X_train, X_test, y_train, y_test
 ```
-
-return X_train, X_test, y_train, y_test
 
 Метрика ROC-AUC не подходит для мультиклассовой классификации, а ROC-AUC с настройкой ovo - подходит, «один против одного»
 
@@ -4170,11 +3542,7 @@ return X_train, X_test, y_train, y_test
 ```python
 from sklearn.preprocessing import LabelEncoder
 label_encoder = LabelEncoder()
-```
-
 label_encoder.fit(example_train)
-
-```python
 y_train = label_encoder.transform(example_train)
 y_test = label_encoder.transform(example_test)
 ```
@@ -4203,13 +3571,12 @@ print(label_encoder.inverse_transform(pred_classes))
 К признакам для построения модели нужно применять другие кодировщики, с которыми вы уже знакомы.
 Кажется, что LabelEncoder очень похож на OrdinalEncoder, но между ними всё-таки есть различия:
 
-## Тоже правильный ответ
-
+Тоже правильный ответ
 Кодировщику LabelEncoder за раз можно передать только один столбец вида: (количество объектов,).
-• LabelEncoder применяется для кодирования целевых значений, поэтому на вход ему передают одномерные данные. Чтобы закодировать входные признаки, пришлось бы использовать цикл. Это ни к чему, если есть другие подходящие кодировщики.
-• В кодировщике OrdinalEncoder порядок категорий можно получить по атрибуту categories_.
+- LabelEncoder применяется для кодирования целевых значений, поэтому на вход ему передают одномерные данные. Чтобы закодировать входные признаки, пришлось бы использовать цикл. Это ни к чему, если есть другие подходящие кодировщики.
+- В кодировщике OrdinalEncoder порядок категорий можно получить по атрибуту categories_.
 Атрибут categories_ вернёт двумерный массив с исходными наименованиями категорий.
-• В кодировщике LabelEncoder значения для кодирования получают по атрибуту classes_.
+- В кодировщике LabelEncoder значения для кодирования получают по атрибуту classes_.
 Атрибут classes_ вернёт одномерный массив с исходными наименованиями классов.
 
 Инициализируйте LabelEncoder. Затем обучите кодировщик и преобразуйте тренировочные данные — сделать это нужно одной строкой.
@@ -4233,23 +3600,15 @@ parameters = {
     'min_samples_split': range(2, 11),
     'min_samples_leaf': range(1, 11),
     'max_depth': range(2, 11),
-```
-
 }
-
-```python
 rs = RandomizedSearchCV(
     model,
     parameters,
     n_jobs=-1,
     scoring='roc_auc_ovo',
     random_state=RANDOM_STATE
-```
-
 )
 rs.fit(X_train, y_train)
-
-```python
 print(f'Best score: {rs.best_score_}, best params: {rs.best_params_}')
 ```
 
@@ -4258,7 +3617,7 @@ print(f'Best score: {rs.best_score_}, best params: {rs.best_params_}')
 
 Существуют споосбы создания новых признаков. Этот процесс носит гордое название feature engineering (англ. «разработка признаков»).
 
-• Биннинг
+- Биннинг
 Под биннингом понимают ранжирование числового признака.
 Чтобы это сделать, можно написать собственную функцию с условиями:
 
@@ -4267,28 +3626,24 @@ def to_category(ages_list):
     age_category = []
     for age in ages_list:
         if age < 40:
+            age_category.append('молодой')
 ```
 
-age_category.append('молодой')
+elif 40 <= age < 60:
 
 ```python
-        elif 40 <= age < 60:
-```
-
-age_category.append('средний')
-
-```python
+            age_category.append('средний')
         else:
+            age_category.append('пожилой')
+    return age_category
 ```
 
-age_category.append('пожилой')
-    return age_category
 Также биннинг можно выполнить с помощью функции cut() в pandas:
 Параметр bins управляет количеством категорий.
 Аргумент labels=False позволяет сразу вернуть численные категории.
 df['Численная категория'] = pd.cut(df['Возраст'], bins=3, labels=False)
 
-• Полиномизация
+- Полиномизация
 Это возведение признака в степень. Лучше всего этот подход работает на простых линейных моделях, которые не способны запоминать сложные закономерности.
 Выполнить полиномизацию можно с помощью класса PolynomialFeatures из модуля preprocessing в sklearn.
 Усложним признак с помощью полиномизации до второй степени:
@@ -4303,17 +3658,17 @@ X_poly = poly.transform(X)
 pd.DataFrame(X_poly, columns=['feature^0', 'feature^1', 'feature^2'])
 ```
 
-• Применение функции к признакам
+- Применение функции к признакам
 В рамках этого подхода к существующим признакам применяют некоторую функцию. К примеру, можно взять признаки с оценками сервисов в поезде и посчитать, сколько низких оценок выставил пассажир. Так получится новая характеристика.
 В новый признак войдёт число, которое покажет, сколько услуг пассажиру не понравилось. Отберём услуги с оценками 1 и 2:
 
 ```python
 columns_grades_num = [
-    'Оценка комфортности места',
-    'Оценка качества уборки',
 ```
 
-'Оценка качества обслуживания в пути'
+'Оценка комфортности места',
+    'Оценка качества уборки',
+    'Оценка качества обслуживания в пути'
 ]
 df_full['bad_grade_num'] = df_full[columns_grades_num].isin([1, 2]).sum(axis=1)
 
@@ -4328,46 +3683,38 @@ from sklearn.metrics import roc_auc_score
 RANDOM_STATE = 42
 df_full = pd.read_csv('railway_full.csv')
 columns_grades_num = [
-    'Оценка комфортности места',
-    'Оценка качества уборки',
 ```
 
-'Оценка качества обслуживания в пути'
+'Оценка комфортности места',
+    'Оценка качества уборки',
+    'Оценка качества обслуживания в пути'
 ]
 
 ```python
 columns_grades_str = [
-    'Оценка комфортности покупки билета онлайн',
-    'Оценка качества питания',
-    'Оценка качества wifi',
 ```
 
-'Оценка комфортности времени отправления/прибытия'
+'Оценка комфортности покупки билета онлайн',
+    'Оценка качества питания',
+    'Оценка качества wifi',
+    'Оценка комфортности времени отправления/прибытия'
 ]
 df_full['bad_grade_num'] = df_full[columns_grades_num].isin([1, 2]).sum(axis=1)
 df_full['bad_grades_str'] = df_full[columns_grades_str].isin(['плохо']).sum(axis=1)
-
-```python
 X = df_full.drop(['Общая оценка качества предоставленной услуги'], axis=1)
 y = df_full['Общая оценка качества предоставленной услуги']
+
+```python
 X_train, X_test, y_train, y_test = prepare_data(X, y)
 model = DecisionTreeClassifier(
     max_depth=8,
     min_samples_leaf=7,
     min_samples_split=4,
     random_state=RANDOM_STATE
-```
-
 ).fit(X_train, y_train)
-
-```python
 score = cross_val_score(
     model,
-```
-
-X_train,
-
-```python
+    X_train,
     y_train,
     scoring='roc_auc_ovo',
     n_jobs=-1).mean()
@@ -4375,19 +3722,11 @@ print('На всех признаках', score)
 feature_importances = pd.DataFrame(
     {
         'Feature': X_train.columns,
-```
-
-'Importance': model.feature_importances_
+        'Importance': model.feature_importances_
     })
-
-```python
 features_to_drop = feature_importances[
-```
-
-feature_importances['Importance'] < 0.02
+    feature_importances['Importance'] < 0.02
 ]['Feature'].to_list()
-
-```python
 X_train_less_features = X_train.drop(features_to_drop, axis=1)
 X_test_less_features = X_test.drop(features_to_drop, axis=1)
 model = DecisionTreeClassifier(
@@ -4395,18 +3734,10 @@ model = DecisionTreeClassifier(
     min_samples_leaf=7,
     min_samples_split=4,
     random_state=RANDOM_STATE
-```
-
 ).fit(X_train_less_features, y_train)
-
-```python
 score = cross_val_score(
     model,
-```
-
-X_train_less_features,
-
-```python
+    X_train_less_features,
     y_train,
     scoring='roc_auc_ovo',
     n_jobs=-1).mean()
@@ -4418,17 +3749,17 @@ print('На тестовых данных', score)
 
 Повысить качество модели можно, не только удаляя признаки, но и добавляя. Чтобы создать новые признаки, текущие данные обрабатывают алгоритмическими способами. Этот процесс называется feature engineering.
 Способов генерации новых признаков множество. Вот некоторые из них:
-• Биннинг — ранжирование численного признака.
-• Полиномизация — возведение признака в степень.
-• Применение функции к признакам — применение математических операций и более сложных функций к текущим признакам.
+- Биннинг — ранжирование численного признака.
+- Полиномизация — возведение признака в степень.
+- Применение функции к признакам — применение математических операций и более сложных функций к текущим признакам.
 Помимо изученных в уроке, существует ещё несколько способов:
-• Бинаризация — извлечение наиболее примечательного значения из текущего признака в новый бинарный признак.
-• Способ на основе бизнес-логики — подход, при котором признаки создаются на основе предметной области.
+- Бинаризация — извлечение наиболее примечательного значения из текущего признака в новый бинарный признак.
+- Способ на основе бизнес-логики — подход, при котором признаки создаются на основе предметной области.
 
 Одно из самых распространённых препятствий — объёмное признаковое описание. Когда входных признаков слишком много, модели бывает трудно разобраться, какие входные признаки помогают предсказать целевой, а какие только мешают. Чтобы и эта загвоздка не была преградой, есть ещё один способ улучшать работу моделей — отбор признаков.
 
 Первое, на что стоит обратить внимание во время работы с признаками, — это смещение и разброс модели.
-• Если у модели большое смещение, попробуйте усложнить её или добавить новые признаки.
+- Если у модели большое смещение, попробуйте усложнить её или добавить новые признаки.
 Чем больше смещение, тем хуже обучилась модель. Значит, ей нужно уловить больше закономерностей в данных с помощью дополнительной настройки или новых признаков.
 
 Возможно, эти простые меры позволят быстро устранить проблемы модели, но всё бывает сложнее. К примеру, большое смещение может сохраниться даже после того, как вы добавите новые признаки для борьбы с недообучением. Вы будете тратить на обучение больше времени и ресурсов, а качество возрастёт незначительно.
@@ -4437,9 +3768,9 @@ print('На тестовых данных', score)
 Отбор признаков (англ. feature selection) — это оценка важности каждого входного признака алгоритмами машинного обучения. За отбором признаков следует удаление избыточных.
 
 Почему необходимо отбирать признаки для обучения модели?
-• Отбор признаков эффективно сокращает сложность модели, повышая её предсказательные свойства.
+- Отбор признаков эффективно сокращает сложность модели, повышая её предсказательные свойства.
 Избыточные признаки только «смущают» модель, поэтому их можно удалить, это только увеличит обобщающие свойства модели.
-• Отбор признаков уменьшает расход ресурсов на обучение, даже если оставляет качество на прежнем уровне.
+- Отбор признаков уменьшает расход ресурсов на обучение, даже если оставляет качество на прежнем уровне.
 Иногда не выходит увеличить качество при отборе признаков, однако и хуже от него модель не станет. Зато будет работать экономнее, что тоже важно.
 
 Цель отбора признаков — найти те, которые вносят наибольший вклад в корректное предсказание. Это свойство называют важностью признаков (англ. feature importance).
@@ -4452,42 +3783,33 @@ print('На тестовых данных', score)
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-```
-
 X, y = make_classification(n_samples=500, n_features=10, n_informative=5, n_redundant=2,
-
-```python
                                                  n_classes=2,random_state=0)
 X = pd.DataFrame(X, columns = ['x1','x2','x3','x4','x5','x6','x7','x8','x9','x10'])
 model = LogisticRegression()
-```
-
 model.fit(X, y)
-
-```python
 coefficients = model.coef_[0]
 sns.set_style('white')
 feature_importance = pd.DataFrame({'Feature': X.columns, 'Importance': np.abs(coefficients)})
 feature_importance = feature_importance.sort_values('Importance', ascending=True)
-```
-
 feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
+```
 
 Алгоритмы по-разному оценили важность признаков. Это не произвольное решение. Так, для логистической регрессии важнее линейно связанные с таргетом входные признаки, поэтому она смотрит на высокую корреляцию. Дерево решений же старается учесть те признаки, которые позволят эффективно разделить данные по листьям.
 У методов опорных векторов и k-ближайших соседей нет встроенных механизмов по работе с весами. Алгоритмы этих моделей работают с расчётом расстояний между объектами в пространстве признаков, поэтому им не нужно оценивать важность.
 
 ## Методы отбора признаков
 
-• Метод фильтрации
+- Метод фильтрации
 Малозначимые признаки можно отсеять ещё до обучения модели. Для этого достаточно изучить статистики признаков и убрать те, у которых низкая дисперсия. Это свойство говорит о том, что они не отличаются от наблюдения к наблюдению, а значит, и не дадут полезной информации для модели. Этот способ отбора признаков называют методом фильтрации.
 Пример признака с низкой дисперсией — возраст студентов бакалавриата. Если вы захотите предсказать их успеваемость или проанализировать, по какому принципу они дружат, возраст вам ничего не даст — он практически у всех одинаковый. У этого признака низкая дисперсия, поэтому его можно отсеять.
 Фильтрацию выполняют после загрузки данных, во время их предобработки. Для этого нужно вручную проанализировать распределение признаков. Если значение любого из них совпадает для подавляющего числа наблюдений, то, скорее всего, для моделирования он не подходит.
 Отфильтровать лишние признаки также можно с помощью вычисления корреляций между признаками, если вы выбрали регрессионные модели.
 
-• L1-регуляризация
+- L1-регуляризация
 Лассо-регуляризация также решает проблему избыточных признаков.
 
-• Методы sklearn
+- Методы sklearn
 Один из самых популярных методов отбора признаков — SelectKBest из библиотеки sklearn. Он выбирает лучшие признаки на основе статистических тестов.
 Вот как его импортировать:
 
@@ -4513,17 +3835,17 @@ selector = SelectKBest(f_classif, k=2)
 X_new = selector.fit_transform(X, y)
 ```
 
-• Метод введения шума
+- Метод введения шума
 Ещё один способ выявить лишние признаки — это создать новый со случайными значениями и взглянуть на его важность в сравнении с остальными. Если вес каких-то исходных признаков не слишком превышает вес случайного, то их можно смело удалять. Чтобы формализовать отбор признаков, можете самостоятельно выбрать порог значимости. Например, если вес исходного признака отличается от веса шумного не более чем на ±0,1, то его можно без последствий удалить. Простое, но элегантное решение.
 
-• Прочие методы
+- Прочие методы
 Существуют алгоритмы, которые преобразуют объёмное признаковое описание в управляемое подмножество признаков. Иными словами, они сжимают имеющийся набор признаков в более компактный.
 
 Метод фильтрации — самый универсальный способ отбора признаков. Его можно использовать при работе с любой моделью, потому что он применяется ещё до этапа обучения.
 Остальные методы зависят от ваших планов:
-• Если вы хотите обучить логистическую регрессию, попробуйте L1-регуляризацию. При низких значениях гиперпараметра C коэффициенты избыточных признаков станут очень низкими, и можно будет попробовать обучить модель без них. Гиперпараметр C- это обратное значение силы регуляризации: меньшие значения указывают на более сильную регуляризацию.
-• Если вам подходят другие модели или регуляризация не помогла, воспользуйтесь SelectKBest и выберите нужные признаки. Оцените качество обученной на этих признаках модели.
-• Если другие методы не подошли, добавьте «шумный» признак в модель и самостоятельно подберите порог, при котором другие признаки тоже будут считаться «шумными».
+- Если вы хотите обучить логистическую регрессию, попробуйте L1-регуляризацию. При низких значениях гиперпараметра C коэффициенты избыточных признаков станут очень низкими, и можно будет попробовать обучить модель без них. Гиперпараметр C- это обратное значение силы регуляризации: меньшие значения указывают на более сильную регуляризацию.
+- Если вам подходят другие модели или регуляризация не помогла, воспользуйтесь SelectKBest и выберите нужные признаки. Оцените качество обученной на этих признаках модели.
+- Если другие методы не подошли, добавьте «шумный» признак в модель и самостоятельно подберите порог, при котором другие признаки тоже будут считаться «шумными».
 
 Инициализируйте и обучите логистическую регрессию с L1-регуляризацией. Проверьте её работу с разными значениями гиперпараметра C при помощи цикла. Выведите на экран все значения С, accuracy и сэкономленных средств.
 
@@ -4542,11 +3864,7 @@ all_data = pd.concat([data,test_data],axis=0)
 X = all_data.drop(columns=['target', 'client_id'])
 y = all_data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 poly = PolynomialFeatures(2)
 X_train = poly.fit_transform(X_train)
 X_test = poly.transform(X_test)
@@ -4560,24 +3878,15 @@ X_test_scaled =  pd.DataFrame(scaler.transform(X_test),columns = poly.get_featur
 C_ = [0.1,0.4,0.5,0.6,0.7,0.8,1,2,5,10]
 for c in C_:
     model = LogisticRegression(random_state=RANDOM_STATE, penalty='l1', solver='saga', C=c)
-```
-
-model.fit(X_train_scaled, y_train)
-
-```python
+    model.fit(X_train_scaled, y_train)
     acc1 = accuracy_score(y_test, model.predict(X_test_scaled))
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['logreg'] = model.predict(X_test_scaled)
+    predicts['logreg'] = model.predict(X_test_scaled)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['logreg']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7*0.8
     FP = predicts[(predicts['logreg']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
+    print(c, acc1, TP-FP)
 ```
-
-print(c, acc1, TP-FP)
 
 Подберите количество лучших признаков для модели SVC(). Выведите на экран количество признаков, значение переменной acc1, accuracy при разном количестве признаков и количество сэкономленных средств компании.
 
@@ -4596,11 +3905,7 @@ all_data = pd.concat([data,test_data],axis=0)
 X = all_data.drop(columns=['target', 'client_id'])
 y = all_data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 poly = PolynomialFeatures(2)
 X_train = poly.fit_transform(X_train)
 X_test = poly.transform(X_test)
@@ -4608,65 +3913,39 @@ X_test_df = pd.DataFrame(X_test,columns = poly.get_feature_names())
 X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train),columns = poly.get_feature_names())
 X_test_scaled =  pd.DataFrame(scaler.transform(X_test),columns = poly.get_feature_names())
 model = SVC()
-```
-
 model.fit(X_train_scaled, y_train)
-
-```python
 acc1 = accuracy_score(y_test, model.predict(X_test_scaled))
 for i in range(len(X_test_df.columns)):
     selector = SelectKBest(f_classif, k=i+1)
-```
-
-selector.fit(X_train_scaled, y_train)
-
-```python
+    selector.fit(X_train_scaled, y_train)
     features_names = X_train_scaled.columns[selector.get_support(indices=True)]
     X_train_new = X_train_scaled[list(features_names)]
     X_test_new = X_test_scaled[list(features_names)]
     model = SVC(kernel = 'rbf')
-```
-
-model.fit(X_train_new, y_train)
-
-```python
+    model.fit(X_train_new, y_train)
     acc_new = accuracy_score(y_test, model.predict(X_test_new))
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['svm'] = model.predict(X_test_new)
+    predicts['svm'] = model.predict(X_test_new)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['svm']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7*0.8
     FP = predicts[(predicts['svm']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
+    print(i+1, acc1, acc_new, TP-FP)
 ```
 
-print(i+1, acc1, acc_new, TP-FP)
-
-## Дерево решений
-
+Дерево решений
 Обучим стандартную модель с полиномиальными признаками:
 
 ```python
 from sklearn.tree import DecisionTreeClassifier
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 X_train = poly.fit_transform(X_train)
 X_test = poly.transform(X_test)
 X_test_df = pd.DataFrame(X_test,columns = poly.get_feature_names())
 X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train),columns = poly.get_feature_names())
 X_test_scaled =  pd.DataFrame(scaler.transform(X_test),columns = poly.get_feature_names())
 model = DecisionTreeClassifier(random_state=RANDOM_STATE)
-```
-
 model.fit(X_train_scaled, y_train)
-
-```python
 acc1 = accuracy_score(y_test, model.predict(X_test_scaled))
 print(acc1)
 ```
@@ -4679,35 +3958,22 @@ accs = []
 money = []
 for i in range(len(X_test_df.columns)):
     selector = SelectKBest(mutual_info_classif, k=i+1)
-```
-
-selector.fit(X_train_scaled, y_train)
-
-```python
+    selector.fit(X_train_scaled, y_train)
     features_names = selector.get_feature_names_out()
     X_train_new = X_train_scaled[list(features_names)]
     X_test_new = X_test_scaled[list(features_names)]
     model = DecisionTreeClassifier(random_state=RANDOM_STATE)
-```
-
-model.fit(X_train_new, y_train)
-
-```python
+    model.fit(X_train_new, y_train)
     acc_new = accuracy_score(y_test, model.predict(X_test_new))
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['tree'] = model.predict(X_test_new)
+    predicts['tree'] = model.predict(X_test_new)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['tree']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7*0.8
     FP = predicts[(predicts['tree']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
-```
-
-accs.append(acc_new)
+    accs.append(acc_new)
     money.append(TP-FP)
     print(i, acc1, acc_new, TP-FP)
+```
 
 Выше мы заметили, что прирост значений метрики не всегда сопровождается большей экономией денег. Разберёмся, почему так.
 Для начала нужно посчитать корреляцию Пирсона между accuracy и оценкой сберегаемых средств, а затем посмотреть, изменится ли взаимосвязь, если оценивать модель другой метрикой. Также стоит применить эти расчёты к обеим моделям с лучшим качеством: к логистической регрессии и к дереву решений.
@@ -4720,25 +3986,20 @@ from matplotlib import pyplot as plt
 # строит диаграмму рассеяния между метрикой и сэкономленными деньгами
 sns.set_style('white')
 quality = pd.DataFrame()
-```
-
 quality['money'] = money
 quality['accuracy'] = accs
-
-```python
 a = sns.scatterplot(data = quality, x = 'money', y = 'accuracy')
 ```
 
-см изображение
+![accuracy и money](figures/money-acc.png)
 
 Хаотичность налицо. Коэффициент корреляции:
 
 ```python
 from scipy.stats.stats import pearsonr
 print(pearsonr(money,accs)[0])
-```
-
 0.2803097001810603
+```
 
 Теперь посмотрим на связь между сэкономленными деньгами и ROC-AUC:
 
@@ -4747,44 +4008,32 @@ rocs = []
 money = []
 for i in range(len(X_test_df.columns)):
     selector = SelectKBest(f_classif, k=i+1)
-```
-
-selector.fit(X_train_scaled, y_train)
-
-```python
+    selector.fit(X_train_scaled, y_train)
     features_names = selector.get_feature_names_out()
     X_train_new = X_train_scaled[list(features_names)]
     X_test_new = X_test_scaled[list(features_names)]
     model = LogisticRegression()
-```
-
-model.fit(X_train_new, y_train)
-
-```python
+    model.fit(X_train_new, y_train)
     roc1 = roc_auc_score(y_test.tolist(), model.predict_proba(X_test_new)[:,1])
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['logreg'] = model.predict(X_test_new)
+    predicts['logreg'] = model.predict(X_test_new)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['logreg']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7**0.8
     FP = predicts[(predicts['logreg']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
+    rocs.append(roc1)
+    money.append(TP-FP)
 ```
 
-rocs.append(roc1)
-    money.append(TP-FP)
-
-см изображение
+![ROC-AUC и money](figures/money-roc.png)
 
 Корреляция:
 
 ```python
 print(pearsonr(money,rocs)[0])
-```
 
 0.2803097001810603
+```
+
 Лучше не стало… А что насчёт F1-меры?
 
 ```python
@@ -4792,45 +4041,31 @@ f1 = []
 money = []
 for i in range(len(X_test_df.columns)):
     selector = SelectKBest(mutual_info_classif, k=i+1)
-```
-
-selector.fit(X_train_scaled, y_train)
-
-```python
+    selector.fit(X_train_scaled, y_train)
     features_names = selector.get_feature_names_out()
     X_train_new = X_train_scaled[list(features_names)]
     X_test_new = X_test_scaled[list(features_names)]
     model = LogisticRegression()
-```
-
-model.fit(X_train_new, y_train)
-
-```python
+    model.fit(X_train_new, y_train)
     f1_new = f1_score(y_test, model.predict(X_test_new))
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['logreg'] = model.predict(X_test_new)
+    predicts['logreg'] = model.predict(X_test_new)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['logreg']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7*0.8
     FP = predicts[(predicts['logreg']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
-```
-
-f1.append(f1_new)
+    f1.append(f1_new)
     money.append(TP-FP)
     print(i, acc1, f1_new, TP-FP)
+```
 
 Кажется, что прирост стал гораздо более синхронным. Посмотрим, заметна ли разница на графике и по коэффициенту корреляции:
 
-см изображение
+![F1 и money](figures/money-f1.png)
 
 ```python
 print(pearsonr(money,f1)[0])
-```
-
 0.6943181470905806
+```
 
 Вот так-то лучше! Теперь взглянем на то, есть ли такая же взаимосвязь у показателей дерева решений:
 
@@ -4839,59 +4074,41 @@ f1 = []
 money = []
 for i in range(len(X_test_df.columns)):
     selector = SelectKBest(mutual_info_classif, k=i+1)
-```
-
-selector.fit(X_train_scaled, y_train)
-
-```python
+    selector.fit(X_train_scaled, y_train)
     features_names = selector.get_feature_names_out()
     X_train_new = X_train_scaled[list(features_names)]
     X_test_new = X_test_scaled[list(features_names)]
     model = DecisionTreeClassifier(random_state=RANDOM_STATE)
-```
-
-model.fit(X_train_new, y_train)
-
-```python
+    model.fit(X_train_new, y_train)
     f1_new = f1_score(y_test, model.predict(X_test_new))
     predicts = X_test_df[['x3']].copy()
-```
-
-predicts['tree'] = model.predict(X_test_new)
+    predicts['tree'] = model.predict(X_test_new)
     predicts['y_test'] = y_test.tolist()
-
-```python
     TP = predicts[(predicts['tree']==1)&(predicts['y_test']==1)]['x3'].sum()*0.7*0.8
     FP = predicts[(predicts['tree']==1)&(predicts['y_test']==0)]['x3'].sum()*0.2
-```
-
-f1.append(f1_new)
+    f1.append(f1_new)
     money.append(TP-FP)
     print(i, f1_new , TP-FP)
+```
 
 Диаграмма рассеяния:
 
 ```python
 sns.set_style('white')
 quality = pd.DataFrame()
-```
-
 quality['money'] = money
 quality['f1'] = f1
-
-```python
 a = sns.scatterplot(data = quality, x = 'money', y = 'f1')
 ```
 
-см изображение
+![F1 после согласования](figures/money-f1b.png)
 
 Коэффициент корреляции:
 
 ```python
 print(pearsonr(money,f1)[0])
-```
-
 0.8625747098169939
+```
 
 Отличный результат!
 Итак, зафиксируем результаты анализа:
@@ -4926,21 +4143,16 @@ SHAP
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-```
-
 X, y = make_classification(n_samples=500, n_features=10, n_informative=5, n_redundant=2,
-
-```python
                                                  n_classes=2,random_state=0)
 X = pd.DataFrame(X, columns = ['x1','x2','x3','x4','x5','x6','x7','x8','x9','x10'])
 model = LogisticRegression()
+model.fit(X, y)
 ```
 
-model.fit(X, y)
 Чаще всего значения Шепли показывают на трёх графиках. Два из них предназначены для визуализации общей значимости признаков, а ещё один — для отображения вклада каждого признака в классификацию отдельного наблюдения.
 
-## График shap.plots.beeswarm
-
+График shap.plots.beeswarm
 Диаграмма shap.plots.beeswarm — это один из вариантов визуализации вклада признаков в каждое предсказание модели. На графике точками отображены все наблюдения из выборки.
 На оси X отложены значения Шепли, на оси Y — признаки модели, расположенные сверху вниз в порядке убывания средних SHAP‑значений.
 
@@ -4948,11 +4160,10 @@ model.fit(X, y)
 import shap
 explainer = shap.LinearExplainer(model, X)
 shap_values = explainer(X)
+shap.plots.beeswarm(shap_values)
 ```
 
-shap.plots.beeswarm(shap_values)
-
-см изображение
+![SHAP beeswarm](figures/shap-beeswarm.png)
 
 Вот как читать этот график:
 Негативные значения Шепли слева от центральной вертикальной линии означают, что признак склоняет модель отнести объекты к классу 0, а положительные справа — к классу 1.
@@ -4970,8 +4181,7 @@ shap.plots.beeswarm(shap_values)
 
 Feature importance — это встроенная в некоторые модели оценка влияния признаков на значение целевого.
 
-## Permutation importance
-
+Permutation importance
 Самый простой показатель для оценки важности признаков в моделях без встроенных весов называют permutation importance. На русский язык фразу можно примерно перевести как «перестановочная важность» или «важность после перестановки».
 Этот метод доказывает значимость признаков от обратного. Предположим, что признак неважен для модели. Если это так, то перемешивание его значений между разными наблюдениями никак не повлияет на предсказание. Если же признак важен, то после перестановки качество модели резко упадёт, потому что закономерности между значениями этого признака и остальными исчезнут.
 Оценить важность признаков после перестановки можно любой подходящей метрикой. Алгоритм permutation importance измерит качество модели по умолчанию, а затем:
@@ -4990,31 +4200,32 @@ permutation = permutation_importance(model, X_test, y_test, scoring = 'f1')
 Чтобы проверить важность признаков после перестановки, нужно передать функции обученную модель, тестовые данные и метрику, которой вы хотите оценить качество модели.
 Permutation importance — наглядный метод, но он не позволяет оценить, как признак влияет на каждое отдельное предсказание. Для этого разработали другие подходы.
 
-## График shap.plots.waterfall
-
+График shap.plots.waterfall
 Диаграмма shap.plots.waterfall визуализирует индивидуальные SHAP-значения каждого наблюдения в датасете. Вот как будет выглядеть график для шестого объекта:
 
+```python
 shap.plots.waterfall(shap_values[5])
+```
 
-см изображение
+![SHAP waterfall](figures/shap-water.png)
 
 Сильнее всего на его классификацию влияет признак x_6: он «перетягивает» предсказание в сторону класса 0. Значение f(x) на графике показывает, к какому классу признак склоняет наблюдение: отрицательные значения говорят о том, что наблюдение скорее относится к классу 0, а положительные — к классу 1.
 
-## График shap.plots.bar
-
+График shap.plots.bar
 Столбчатая диаграмма shap.plots.bar отражает общий вклад признаков в прогнозы модели. Она показывает средние SHAP-значения признака по всем наблюдениям. Для расчёта средних берут значения Шепли по модулю, чтобы положительные и отрицательные значения не сводили друг друга к нулю.
 
+```python
 shap.plots.bar(shap_values)
+```
 
-см изображение
+![Важность признаков SHAP](figures/shap-bar.png)
 
 Модель МО — это чёрный ящик, который принимает решения понятным только ему образом. Чтобы устранить неизвестность, существуют средства для интерпретации моделей.
 В регрессии и деревья решений встроен механизм определения значимости каждого признака для модели.
 Permutation importance позволяет оценить вклад признака от обратного, оценив качество модели после перемешивания его значений.
 Вычисление значений Шепли позволяет более точно оценивать вклад признаков как на все решения модели, так и для каждого конкретного наблюдения.
 
-## Шаг два: проверка permutation importance
-
+Шаг два: проверка permutation importance
 Значимость признаков можно рассмотреть с разных сторон. Коэффициенты линейных моделей показывают, насколько сильно меняется y при изменении X, а атрибут feature_importances_ деревьев решений — как часто признак участвует в правилах разделения на классы.
 Это не единственные критерии, которые можно учесть для интерпретации модели. Чем больше из них вы рассмотрите, тем сильнее снимите завесу тайн с модели.
 Permutation importance подсвечивает качество модели с ещё одной стороны. Он показывает, насколько изменятся метрики, если поочерёдно рандомизировать каждый входной признак модели. Чтобы пересчитывать значения метрики после каждого перемешивания, нужно передать permutation_importance функцию расчёта оценки качества, а не только встроенный алгоритм вычисления. Вот как это сделать с F1-мерой:
@@ -5024,27 +4235,21 @@ from sklearn.inspection import permutation_importance
 def custom_f1(model, X, y):
     y_pred = model.predict(X)
     score = f1_score(y, y_pred)
-```
-
-return score
-
-```python
+    return score
 result = permutation_importance(model, X_test_new, y_test, scoring=custom_f1)
 feature_importance = pd.DataFrame({'Feature': features_names, 'Importance': result['importances_mean']})
 feature_importance = feature_importance.sort_values('Importance', ascending=True)
 sns.set_style('white')
+feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
 ```
 
-feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
-
 Что означают полиномиальные признаки модели в числе наиболее важных?
-• Произведение — это совместное влияние двух входных признаков. Они синхронно влияют на целевой: у обоих значение либо растёт, либо снижается.
+- Произведение — это совместное влияние двух входных признаков. Они синхронно влияют на целевой: у обоих значение либо растёт, либо снижается.
 Сами по себе линейные модели не могут отследить влияние сразу двух или трёх признаков. Но всегда можно создать из них один полиномиальный и обойти это ограничение.
-• Возведённый в квадрат признак означает, что для модели важен только очень значительный его рост. Для сдвига оценки принадлежности к классам нужно существенное увеличение или уменьшение входного признака.
+- Возведённый в квадрат признак означает, что для модели важен только очень значительный его рост. Для сдвига оценки принадлежности к классам нужно существенное увеличение или уменьшение входного признака.
 Наличие полиномиального признака в списке значимых говорит о том, что для модели важно более сильное изменение значения входного признака, чтобы он мог повлиять на целевой.
 
-## Шаг три: анализ SHAP-значений
-
+Шаг три: анализ SHAP-значений
 Оценки значимости признаков при классификации отдельных наблюдений позволяют детальнее всего интерпретировать модель и даже понять, почему она ошиблась в каждом конкретном случае.
 Но начнём более плавно — сперва построим график общей значимости признаков:
 
@@ -5052,34 +4257,36 @@ feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6
 import shap
 explainer = shap.LinearExplainer(model, X_train_new)
 shap_values = explainer(X_test_new)
-```
-
 shap.plots.bar(shap_values, max_display=17)
+```
 
 Признаки на графике расположены в порядке убывания их вклада: если убрать те, что наверху, качество модели просядет сильнее всего.
 Перейдём к самому интересному — посмотрим, как признаки влияют на каждое предсказание модели:
 
+```python
 shap.plots.beeswarm(shap_values, max_display=16)
+```
 
-см изображение
+![SHAP beeswarm](figures/shap-beeswarm-2.png)
 
 Оценим вклад каждого признака:
 
+```python
 shap.plots.waterfall(shap_values[181])
+```
 
-см изображение
+![SHAP waterfall](figures/shap-water-2.png)
 
-• Отбор признаков — метод, который уменьшает сложность модели, сохраняя или увеличивая её качество.
+- Отбор признаков — метод, который уменьшает сложность модели, сохраняя или увеличивая её качество.
 Без отбора признаков в моделях остались бы признаки, которые только сбивают алгоритмы с толку.
-• Интерпретация модели — непростая задача, но в большинстве задач крайне необходима.
+- Интерпретация модели — непростая задача, но в большинстве задач крайне необходима.
 В особенности она важна для заказчиков, которые хотят вынести для себя какие-то выводы по итогам работы модели.
-• SHAP может помочь объяснить решение любой модели.
+- SHAP может помочь объяснить решение любой модели.
 Этот метод выручает в любой ситуации!
 
 Самой эффективной оказалась логистическая регрессия, сейчас мы определим почему так, и опишем для заказчика работу модели, выделив признаки, за которыми ему стоит следить.
 
-## Шаг первый: анализ предсказаний модели
-
+Шаг первый: анализ предсказаний модели
 Сперва взглянем на совокупность признаков и создадим полиномиальные:
 
 ```python
@@ -5093,11 +4300,7 @@ all_data = pd.concat([data,test_data],axis=0)
 X = all_data.drop(columns=['target', 'client_id'])
 y = all_data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 poly = PolynomialFeatures(2)
 X_train = poly.fit_transform(X_train)
 X_test = poly.transform(X_test)
@@ -5129,11 +4332,7 @@ all_data = pd.concat([data,test_data],axis=0)
 X = all_data.drop(columns=['target', 'client_id'])
 y = all_data['target']
 X_train, X_test, y_train, y_test = \
-```
-
 train_test_split(X, y, test_size=0.25, random_state=RANDOM_STATE)
-
-```python
 poly = PolynomialFeatures(2)
 X_train = poly.fit_transform(X_train)
 X_test = poly.transform(X_test)
@@ -5141,20 +4340,12 @@ X_test = poly.transform(X_test)
 X_test_df = pd.DataFrame(X_test,columns = poly.get_feature_names())
 X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train),columns = poly.get_feature_names())
 X_test_scaled =  pd.DataFrame(scaler.transform(X_test),columns = poly.get_feature_names())
-```
-
 selector.fit(X_train_scaled, y_train)
-
-```python
 # сформируйте выборки с лучшими признаками
 features_names = X_train_scaled.columns[selector.get_support(indices=True)]
 X_train_new = X_train_scaled[list(features_names)]
 X_test_new = X_test_scaled[list(features_names)]
-```
-
 model.fit(X_train_new, y_train)
-
-```python
 print(list(features_names))
 ```
 
@@ -5164,30 +4355,20 @@ print(list(features_names))
 ```python
 selector = SelectKBest(f_classif, k=16)
 model = LogisticRegression()
-```
-
 selector.fit(X_train_scaled, y_train)
-
-```python
 features_names = X_train_scaled.columns[selector.get_support(indices=True)]
 X_train_new = X_train_scaled[list(features_names)]
 X_test_new = X_test_scaled[list(features_names)]
-```
-
 model.fit(X_train_new, y_train)
-
-```python
 # отложите значения коэффициентов на графике
 coefficients = model.coef_[0]
 feature_importance = pd.DataFrame({'Feature': features_names, 'Importance': np.abs(coefficients)})
 feature_importance = feature_importance.sort_values('Importance', ascending=True)
 sns.set_style('white')
+feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
 ```
 
-feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
-
-## Шаг два: проверка permutation importance
-
+Шаг два: проверка permutation importance
 Значимость признаков можно рассмотреть с разных сторон. Коэффициенты линейных моделей показывают, насколько сильно меняется y при изменении X, а атрибут feature_importances_ деревьев решений — как часто признак участвует в правилах разделения на классы.
 Это не единственные критерии, которые можно учесть для интерпретации модели. Чем больше из них вы рассмотрите, тем сильнее снимите завесу тайн с модели.
 Permutation importance подсвечивает качество модели с ещё одной стороны. Он показывает, насколько изменятся метрики, если поочерёдно рандомизировать каждый входной признак модели. Чтобы пересчитывать значения метрики после каждого перемешивания, нужно передать permutation_importance функцию расчёта оценки качества, а не только встроенный алгоритм вычисления. Вот как это сделать с F1-мерой:
@@ -5197,27 +4378,21 @@ from sklearn.inspection import permutation_importance
 def custom_f1(model, X, y):
     y_pred = model.predict(X)
     score = f1_score(y, y_pred)
-```
-
-return score
-
-```python
+    return score
 result = permutation_importance(model, X_test_new, y_test, scoring=custom_f1)
 feature_importance = pd.DataFrame({'Feature': features_names, 'Importance': result['importances_mean']})
 feature_importance = feature_importance.sort_values('Importance', ascending=True)
 sns.set_style('white')
+feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
 ```
 
-feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6))
-
 Что означают полиномиальные признаки модели в числе наиболее важных?
-• Произведение — это совместное влияние двух входных признаков. Они синхронно влияют на целевой: у обоих значение либо растёт, либо снижается.
+- Произведение — это совместное влияние двух входных признаков. Они синхронно влияют на целевой: у обоих значение либо растёт, либо снижается.
 Сами по себе линейные модели не могут отследить влияние сразу двух или трёх признаков. Но всегда можно создать из них один полиномиальный и обойти это ограничение.
-• Возведённый в квадрат признак означает, что для модели важен только очень значительный его рост. Для сдвига оценки принадлежности к классам нужно существенное увеличение или уменьшение входного признака.
+- Возведённый в квадрат признак означает, что для модели важен только очень значительный его рост. Для сдвига оценки принадлежности к классам нужно существенное увеличение или уменьшение входного признака.
 Наличие полиномиального признака в списке значимых говорит о том, что для модели важно более сильное изменение значения входного признака, чтобы он мог повлиять на целевой.
 
-## Шаг три: анализ SHAP-значений
-
+Шаг три: анализ SHAP-значений
 Оценки значимости признаков при классификации отдельных наблюдений позволяют детальнее всего интерпретировать модель и даже понять, почему она ошиблась в каждом конкретном случае.
 Но начнём более плавно — сперва построим график общей значимости признаков:
 
@@ -5225,28 +4400,31 @@ feature_importance.plot(x='Feature', y='Importance', kind='barh', figsize=(10, 6
 import shap
 explainer = shap.LinearExplainer(model, X_train_new)
 shap_values = explainer(X_test_new)
-```
-
 shap.plots.bar(shap_values, max_display=17)
+```
 
 Признаки на графике расположены в порядке убывания их вклада: если убрать те, что наверху, качество модели просядет сильнее всего.
 Перейдём к самому интересному — посмотрим, как признаки влияют на каждое предсказание модели:
 
+```python
 shap.plots.beeswarm(shap_values, max_display=16)
+```
 
-см изображение
+![SHAP beeswarm](figures/shap-beeswarm.png)
 
 Оценим вклад каждого признака:
 
+```python
 shap.plots.waterfall(shap_values[181])
+```
 
-см изображение
+![SHAP waterfall](figures/shap-water.png)
 
-• Отбор признаков — метод, который уменьшает сложность модели, сохраняя или увеличивая её качество.
+- Отбор признаков — метод, который уменьшает сложность модели, сохраняя или увеличивая её качество.
 Без отбора признаков в моделях остались бы признаки, которые только сбивают алгоритмы с толку.
-• Интерпретация модели — непростая задача, но в большинстве задач крайне необходима.
+- Интерпретация модели — непростая задача, но в большинстве задач крайне необходима.
 В особенности она важна для заказчиков, которые хотят вынести для себя какие-то выводы по итогам работы модели.
-• SHAP может помочь объяснить решение любой модели.
+- SHAP может помочь объяснить решение любой модели.
 Этот метод выручает в любой ситуации!
 
 При уменьшении признакового описания вы можете не только сохранить качество модели, но и увеличить его. В этом вам помогут метод фильтрации, L1-регуляризация и алгоритм SelectKBest.
@@ -5264,8 +4442,6 @@ shap.plots.waterfall(shap_values[181])
 6 Инициализировали модель и обучили её на тренировочной выборке.
 
 И каждый раз делать это заново? А что, если несколько шагов можно объединить в один? Тогда схема будет выглядеть проще:
-
-см изображения
 
 Теперь один из этапов — итоговый пайплайн. В нём мы объединили последовательность шагов для подготовки данных и инициализацию модели. Вы определяете всё, что будете делать с данными, а затем «пропускаете» данные через получившуюся структуру. Всю рутинную работу за вас делает конвейер.
 
@@ -5289,10 +4465,7 @@ ord_columns = [
 'Оценка комфортности покупки билета онлайн', 'Оценка качества wifi',
     'Оценка комфортности времени отправления/прибытия'
 ]
-
-```python
 num_columns = ['Возраст', 'Расстояние']
-```
 
 Загрузим все необходимые инструменты:
 
@@ -5303,8 +4476,7 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 ```
 
-## Добавляем OHE-кодирование в пайплайн
-
+Добавляем OHE-кодирование в пайплайн
 Распишем по шагам, что нужно сделать с данными, которые кодируем с помощью OneHotEncoder:
 Если в данных есть пропуски, заполним их самым часто встречающимся значением с помощью SimpleImputer. Назовём этот шаг simpleImputer_ohe.
 Кодируем данные с помощью OneHotEncoder. Назовём это шаг ohe.
@@ -5315,26 +4487,18 @@ from sklearn.impute import SimpleImputer
 ohe_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_ohe',
+            'simpleImputer_ohe',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
-```
-
-'ohe',
+            'ohe',
             OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False)
         )
     ]
 )
+```
 
-см изображение
-
-## Добавляем Ordinal-кодирование в пайплайн
-
+Добавляем Ordinal-кодирование в пайплайн
 Теперь распишем, что нужно сделать с данными, которые кодируем с помощью OrdinalEncoder:
 Заполним пропуски самым часто встречающимся значением с помощью SimpleImputer. Назовём этот шаг simpleImputer_before_ord.
 Проводим Ordinal-кодирование с помощью OrdinalEncoder. Назовём этот шаг ord.
@@ -5342,9 +4506,7 @@ ohe_pipe = Pipeline(
 Объединим все действия в пайплайн и назовём его ord_pipe:
 '''
 При порядковом кодировании необходимо задать порядок категоризации.
-
-## Поэтому в параметре categories последовательно перечислим
-
+Поэтому в параметре categories последовательно перечислим
 уровни категорий для каждого признака из списка ord_columns.
 '''
 
@@ -5352,48 +4514,31 @@ ohe_pipe = Pipeline(
 ord_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_before_ord',
+            'simpleImputer_before_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
-```
-
-'ord',
+            'ord',
             OrdinalEncoder(
-
-```python
                 categories=[
 ```
 
 ['нормально', 'хорошо', 'плохо', 'отсутствует'],
-
-```python
                     ['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо'],
-```
-
-],
+                ],
 
 ```python
                 handle_unknown='use_encoded_value', unknown_value=np.nan
-```
-
-)
-
-```python
+            )
         ),
         (
-```
-
-'simpleImputer_after_ord',
+            'simpleImputer_after_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
         )
     ]
 )
+```
 
 Применяем пайплайн ohe_pipe к данным ohe_columns, которые требуют OHE-кодирования. Это шаг ohe.
 Применяем пайплайн ord_pipe к данным ord_columns, которые требуют Ordinal-кодирования. Это шаг ord.
@@ -5408,21 +4553,13 @@ data_preprocessor = ColumnTransformer(
     [
         ('ohe', ohe_pipe, ohe_columns),
         ('ord', ord_pipe, ord_columns),
-```
-
-('num', StandardScaler(), num_columns)
+        ('num', StandardScaler(), num_columns)
     ],
-
-```python
     remainder='passthrough'
+)
 ```
 
-)
-
-см изображение
-
-## Создаём итоговый пайплайн для обучения модели
-
+Создаём итоговый пайплайн для обучения модели
 Пайплайн подготовки данных создан. Присоединим к нему шаг с моделированием — будем использовать модель DecisionTreeClassifier.
 Итоговый пайплайн назовём pipe_final. Он включает шаги:
 Подготовка данных — шаг preprocessor.
@@ -5433,13 +4570,10 @@ data_preprocessor = ColumnTransformer(
 pipe_final = Pipeline(
     [
         ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+        ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
     ]
 )
-
-см изображение
+```
 
 Передадим пайплайну pipe_final данные для обучения:
 
@@ -5449,8 +4583,7 @@ y_train_pred = pipe_final.predict(X_train)
 print(f'Предсказание на обучающей выборке: {y_train_pred}')
 ```
 
-## Применяем модель к тестовым данным
-
+Применяем модель к тестовым данным
 После того как пайплайну передали тренировочную выборку, обученную модель пайплайна pipe_final можно использовать и для тестовых данных:
 
 ```python
@@ -5474,17 +4607,12 @@ print(f'Метрика ROC-AUC на тестовой выборке: {roc_auc_sc
 X_train_p = pd.DataFrame(
 data_preprocessor.fit_transform(X_train),
 columns=data_preprocessor.get_feature_names_out()
-```
-
 )
-
-```python
 X_test_p = pd.DataFrame(
 data_preprocessor.transform(X_test),
 columns=data_preprocessor.get_feature_names_out()
-```
-
 )
+```
 
 Создайте пайплайн для подготовки бинарных признаков. Он должен состоять из двух шагов:
 Обработка пропусков: пропущенные значения сначала заполняются nan, а затем самым частотным значением ('most_frequent').
@@ -5492,11 +4620,7 @@ OHE-кодирование. При этом нужно учесть, что да
 
 Напишите пайплайн для подготовки порядковых признаков из списка ord_columns. Он должен состоять из трёх шагов:
 1 Обработка пропусков: пропущенные значения сначала заполняются nan, а затем самым частотным значением ('most_frequent').
-
-```python
 2 Ordinal-кодирование:
-```
-
 У признаков 'Оценка комфортности покупки билета онлайн' и 'Оценка качества wifi' четыре уровня категорий: 'нормально', 'хорошо', 'плохо', 'отсутствует'.
 У признака 'Оценка комфортности времени отправления/прибытия' три уровня: 'нормально', 'хорошо', 'плохо'.
 3 Обработка пропусков после кодирования: сначала заполнить nan, а затем самым частотным значением ('most_frequent').
@@ -5524,24 +4648,24 @@ df_full = pd.read_csv('railway_full.csv')
 X_train, X_test, y_train, y_test = train_test_split(
     df_full.drop(
         [
-            'Удовлетворён предоставленной услугой',
 ```
 
-'Общая оценка качества предоставленной услуги'
+'Удовлетворён предоставленной услугой',
+            'Общая оценка качества предоставленной услуги'
         ],
 
 ```python
         axis=1
     ),
-    df_full['Удовлетворён предоставленной услугой'],
+```
+
+df_full['Удовлетворён предоставленной услугой'],
+
+```python
     test_size = TEST_SIZE,
     random_state = RANDOM_STATE,
     stratify = df_full['Удовлетворён предоставленной услугой']
-```
-
 )
-
-```python
 ohe_columns = [
 ```
 
@@ -5556,105 +4680,69 @@ ord_columns = [
 'Оценка комфортности покупки билета онлайн', 'Оценка качества wifi',
     'Оценка комфортности времени отправления/прибытия'
 ]
+num_columns = ['Возраст', 'Расстояние']
 
 ```python
-num_columns = ['Возраст', 'Расстояние']
 # создаём пайплайн для подготовки признаков из списка ohe_columns: заполнение пропусков и OHE-кодирование
 # SimpleImputer + OHE
 ohe_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_ohe',
+            'simpleImputer_ohe',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
-```
-
-'ohe',
+            'ohe',
             OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False)
         )
     ]
 )
-
-```python
 # cоздаём пайплайн для подготовки признаков из списка ord_columns: заполнение пропусков и Ordinal-кодирование
 # SimpleImputer + OE
 ord_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_before_ord',
+            'simpleImputer_before_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
             'ord',
+            OrdinalEncoder(
+                categories=[
 ```
 
-OrdinalEncoder(
-
-```python
-                categories=[
-                    ['нормально', 'хорошо', 'плохо', 'отсутствует'],
+['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо'],
-```
-
-],
+                ],
 
 ```python
                 handle_unknown='use_encoded_value',
                 unknown_value=np.nan
-```
-
-)
-
-```python
+            )
         ),
         (
-```
-
-'simpleImputer_after_ord',
+            'simpleImputer_after_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
         )
     ]
 )
-
-```python
 # создаём общий пайплайн для подготовки данных
 data_preprocessor = ColumnTransformer(
     [
         ('ohe', ohe_pipe, ohe_columns),
         ('ord', ord_pipe, ord_columns),
-```
-
-('num', MinMaxScaler(), num_columns)
+        ('num', MinMaxScaler(), num_columns)
     ],
-
-```python
     remainder='passthrough'
-```
-
 )
-
-```python
 # создайте итоговый пайплайн: подготовка данных и модель
 pipe_final = Pipeline(
     [
         ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+        ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
     ]
 )
-
-```python
 pipe_final.fit(X_train, y_train)
 y_test_pred = pipe_final.predict_proba(X_test)[:,1]
 print(f'Метрика ROC-AUC на тестовой выборке: {round(roc_auc_score(y_test, y_test_pred), 2)}')
@@ -5662,29 +4750,22 @@ print(f'Метрика ROC-AUC на тестовой выборке: {round(roc_
 
 Можно автоматически подбирать лучший метод вместо того, чтобы обучать и тестировать модель несколько раз.
 Для этого зададим метод масштабирования как гиперпараметр. Создадим такой пайплайн подготовки данных:
-• Подготовку категориальных данных оставим, как было в прошлом уроке.
-• Метод масштабирования сделаем гиперпараметром, то есть зададим возможность перебора методов StandardScaler() и MinMaxScaler().
-
-см изображение
+- Подготовку категориальных данных оставим, как было в прошлом уроке.
+- Метод масштабирования сделаем гиперпараметром, то есть зададим возможность перебора методов StandardScaler() и MinMaxScaler().
 
 Что изменится в структуре кода, если использовать вместе пайплайн и GridSearchCV? Почти ничего, нужно только взять модель и гиперпараметры из пайплайна.
 С моделью всё просто, ведь созданный пайплайн pipe_final — та самая модель, которая нам нужна для GridSearchCV:
 
 ```python
 grid = GridSearchCV(
-```
-
-pipe_final,
-
-```python
+    pipe_final,
     param_grid=param_grid,
     cv=5,
     scoring=score,
     n_jobs=-1
-```
-
 )
 grid.fit(X_train, y_train)
+```
 
 Чтобы задать перебор метода масштабирования, подробнее взглянем на пайплайн data_preprocessor из прошлого урока:
 
@@ -5693,16 +4774,11 @@ data_preprocessor = ColumnTransformer(
     [
         ('ohe', ohe_pipe, ohe_columns),
         ('ord', ord_pipe, ord_columns),
-```
-
-('num', StandardScaler(), num_columns)
+        ('num', StandardScaler(), num_columns)
     ],
-
-```python
     remainder='passthrough'
-```
-
 )
+```
 
 Масштабирование происходит здесь, в шаге num. В словаре укажем, какие варианты масштабирования собираемся перебрать. Их три: варианты с разными методами и один вариант без масштабирования.
 
@@ -5714,21 +4790,14 @@ data_preprocessor = ColumnTransformer(
 # создаём итоговый пайплайн: подготовка данных и модель
 pipe_final= Pipeline([
     ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+    ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
 ])
-
-```python
 param_grid = {
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
+    'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
 }
+```
 
 Посмотрим, как перебрать несколько моделей в пайплайне. Схема такая:
-
-см изображение
 
 В словарь гиперпараметров param_grid добавим модели, которые хотим использовать: DecisionTreeClassifier(), SVС(), KNeighborsClassifier() и LogisticRegression().
 Модель models задаётся в итоговом пайплайне pipe_final:
@@ -5736,10 +4805,9 @@ param_grid = {
 ```python
 pipe_final= Pipeline([
     ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+    ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
 ])
+```
 
 Чтобы задать перебор моделей, нужно напрямую обратиться к шагу models. Сделаем это и вставим список моделей:
 
@@ -5747,32 +4815,23 @@ pipe_final= Pipeline([
 param_grid = {
     'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough'],
     'models' : [
-```
-
-DecisionTreeClassifier(random_state=RANDOM_STATE),
+        DecisionTreeClassifier(random_state=RANDOM_STATE),
         KNeighborsClassifier(),
         SVC(random_state=RANDOM_STATE),
         LogisticRegression(random_state=RANDOM_STATE)
     ]
 }
+```
 
 После запуска команды grid.fit(X_train, y_train) выведем лучшую из 12 комбинаций. Используем команду grid.best_estimator_:
 
-```python
 print('Лучшая модель и её параметры:\n\n', grid.best_estimator_)
-```
 
 Результат выглядит так:
 
-см изображение
-
 Вот наш победитель — LogisticRegression(random_state=42) c методом масштабирования MinMaxScaler().
 Чтобы посмотреть метрику лучшей модели, используем атрибут grid.best_score_:
-
-```python
 print('Метрика ROC-AUC для лучшей модели:\n', grid.best_score_)
-```
-
 Метрика ROC-AUC для лучшей модели:
 0.9307287194388522
 
@@ -5791,18 +4850,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import (
-```
-
-OneHotEncoder,
+    OneHotEncoder,
     OrdinalEncoder,
     StandardScaler,
     MinMaxScaler,
-
-##     RobustScaler
-
+    RobustScaler
 )
-
-```python
 from sklearn.model_selection import GridSearchCV
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import roc_auc_score
@@ -5816,24 +4869,24 @@ df_full = pd.read_csv('railway_full.csv')
 X_train, X_test, y_train, y_test = train_test_split(
     df_full.drop(
         [
-            'Удовлетворён предоставленной услугой',
 ```
 
-'Общая оценка качества предоставленной услуги'
+'Удовлетворён предоставленной услугой',
+            'Общая оценка качества предоставленной услуги'
         ],
 
 ```python
         axis=1
     ),
-    df_full['Удовлетворён предоставленной услугой'],
+```
+
+df_full['Удовлетворён предоставленной услугой'],
+
+```python
     test_size = TEST_SIZE,
     random_state = RANDOM_STATE,
     stratify = df_full['Удовлетворён предоставленной услугой']
-```
-
 )
-
-```python
 # создаём списки с названиями признаков
 ohe_columns = [
 ```
@@ -5849,159 +4902,97 @@ ord_columns = [
 'Оценка комфортности покупки билета онлайн', 'Оценка качества wifi',
     'Оценка комфортности времени отправления/прибытия'
 ]
+num_columns = ['Возраст', 'Расстояние']
 
 ```python
-num_columns = ['Возраст', 'Расстояние']
 # создаём пайплайн для подготовки признаков из списка ohe_columns: заполнение пропусков и OHE-кодирование
 # SimpleImputer + OHE
 ohe_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_ohe',
+            'simpleImputer_ohe',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
-```
-
-'ohe',
+            'ohe',
             OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False)
         )
     ]
 )
-
-```python
 # cоздаём пайплайн для подготовки признаков из списка ord_columns: заполнение пропусков и Ordinal-кодирование
 # SimpleImputer + OE
 ord_pipe = Pipeline(
     [
         (
-```
-
-'simpleImputer_before_ord',
+            'simpleImputer_before_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-
-```python
         ),
         (
             'ord',
+            OrdinalEncoder(
+                categories=[
 ```
 
-OrdinalEncoder(
-
-```python
-                categories=[
-                    ['нормально', 'хорошо', 'плохо', 'отсутствует'],
+['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо'],
-```
-
-],
+                ],
 
 ```python
                 handle_unknown='use_encoded_value',
                 unknown_value=np.nan
-```
-
-)
-
-```python
+            )
         ),
         (
-```
-
-'simpleImputer_after_ord',
+            'simpleImputer_after_ord',
             SimpleImputer(missing_values=np.nan, strategy='most_frequent')
         )
     ]
 )
-
-```python
 # создаём общий пайплайн для подготовки данных
 data_preprocessor = ColumnTransformer(
     [
         ('ohe', ohe_pipe, ohe_columns),
         ('ord', ord_pipe, ord_columns),
-```
-
-('num', MinMaxScaler(), num_columns)
+        ('num', MinMaxScaler(), num_columns)
     ],
-
-```python
     remainder='passthrough'
-```
-
 )
-
-```python
 # создаём итоговый пайплайн: подготовка данных и модель
 pipe_final= Pipeline(
     [
         ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+        ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
     ]
 )
-
-```python
 param_grid = {
     'preprocessor__num': [
-```
-
-StandardScaler(),
+        StandardScaler(),
         MinMaxScaler(),
         RobustScaler(),
         'passthrough'
-
-```python
     ],
-```
-
-# напишите название шага и укажите модели
-
-```python
+    # напишите название шага и укажите модели
     'models': [
-```
-
-DecisionTreeClassifier(random_state=RANDOM_STATE),
+        DecisionTreeClassifier(random_state=RANDOM_STATE),
         KNeighborsClassifier(),
         SVC(random_state=RANDOM_STATE),
         LogisticRegression(random_state=RANDOM_STATE),
     ]
 }
-
-```python
 grid = GridSearchCV(
-```
-
-pipe_final,
-
-```python
+    pipe_final,
     param_grid=param_grid,
     cv=5,
-```
-
-# задайте метрику ROC-AUC
-
-```python
+    # задайте метрику ROC-AUC
     scoring='roc_auc',
     n_jobs=-1
-```
-
 )
 grid.fit(X_train, y_train)
-
-```python
 print('Лучшая модель и её параметры:\n\n', grid.best_estimator_)
 ```
 
 Можно подбирать гиперпараметры внутри каждой модели — теперь в пайплайне. Как обычно, представим пайплайн в виде схемы:
-
-см изображение
 
 Чтобы найти лучшее решение, перебирать будем и гиперпараметры, и методы подготовки данных. Последнее вы уже умеете выполнять с помощью GridSearchCV. В этом уроке попробуем случайный поиск с помощью RandomizedSearchCV.
 
@@ -6009,11 +5000,11 @@ print('Лучшая модель и её параметры:\n\n', grid.best_est
 
 ```python
 param_distributions = [
-    {словарь гиперпараметров для первой модели},
-    {словарь гиперпараметров для второй модели},
 ```
 
-{...}
+{словарь гиперпараметров для первой модели},
+    {словарь гиперпараметров для второй модели},
+    {...}
 ]
 
 '''
@@ -6026,70 +5017,34 @@ preprocessor__num – обращаемся к шагу preprocessor в пайп�
 
 ```python
 param_distributions = [
-```
-
-# словарь для модели KNeighborsClassifier()
-
-```python
+    # словарь для модели KNeighborsClassifier()
     {
-```
-
-# название модели
-
-```python
+        # название модели
         'models': [KNeighborsClassifier()],
-```
-
-# указываем гиперпараметр модели n_neighbors
-
-```python
+        # указываем гиперпараметр модели n_neighbors
         'models__n_neighbors': range(1, 20),
-```
-
-# указываем список методов масштабирования
+        # указываем список методов масштабирования
         'preprocessor__num': [StandardScaler(), MinMaxScaler()]
-
-```python
     },
-```
-
-# словарь для модели DecisionTreeClassifier()
-
-```python
+    # словарь для модели DecisionTreeClassifier()
     {
         'models': [DecisionTreeClassifier(random_state=RANDOM_STATE)],
         'models__max_depth': range(2, 11),
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
-
-```python
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
     },
-```
-
-# словарь для модели SVC()
-
-```python
+    # словарь для модели SVC()
     {
         'models': [SVC(random_state=RANDOM_STATE)],
-```
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
 
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
-
-```python
     },
-```
-
-# словарь для модели LogisticRegression()
-
-```python
+    # словарь для модели LogisticRegression()
     {
         'models': [LogisticRegression(random_state=RANDOM_STATE)],
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
     }
 ]
+```
 
 Комбинаций получилось много — какая же лучше? Напомним: это покажет команда randomized_search.best_estimator_. Заодно выведем метрику ROC-AUC лучшей модели — командой randomized_search.best_score_.
 
@@ -6103,10 +5058,9 @@ print('\nЛучшая модель и её параметры:\n\n', randomized_
 ```python
 result = pd.DataFrame(randomized_search.cv_results_)
 print(result[
-```
-
-['rank_test_score', 'param_models', 'mean_test_score','params']
+    ['rank_test_score', 'param_models', 'mean_test_score','params']
 ].sort_values('rank_test_score'))
+```
 
 Создайте пайплайн, который выберет лучшую комбинацию модели и гиперпараметров.
 
@@ -6128,7 +5082,11 @@ TEST_SIZE = 0.25
 df_full = pd.read_csv('railway_full.csv')
 X_train, X_test, y_train, y_test = train_test_split(
     df_full.drop(['Удовлетворён предоставленной услугой','Общая оценка качества предоставленной услуги'], axis=1),
-    df_full['Удовлетворён предоставленной услугой'],
+```
+
+df_full['Удовлетворён предоставленной услугой'],
+
+```python
     test_size = TEST_SIZE,
     random_state = RANDOM_STATE,
     stratify = df_full['Удовлетворён предоставленной услугой'])
@@ -6138,18 +5096,14 @@ ord_columns = ['Оценка комфортности покупки билет�
 ```
 
 'Оценка комфортности времени отправления/прибытия']
+num_columns = ['Возраст', 'Расстояние']
 
 ```python
-num_columns = ['Возраст', 'Расстояние']
 ohe_pipe = Pipeline(
     [('simpleImputer_ohe', SimpleImputer(missing_values=np.nan, strategy='most_frequent')),
-```
-
-('ohe', OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False))
+     ('ohe', OneHotEncoder(drop='first', handle_unknown='ignore', sparse=False))
     ]
     )
-
-```python
 ord_pipe = Pipeline(
     [('simpleImputer_before_ord', SimpleImputer(missing_values=np.nan, strategy='most_frequent')),
      ('ord',  OrdinalEncoder(
@@ -6157,71 +5111,39 @@ ord_pipe = Pipeline(
 ```
 
 ['нормально', 'хорошо', 'плохо', 'отсутствует'],
-
-```python
                     ['нормально', 'хорошо', 'плохо', 'отсутствует'],
                     ['нормально', 'хорошо', 'плохо'],
-```
-
-],
+                ],
 
 ```python
                 handle_unknown='use_encoded_value', unknown_value=np.nan
-```
-
-)
-
-```python
+            )
         ),
-```
-
-('simpleImputer_after_ord', SimpleImputer(missing_values=np.nan, strategy='most_frequent'))
+     ('simpleImputer_after_ord', SimpleImputer(missing_values=np.nan, strategy='most_frequent'))
     ]
 )
-
-```python
 data_preprocessor = ColumnTransformer(
     [('ohe', ohe_pipe, ohe_columns),
      ('ord', ord_pipe, ord_columns),
-```
-
-('num', MinMaxScaler(), num_columns)
+     ('num', MinMaxScaler(), num_columns)
     ],
-
-```python
     remainder='passthrough'
-```
-
 )
-
-```python
 pipe_final = Pipeline([
     ('preprocessor', data_preprocessor),
-```
-
-('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
+    ('models', DecisionTreeClassifier(random_state=RANDOM_STATE))
 ])
-
-```python
 param_grid = [
     {
         'models': [DecisionTreeClassifier(random_state=RANDOM_STATE)],
         'models__max_depth': range(2, 5),
         'models__max_features': range(2, 5),
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
-
-```python
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
     },
     {
         'models': [KNeighborsClassifier()],
         'models__n_neighbors': range(2, 5),
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
-
-```python
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
     },
     {
         'models': [LogisticRegression(
@@ -6230,36 +5152,20 @@ param_grid = [
             penalty='l1'
         )],
         'models__C': range(1, 5),
-```
-
-'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
+        'preprocessor__num': [StandardScaler(), MinMaxScaler(), 'passthrough']
     }
 ]
-
-```python
 randomized_search = RandomizedSearchCV(
-```
-
-pipe_final,
+    pipe_final,
     param_grid,
-
-```python
     cv=5,
     scoring='roc_auc',
     random_state=RANDOM_STATE,
     n_jobs=-1
-```
-
 )
-
-```python
 randomized_search.fit(X_train, y_train)
 print('Лучшая модель и её параметры:\n\n', randomized_search.best_estimator_)
-```
-
 print ('Метрика лучшей модели на тренировочной выборке:', randomized_search.best_score_)
-
-```python
 y_test_pred = randomized_search.predict_proba(X_test)[:,1]
 print(f'Метрика ROC-AUC на тестовой выборке: {roc_auc_score(y_test, y_test_pred)}')
 ```
@@ -6269,8 +5175,7 @@ print(f'Метрика ROC-AUC на тестовой выборке: {roc_auc_sc
 Итоговый пайплайн — это модель, у которой можно перебрать гиперпараметры. Как и обычная модель, пайплайн может работать с fit() и predict().
 В итоговый пайплайн часто входят другие пайплайны, и каждый из них может работать независимо. Например, к пайплайну подготовки данных можно применять методы transform() и fit_transform(), чтобы взаимодействовать с промежуточными результатами пайплайна.
 
-## Библиотека Инструменты Описание
-
+Библиотека Инструменты Описание
 sklearn.pipeline make_pipeline Работает аналогично Pipeline. Отличие в том, что названия шагов можно не прописывать. Функция сделает это автоматически
 sklearn.feature_selection SelectKBest, chi2, f_regression Позволяет задавать правила отбора признаков из списка всех признаков
 feature_engine.selection DropCorrelatedFeatures Позволяет работать с мультиколлинеарностью
