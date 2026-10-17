@@ -2,7 +2,7 @@
 
 Открытый учебный репозиторий: конспекты уже пройденных тем и сайт для повторения. Первая специальность — Data Science.
 
-Сайт: [https://danlikendy.github.io/learn-tracks/](https://danlikendy.github.io/learn-tracks/)
+Сайт (не корень `github.io`, а проектный путь): [https://danlikendy.github.io/learn-tracks/](https://danlikendy.github.io/learn-tracks/)
 
 Ключевые слова: data science, machine learning, supervised learning, linear models, logistic regression, SVM, scikit-learn, notes, GitHub Pages.
 
@@ -24,7 +24,9 @@ npm run dev
 
 Откройте `http://localhost:5173/learn-tracks/`.
 
-Сайт на GitHub Pages собирается Actions при каждом пуше в `main` и публикуется в ветку `gh-pages` (`app/dist`, базовый путь `/learn-tracks/`). В Settings → Pages выберите **Deploy from a branch**, ветка `gh-pages`, папка `/`.
+Сайт собирает Actions и публикует GitHub Pages. Адрес только `https://danlikendy.github.io/learn-tracks/` — `https://danlikendy.github.io/` это другой сайт и будет 404.
+
+Если страница не открывается: Settings → Pages → Source **GitHub Actions**.
 
 ## Сейчас
 

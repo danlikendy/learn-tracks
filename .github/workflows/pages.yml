@@ -6,20 +6,42 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: app
     steps:
       - uses: actions/checkout@v4
+      - name: Enable GitHub Pages
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sS -o /tmp/pages-post.json -w "POST %{http_code}\n" \
+            -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
+            -d '{"build_type":"workflow"}' || true
+          cat /tmp/pages-post.json || true
+          curl -sS -o /tmp/pages-put.json -w "PUT %{http_code}\n" \
+            -X PUT \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
+            -d '{"build_type":"workflow"}' || true
+          cat /tmp/pages-put.json || true
+      - uses: actions/configure-pages@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -30,8 +52,16 @@ jobs:
       - run: |
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
-      - uses: JamesIves/github-pages-deploy-action@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          folder: app/dist
-          branch: gh-pages
-          clean: true
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
