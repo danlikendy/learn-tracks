@@ -38,6 +38,17 @@ export function MarkdownBody({ source }: { source: string }) {
             const text = headingText(children)
             return <h3 id={slugify(text)}>{children}</h3>
           },
+          img: ({ src, alt }) => {
+            if (!src) return null
+            const base = import.meta.env.BASE_URL
+            const url = src.startsWith('figures/') ? `${base}${src}` : src
+            return (
+              <figure className="note-figure">
+                <img src={url} alt={alt ?? ''} />
+                {alt ? <figcaption>{alt}</figcaption> : null}
+              </figure>
+            )
+          },
         }}
       >
         {source}

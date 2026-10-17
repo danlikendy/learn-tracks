@@ -96,12 +96,21 @@ function NotesPanel({ topic }: { topic: Topic }) {
         <p className="mb-3 text-xs uppercase tracking-wide text-[var(--muted)]">
           Содержание
         </p>
-        <nav className="flex max-h-[70vh] flex-col gap-1 overflow-auto text-sm">
+        <nav className="toc-nav flex max-h-[70vh] flex-col gap-1 overflow-auto text-sm">
           {toc.map((entry) => (
             <a
               key={entry.id + entry.title}
               href={`#${entry.id}`}
               className={entry.level === 1 ? 'text-[var(--fg)]' : 'pl-3 text-[var(--muted)]'}
+              onClick={(event) => {
+                event.preventDefault()
+                const node = document.getElementById(entry.id)
+                if (node) {
+                  const top = node.getBoundingClientRect().top + window.scrollY - 88
+                  window.scrollTo({ top, behavior: 'smooth' })
+                }
+                history.replaceState(null, '', `#${entry.id}`)
+              }}
             >
               {entry.title}
             </a>
