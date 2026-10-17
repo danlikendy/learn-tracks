@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { KnowledgeGraph } from '../components/KnowledgeGraph'
 import { MarkdownBody } from '../components/MarkdownBody'
 import { Select } from '../components/Select'
 import {
-  TRACK_TITLE,
   TOPICS,
   allTags,
   getTopic,
@@ -41,8 +41,12 @@ export function Learn() {
 
   return (
     <div className="flex flex-col gap-8">
+      <KnowledgeGraph
+        topicId={topic.id}
+        onSelectTopic={(id) => patch({ topic: id, view: null })}
+      />
       <section>
-        <p className="text-sm text-[var(--muted)]">{TRACK_TITLE}</p>
+        <p className="text-sm text-[var(--muted)]">{topic.trackTitle}</p>
         <div className="mt-3">
           <Select
             value={topic.id}
@@ -102,15 +106,6 @@ function NotesPanel({ topic }: { topic: Topic }) {
               key={entry.id + entry.title}
               href={`#${entry.id}`}
               className={entry.level === 1 ? 'text-[var(--fg)]' : 'pl-3 text-[var(--muted)]'}
-              onClick={(event) => {
-                event.preventDefault()
-                const node = document.getElementById(entry.id)
-                if (node) {
-                  const top = node.getBoundingClientRect().top + window.scrollY - 88
-                  window.scrollTo({ top, behavior: 'smooth' })
-                }
-                history.replaceState(null, '', `#${entry.id}`)
-              }}
             >
               {entry.title}
             </a>

@@ -25,7 +25,7 @@ export function Select({
   }, [])
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className="relative inline-block max-w-full">
       <button
         type="button"
         aria-haspopup="listbox"
@@ -40,7 +40,7 @@ export function Select({
         <ul
           id={id}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-64 min-w-full overflow-auto rounded-xl border border-[var(--line)] bg-[var(--bg)] py-1 shadow-lg"
+          className="absolute z-30 mt-1 max-h-64 w-max min-w-full max-w-[min(28rem,90vw)] overflow-auto rounded-xl border border-[var(--line)] bg-[var(--bg)] py-1 shadow-lg"
         >
           {options.map((option) => (
             <li key={option.value}>

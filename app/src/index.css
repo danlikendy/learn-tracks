@@ -76,7 +76,7 @@ html[data-theme="dark"] .select-control {
   display: block;
   margin: 1.35rem 0;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   padding: 0.5rem 0;
 }
 
@@ -123,18 +123,49 @@ html[data-theme="dark"] .select-control {
   color: var(--accent);
 }
 
+.note-code {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.note-code .copy-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  background: var(--bg);
+}
+
 .prose-note pre {
   overflow-x: auto;
-  padding: 1rem 1.1rem;
+  padding: 2.7rem 1.1rem 1rem;
   border-radius: 0.75rem;
   background: color-mix(in oklab, var(--fg) 6%, var(--bg));
   color: var(--fg);
   border: 1px solid var(--line);
   font-size: 0.8rem;
-  line-height: 1.45;
-  margin: 1rem 0;
+  line-height: 1.55;
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.prose-note table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.prose-note th,
+.prose-note td {
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.prose-note th {
+  font-weight: 600;
 }
 
 .prose-note code {
@@ -167,9 +198,15 @@ html[data-theme="dark"] .select-control {
   list-style: decimal;
 }
 
+.prose-note .note-block {
+  margin: 1.5rem 0;
+}
+
 .prose-note .note-figure {
-  margin: 1.1rem auto;
+  display: block;
+  margin: 1.5rem auto;
   max-width: 24rem;
+  overflow: hidden;
 }
 
 .prose-note .note-figure img {
@@ -178,15 +215,24 @@ html[data-theme="dark"] .select-control {
   max-width: 24rem;
   height: auto;
   margin: 0 auto;
-  border-radius: 0.75rem;
-  border: 1px solid var(--line);
-  background: var(--bg-elev);
+  background: transparent;
 }
 
 .prose-note .note-figure figcaption {
-  margin-top: 0.45rem;
-  font-size: 0.85rem;
-  color: var(--muted);
+  margin-top: 0.55rem;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--fg);
+}
+
+.prose-note h1,
+.prose-note h2,
+.prose-note h3 {
+  scroll-margin-top: 5.5rem;
 }
 
 .toc-nav {
