@@ -40,12 +40,12 @@ export function KnowledgeGraph({
   topicId,
   onSelectTopic,
 }: {
-  topicId: string
+  topicId: string | null
   onSelectTopic: (id: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
-  const topicIdRef = useRef(topicId)
+  const topicIdRef = useRef<string | null>(topicId)
   const onSelectRef = useRef(onSelectTopic)
   const camRef = useRef({ x: 0, y: 0, scale: 1 })
   const zoomFnRef = useRef<(factor: number) => void>(() => {})
@@ -110,11 +110,11 @@ export function KnowledgeGraph({
       const cx = width / 2
       const cy = height / 2
       const next: Node[] = []
-      const trackR = Math.min(width, height) * 0.18
+      const trackR = Math.min(width * 0.38, height * 0.36)
       TRACKS.forEach((track, index) => {
         const angle = -Math.PI / 2 + (index * 2 * Math.PI) / TRACKS.length
         const x = cx + Math.cos(angle) * trackR
-        const y = cy + Math.sin(angle) * trackR * 0.55
+        const y = cy + Math.sin(angle) * trackR * 0.92
         next.push({
           id: `track:${track.id}`,
           label: track.title,
@@ -134,9 +134,9 @@ export function KnowledgeGraph({
         const hub = byTrack.get(topic.trackId)
         const siblings = TOPICS.filter((entry) => entry.trackId === topic.trackId)
         const index = siblings.findIndex((entry) => entry.id === topic.id)
-        const angle = (index / Math.max(siblings.length, 1)) * Math.PI * 1.2 - 0.4
-        const x = (hub?.ox ?? cx) + Math.cos(angle) * 130
-        const y = (hub?.oy ?? cy) + Math.sin(angle) * 58
+        const angle = (index / Math.max(siblings.length, 1)) * Math.PI * 1.4 - 0.6
+        const x = (hub?.ox ?? cx) + Math.cos(angle) * 92
+        const y = (hub?.oy ?? cy) + Math.sin(angle) * 42
         next.push({
           id: topic.id,
           label: topic.title,
@@ -152,21 +152,25 @@ export function KnowledgeGraph({
           r: 5.5,
         })
       })
-      const current = TOPICS.find((topic) => topic.id === topicIdRef.current) ?? TOPICS[0]
-      const parent = next.find((node) => node.id === current.id)
-      const headings = notesToc(current.notes).filter((entry) => entry.level === 2)
-      headings.forEach((heading, index) => {
+      const current = TOPICS.find((topic) => topic.id === topicIdRef.current)
+      const parent = current ? next.find((node) => node.id === current.id) : undefined
+      const headings = current
+        ? notesToc(current.notes).filter((entry) => entry.level === 2)
+        : []
+      if (current) {
+        const topic = current
+        headings.forEach((heading, index) => {
         const angle = (index / Math.max(headings.length, 1)) * Math.PI * 2 - Math.PI / 2
         const radius = Math.min(width * 0.28, height * 0.28)
         const x = Math.min(width - 80, Math.max(80, (parent?.ox ?? cx) + Math.cos(angle) * radius))
         const y = Math.min(height - 36, Math.max(36, (parent?.oy ?? cy) + Math.sin(angle) * radius * 0.7))
         next.push({
-          id: `${current.id}:${heading.id}`,
+          id: `${topic.id}:${heading.id}`,
           label: heading.title,
           kind: 'heading',
-          topicId: current.id,
+          topicId: topic.id,
           headingId: heading.id,
-          trackId: current.trackId,
+          trackId: topic.trackId,
           x,
           y,
           vx: 0,
@@ -175,7 +179,8 @@ export function KnowledgeGraph({
           oy: y,
           r: 3,
         })
-      })
+        })
+      }
       nodes = next
       particles = Array.from({ length: 110 }, () => ({
         x: Math.random() * width,
@@ -238,16 +243,6 @@ export function KnowledgeGraph({
       g.globalAlpha = 1
 
       for (const node of nodes) {
-        if (mouse.inside) {
-          const dx = node.x - pointer.x
-          const dy = node.y - pointer.y
-          const dist = Math.hypot(dx, dy) || 1
-          if (dist < 110) {
-            const force = (110 - dist) / 110
-            node.vx += (dx / dist) * force * 0.5
-            node.vy += (dy / dist) * force * 0.5
-          }
-        }
         node.vx += (node.ox - node.x) * 0.04
         node.vy += (node.oy - node.y) * 0.04
         node.vx *= 0.86
@@ -309,7 +304,7 @@ export function KnowledgeGraph({
       const point = world(px, py)
       return [...nodes]
         .reverse()
-        .find((node) => Math.hypot(node.x - point.x, node.y - point.y) < 22)
+        .find((node) => Math.hypot(node.x - point.x, node.y - point.y) < 56)
     }
 
     function onMove(event: PointerEvent) {
@@ -406,7 +401,7 @@ export function KnowledgeGraph({
   return (
     <div
       ref={wrapRef}
-      className="relative -mx-4 h-72 overflow-hidden sm:-mx-0 sm:h-80 sm:rounded-3xl"
+      className="relative h-full min-h-[70vh] overflow-hidden"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
       <div className="absolute right-3 top-3 flex items-center gap-2">

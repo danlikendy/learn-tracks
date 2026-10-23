@@ -6,6 +6,7 @@ const KEYS = {
   theme: 'learn-tracks.theme',
   notifications: 'learn-tracks.notifications',
   notifyEnabled: 'learn-tracks.notify-enabled',
+  favorites: 'learn-tracks.favorites',
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -26,15 +27,32 @@ export function saveProgress(map: ProgressMap): void {
   localStorage.setItem(KEYS.progress, JSON.stringify(map))
 }
 
-export function markSolved(id: string): ProgressMap {
+export function adjustCount(id: string, delta: number): ProgressMap {
   const map = loadProgress()
-  const prev = map[id]
-  map[id] = {
-    count: (prev?.count ?? 0) + 1,
-    lastAt: new Date().toISOString(),
-  }
+  const next = Math.max(0, (map[id]?.count ?? 0) + delta)
+  if (next === 0) delete map[id]
+  else map[id] = { count: next, lastAt: new Date().toISOString() }
   saveProgress(map)
   return map
+}
+
+export function markSolved(id: string): ProgressMap {
+  return adjustCount(id, 1)
+}
+
+export function loadFavorites(): string[] {
+  const raw = readJson<unknown>(KEYS.favorites, [])
+  if (!Array.isArray(raw)) return []
+  return raw.filter((id): id is string => typeof id === 'string')
+}
+
+export function toggleFavorite(id: string): string[] {
+  const next = new Set(loadFavorites())
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  const list = [...next]
+  localStorage.setItem(KEYS.favorites, JSON.stringify(list))
+  return list
 }
 
 export function loadProfile(): Profile {

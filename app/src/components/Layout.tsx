@@ -5,6 +5,7 @@ import type { Theme } from '../lib/types'
 
 const primary: { to: string; label: string; end?: boolean }[] = [
   { to: '/', label: 'Обучение', end: true },
+  { to: '/cards', label: 'Карточки' },
   { to: '/community', label: 'Сообщество' },
   { to: '/roadmaps', label: 'Роадмапы' },
   { to: '/reviews', label: 'Обзоры' },
