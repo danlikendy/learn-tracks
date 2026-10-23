@@ -33,3 +33,31 @@ export type AppNotification = {
 }
 
 export type Theme = 'light' | 'dark'
+
+export type SessionVisit = {
+  kind: 'card' | 'module'
+  id: string
+  title: string
+  ms: number
+}
+
+export type StudySession = {
+  id: string
+  startedAt: string
+  endedAt: string
+  durationMs: number
+  comment: string
+  visits: SessionVisit[]
+}
+
+export type StudyTarget = {
+  kind: 'card' | 'module'
+  id: string
+  title: string
+}
+
+export type LiveSession = {
+  startedAt: number
+  visits: SessionVisit[]
+  current: (StudyTarget & { enteredAt: number }) | null
+}

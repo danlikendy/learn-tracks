@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { SessionTimer } from './SessionTimer'
 import { loadNotifications, loadTheme, saveTheme } from '../lib/storage'
 import type { Theme } from '../lib/types'
 
@@ -56,34 +57,30 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto hidden items-center gap-1 text-sm md:flex">
-            {account.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => linkClass(isActive)}
-              >
-                {link.label}
-                {link.to === '/notifications' && unread > 0 ? (
-                  <span className="ml-1 text-[var(--accent)]">{unread}</span>
-                ) : null}
-              </NavLink>
-            ))}
+          <div className="ml-auto flex items-center gap-1 text-sm">
+            <nav className="hidden items-center gap-1 md:flex">
+              {account.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) => linkClass(isActive)}
+                >
+                  {link.label}
+                  {link.to === '/notifications' && unread > 0 ? (
+                    <span className="ml-1 text-[var(--accent)]">{unread}</span>
+                  ) : null}
+                </NavLink>
+              ))}
+            </nav>
+            <SessionTimer />
             <button
               type="button"
-              className="ml-2 rounded-full border border-[var(--line)] px-3 py-1"
+              className="rounded-full border border-[var(--line)] px-3 py-1"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
               {theme === 'dark' ? 'Светлая' : 'Тёмная'}
             </button>
           </div>
-          <button
-            type="button"
-            className="ml-auto rounded-full border border-[var(--line)] px-3 py-1 text-sm md:hidden"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? 'Светлая' : 'Тёмная'}
-          </button>
         </div>
         <nav className="flex gap-2 overflow-x-auto px-4 pb-3 text-sm md:hidden">
           {[...primary, ...account].map((link) => (
