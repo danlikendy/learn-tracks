@@ -752,6 +752,251 @@ def fig_biz_ab() -> None:
     save(fig, "biz-ab.png")
 
 
+def fig_complexity() -> None:
+    n = np.linspace(1, 40, 200)
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    ax.plot(n, np.ones_like(n) * 8, color=MUTED, label=r"$T(n)\sim 1$")
+    ax.plot(n, n, color=BLUE, label=r"$T(n)\sim n$")
+    ax.plot(n, (n**2) / 40, color=ACCENT, label=r"$T(n)\sim n^2$")
+    ax.plot(n, (n**3) / 1600, color=RED, label=r"$T(n)\sim n^3$")
+    ax.set_xlabel("n")
+    ax.set_ylabel("T(n)")
+    ax.legend(frameon=False)
+    style(ax)
+    save(fig, "nm-complexity.png")
+
+
+def fig_bisection() -> None:
+    x = np.linspace(-0.2, 2.4, 300)
+    y = x**3 - x**2 - 2 * x
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    ax.plot(x, y, color=FG, lw=1.6)
+    ax.axhline(0, color=MUTED, lw=0.8)
+    a, b = 0.2, 2.2
+    ax.plot([a, b], [0, 0], color=ACCENT, lw=4, solid_capstyle="round")
+    ax.scatter([a, (a + b) / 2, b], [0, 0, 0], c=[RED, GREEN, BLUE], s=28, zorder=3)
+    style(ax)
+    ax.set_xlabel("x")
+    save(fig, "nm-bisection.png")
+
+
+def fig_gd() -> None:
+    w = np.linspace(-2, 6, 300)
+    loss = (w - 3) ** 2 + 0.4
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    ax.plot(w, loss, color=FG)
+    x = -1.2
+    for _ in range(6):
+        grad = 2 * (x - 3)
+        nxt = x - 0.35 * grad
+        ax.annotate("", xy=(nxt, (nxt - 3) ** 2 + 0.4), xytext=(x, (x - 3) ** 2 + 0.4), arrowprops={"arrowstyle": "->", "color": ACCENT})
+        x = nxt
+    ax.scatter([3], [0.4], c=GREEN, s=36, zorder=3)
+    style(ax)
+    ax.set_xlabel("w")
+    save(fig, "nm-gd.png")
+
+
+def fig_sgd() -> None:
+    t = np.arange(0, 28)
+    batch = 4 * np.exp(-t / 9)
+    rng = np.random.default_rng(1)
+    stoch = batch + rng.normal(0, 0.18, size=t.size) * np.exp(-t / 14)
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    ax.plot(t, batch, color=GREEN, lw=2, label="пакет")
+    ax.plot(t, stoch, color=ACCENT, lw=1.2, label="SGD")
+    ax.legend(frameon=False)
+    style(ax)
+    ax.set_xlabel("шаг")
+    save(fig, "nm-sgd.png")
+
+
+def fig_neuron() -> None:
+    fig, ax = plt.subplots(figsize=(5.6, 3.2))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 6)
+    ax.axis("off")
+    for i, y in enumerate((4.6, 3.0, 1.4)):
+        ax.add_patch(Circle((1.2, y), 0.38, facecolor=BG, edgecolor=FG, lw=1.2))
+        ax.text(1.2, y, f"x{i+1}", ha="center", va="center", fontsize=8)
+        ax.annotate("", xy=(4.3, 3.0), xytext=(1.6, y), arrowprops={"arrowstyle": "->", "color": MUTED})
+    ax.add_patch(Circle((4.8, 3.0), 0.62, facecolor=ACCENT, alpha=0.25, edgecolor=ACCENT, lw=1.4))
+    ax.text(4.8, 3.0, "Σ", ha="center", va="center")
+    ax.annotate("", xy=(7.2, 3.0), xytext=(5.5, 3.0), arrowprops={"arrowstyle": "->", "color": FG})
+    ax.add_patch(FancyBboxPatch((7.2, 2.45), 1.8, 1.1, boxstyle="round,pad=0.08", facecolor=GREEN, alpha=0.2, edgecolor=GREEN))
+    ax.text(8.1, 3.0, "σ", ha="center", va="center")
+    save(fig, "dl-neuron.png")
+
+
+def fig_activations() -> None:
+    x = np.linspace(-4, 4, 400)
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    ax.plot(x, 1 / (1 + np.exp(-x)), color=ACCENT, label="sigmoid")
+    ax.plot(x, np.tanh(x), color=BLUE, label="tanh")
+    ax.plot(x, np.maximum(0, x) / 4, color=GREEN, label="ReLU / 4")
+    ax.legend(frameon=False)
+    style(ax)
+    ax.set_xlabel("x")
+    save(fig, "dl-activations.png")
+
+
+def fig_backprop() -> None:
+    fig, ax = plt.subplots(figsize=(5.6, 3.0))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 4)
+    ax.axis("off")
+    xs = (1.5, 5.0, 8.5)
+    labels = ("вход", "скрытый", "выход")
+    for x, lab in zip(xs, labels):
+        ax.add_patch(Circle((x, 2), 0.7, facecolor=BG, edgecolor=FG, lw=1.3))
+        ax.text(x, 2, lab, ha="center", va="center", fontsize=8)
+    ax.annotate("", xy=(4.2, 2), xytext=(2.3, 2), arrowprops={"arrowstyle": "->", "color": MUTED})
+    ax.annotate("", xy=(7.7, 2), xytext=(5.8, 2), arrowprops={"arrowstyle": "->", "color": MUTED})
+    ax.annotate("", xy=(5.8, 1.1), xytext=(7.7, 1.1), arrowprops={"arrowstyle": "->", "color": RED})
+    ax.text(6.7, 0.7, "ошибка", ha="center", color=RED, fontsize=8)
+    save(fig, "dl-backprop.png")
+
+
+def fig_dropout() -> None:
+    fig, ax = plt.subplots(figsize=(5.2, 3.0))
+    ax.set_xlim(0, 8)
+    ax.set_ylim(0, 5)
+    ax.axis("off")
+    rng = np.random.default_rng(4)
+    for i in range(6):
+        y = 0.6 + i * 0.7
+        dropped = i in (1, 4)
+        ax.add_patch(Circle((4, y), 0.28, facecolor=BG if dropped else ACCENT, edgecolor=MUTED if dropped else ACCENT, lw=1.2, alpha=0.35 if dropped else 1))
+        if dropped:
+            ax.plot([3.7, 4.3], [y - 0.18, y + 0.18], color=RED, lw=1.2)
+    save(fig, "dl-dropout.png")
+
+
+def fig_ts_series() -> None:
+    t = np.arange(0, 180)
+    y = 20 + 0.04 * t + 6 * np.sin(2 * np.pi * t / 30) + np.random.default_rng(0).normal(0, 0.6, t.size)
+    fig, ax = plt.subplots(figsize=(5.6, 3.1))
+    ax.plot(t, y, color=ACCENT, lw=1)
+    style(ax)
+    ax.set_xlabel("t")
+    save(fig, "ts-series.png")
+
+
+def fig_ts_rolling() -> None:
+    t = np.arange(0, 160)
+    rng = np.random.default_rng(2)
+    y = 10 + 3 * np.sin(2 * np.pi * t / 24) + rng.normal(0, 0.7, t.size)
+    kernel = np.ones(9) / 9
+    roll = np.convolve(y, kernel, mode="same")
+    fig, ax = plt.subplots(figsize=(5.6, 3.1))
+    ax.plot(t, y, color=MUTED, lw=0.8, label="ряд")
+    ax.plot(t, roll, color=ACCENT, lw=2, label="скользящее среднее")
+    ax.legend(frameon=False)
+    style(ax)
+    ax.set_xlabel("t")
+    save(fig, "ts-rolling.png")
+
+
+def fig_ts_diff() -> None:
+    t = np.arange(0, 80)
+    y = 2 + 0.15 * t + np.sin(t / 3)
+    fig, ax = plt.subplots(figsize=(5.6, 3.1))
+    ax.plot(t, y, color=MUTED, label="ряд")
+    ax.plot(t[1:], np.diff(y), color=BLUE, label="разность")
+    ax.legend(frameon=False)
+    style(ax)
+    ax.set_xlabel("t")
+    save(fig, "ts-diff.png")
+
+
+def fig_bow() -> None:
+    words = ["ехать", "Москва", "Петербург", "Фёдор"]
+    counts = [1, 1, 1, 1]
+    fig, ax = plt.subplots(figsize=(5.2, 3.0))
+    ax.bar(words, counts, color=ACCENT)
+    style(ax)
+    save(fig, "nlp-bow.png")
+
+
+def fig_tfidf() -> None:
+    words = ["и", "в", "тупик", "лемма"]
+    vals = [0.05, 0.08, 0.72, 0.41]
+    fig, ax = plt.subplots(figsize=(5.2, 3.0))
+    ax.bar(words, vals, color=BLUE)
+    style(ax)
+    save(fig, "nlp-tfidf.png")
+
+
+def fig_rgb() -> None:
+    fig, axes = plt.subplots(1, 3, figsize=(5.6, 2.2))
+    tile = np.zeros((8, 8, 3))
+    colors = [(0.75, 0.22, 0.18), (0.25, 0.55, 0.28), (0.22, 0.35, 0.7)]
+    names = ("R", "G", "B")
+    for ax, color, name in zip(axes, colors, names):
+        img = np.zeros((8, 8, 3))
+        img[..., 0] = color[0]
+        img[..., 1] = color[1]
+        img[..., 2] = color[2]
+        ax.imshow(img)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlabel(name)
+    fig.tight_layout()
+    save(fig, "cv-rgb.png")
+
+
+def fig_conv() -> None:
+    img = np.zeros((8, 8))
+    img[2:6, 2:6] = 1
+    fig, ax = plt.subplots(figsize=(4.2, 3.4))
+    ax.imshow(img, cmap="Greys", vmin=0, vmax=1)
+    ax.add_patch(Rectangle((-0.5, -0.5), 3, 3, fill=False, edgecolor=ACCENT, lw=2))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    save(fig, "cv-conv.png")
+
+
+def fig_pool() -> None:
+    grid = np.array([[1, 3, 0, 2], [4, 2, 1, 0], [0, 1, 5, 1], [2, 0, 1, 3]])
+    fig, axes = plt.subplots(1, 2, figsize=(5.2, 2.6))
+    axes[0].imshow(grid, cmap="Oranges")
+    axes[1].imshow(np.array([[4, 2], [2, 5]]), cmap="Oranges")
+    for ax in axes:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    save(fig, "cv-pool.png")
+
+
+def fig_iou() -> None:
+    fig, ax = plt.subplots(figsize=(4.6, 3.2))
+    ax.add_patch(Rectangle((0.15, 0.2), 0.5, 0.55, fill=True, facecolor=BLUE, alpha=0.35, edgecolor=BLUE, lw=1.4))
+    ax.add_patch(Rectangle((0.38, 0.35), 0.48, 0.5, fill=True, facecolor=ACCENT, alpha=0.35, edgecolor=ACCENT, lw=1.4))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    save(fig, "cv-iou.png")
+
+
+def course_figures() -> None:
+    fig_complexity()
+    fig_bisection()
+    fig_gd()
+    fig_sgd()
+    fig_neuron()
+    fig_activations()
+    fig_backprop()
+    fig_dropout()
+    fig_ts_series()
+    fig_ts_rolling()
+    fig_ts_diff()
+    fig_bow()
+    fig_tfidf()
+    fig_rgb()
+    fig_conv()
+    fig_pool()
+    fig_iou()
+
+
 def main() -> None:
     fig_class_vs_reg()
     fig_ols()
@@ -807,6 +1052,7 @@ def main() -> None:
     fig_knn()
     fig_overfit()
     fig_l1_l2()
+    course_figures()
     print("wrote", len(list(OUT.glob("*.png"))), "figures to", OUT)
 
 

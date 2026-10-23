@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -115,11 +116,27 @@ def is_mathy(s: str) -> bool:
         return True
     if re.match(r"^C=1/", s):
         return True
+    if re.match(r"^[A-Za-z]=-?[\d.]+[;.]?$", s):
+        return True
     if re.search(r"(>=|<=|-> min|-> max|sum_\(|sum\^n_|w\^t|w\^T|\|\|w\|\||λ\|\||\\lambda)", s, re.I):
         return True
     if re.search(r"d=\(\||M=y\*|w_0\+|y\(x\)=sign|y\(w", s):
         return True
-    if re.search(r"(Var\[|E\[X\]|sum_\^n_|P_n=|A\^k_n|C\^k_n|X∼|sigma\^2|\bмю\b|X_ = N\()", s):
+    if re.search(
+        r"(Var\[|E\[X\]|sum_\^n_|sum\^n_|sum\^N_|P_n=|A\^k_n|C\^k_n|X∼|sigma\^2|\bмю\b|X_ = N\(|SEM\(X_\)|∼N\(|∼Pois|λ\^k|s\^2=|P\(Y=k\)|P\(X=k\)|P\(F\()",
+        s,
+    ):
+        return True
+    if re.search(r"\^|∑|∇|∣", s) and not re.search(
+        r"\b(import|def|class|return|print|for|while|elif)\b|np\.|pd\.|plt\.|torch\.|cv2\.|sklearn",
+        s,
+    ):
+        return True
+    if re.match(r"^(w|T|f|F|P|L|MSE|MAE|BCE|CCE|ELU|Swish)\b", s) and "=" in s and "." not in s:
+        return True
+    if re.match(r"^T\(", s):
+        return True
+    if re.search(r"[²³]", s) and cyr_ratio(s) < 0.2:
         return True
     return False
 
@@ -241,6 +258,165 @@ def prose_math(text: str) -> str:
     return "".join(out)
 
 
+EMOJI_RE = re.compile(
+    r"[\U0001F300-\U0001FAFF\u2600-\u27BF✔️✔✅❌⚠️💡📊📈⭐👉✓✗☑☝]+"
+)
+
+
+def polish_math(text: str) -> str:
+    text = EMOJI_RE.sub("", text)
+    exact = [
+        ("s^2=1/n*Σ^n_(i=1)(x_i-x_)^2", r"$s^2=\frac{1}{n}\sum_{i=1}^{n}(x_i-\bar{x})^2$"),
+        ("x_=1/n*Σ^n_(i=1)(x_i)", r"$\bar{x}=\frac{1}{n}\sum_{i=1}^{n} x_i$"),
+        (
+            "s=sqrt(s^2)=sqrt(1/n*Σ^n_(i=1)(x_i-x_)^2)",
+            r"$s=\sqrt{s^2}=\sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_i-\bar{x})^2}$",
+        ),
+        (
+            "σ=sqrt((sum^N_(i=1)(b_i-μ)^2/N)",
+            NL.join(["$$", r"\sigma=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(b_i-\mu)^2}", "$$"]),
+        ),
+        (
+            "^σ^2=D(X)=(sum^n_(i=1)(x_i-x_)^2)/(n-1)",
+            NL.join(
+                ["$$", r"\hat{\sigma}^2=D(X)=\frac{\sum_{i=1}^{n}(x_i-\bar{x})^2}{n-1}", "$$"]
+            ),
+        ),
+        (
+            "P(Y=k)=λ^k/(k!⋅e^λ)",
+            NL.join(["$$", r"P(Y=k)=\frac{\lambda^k}{k!\,e^{\lambda}}", "$$"]),
+        ),
+        (
+            "P(X=k)=λ^k/(k!⋅e^λ)",
+            NL.join(["$$", r"P(X=k)=\frac{\lambda^k}{k!\,e^{\lambda}}", "$$"]),
+        ),
+        (
+            "(95−100)/10=(178−180)/4=−0.5",
+            NL.join(["$$", r"\frac{95-100}{10}=\frac{178-180}{4}=-0.5", "$$"]),
+        ),
+        (
+            "(a−3.5)/0.7=(a−3.9)/0.5",
+            NL.join(["$$", r"\frac{a-3.5}{0.7}=\frac{a-3.9}{0.5}", "$$"]),
+        ),
+        ("0.7⋅(a−3.9)=0.5⋅(a−3.5).", NL.join(["$$", r"0.7(a-3.9)=0.5(a-3.5)", "$$"])),
+        ("0.7a−2.73=0.5a−1.75;", NL.join(["$$", r"0.7a-2.73=0.5a-1.75", "$$"])),
+        ("0.2a=0.98;", NL.join(["$$", r"0.2a=0.98", "$$"])),
+        ("(X−μ)/σ∼Z", r"$\dfrac{X-\mu}{\sigma} \sim Z$"),
+        ("(X−μ)/σ∼N(0,1)", r"$\dfrac{X-\mu}{\sigma} \sim \mathcal{N}(0,1)$"),
+        (
+            "(X_-мю)/(SEM(X_))~N(0,1^2)",
+            NL.join(
+                [
+                    "$$",
+                    r"\frac{\bar{X}-\mu}{\mathrm{SEM}(\bar{X})} \sim \mathcal{N}(0,1)",
+                    "$$",
+                ]
+            ),
+        ),
+        (
+            "SEM(X_) = sigma / sqrt(n)",
+            NL.join(["$$", r"\mathrm{SEM}(\bar{X})=\frac{\sigma}{\sqrt{n}}", "$$"]),
+        ),
+        (
+            "P(F(0.05)<(мю-X_)/(SEM(X_))<F(0.95))=90%",
+            NL.join(
+                [
+                    "$$",
+                    r"P\bigl(F(0.05)<\frac{\mu-\bar{X}}{\mathrm{SEM}(\bar{X})}<F(0.95)\bigr)=90\%",
+                    "$$",
+                ]
+            ),
+        ),
+        (
+            "P(X_+F(0.05)*SEM(X_)<мю<X_+F(0.95)*SEM(X_))=90%",
+            NL.join(
+                [
+                    "$$",
+                    r"P\bigl(\bar{X}+F(0.05)\,\mathrm{SEM}(\bar{X})<\mu<\bar{X}+F(0.95)\,\mathrm{SEM}(\bar{X})\bigr)=90\%",
+                    "$$",
+                ]
+            ),
+        ),
+        (
+            "P(X_+t(0.05)*SEM(X_)<мю<X_+t(0.95)*SEM(X_))=90%",
+            NL.join(
+                [
+                    "$$",
+                    r"P\bigl(\bar{X}+t(0.05)\,\mathrm{SEM}(\bar{X})<\mu<\bar{X}+t(0.95)\,\mathrm{SEM}(\bar{X})\bigr)=90\%",
+                    "$$",
+                ]
+            ),
+        ),
+        (
+            "P(k успехов из n попыток)=$C_n^k$*p^k*(1-p)^(n-k)",
+            r"$P(\text{$k$ успехов из $n$ попыток})=C_n^k p^k (1-p)^{n-k}$",
+        ),
+        ("P(M≥a)=P(F≥a)", r"$P(M \ge a)=P(F \ge a)$"),
+        ("(b-a)*1/(b-a)=1", r"$(b-a)\cdot\frac{1}{b-a}=1$"),
+        ("X∼U_[13.5,15]", r"$X \sim U_{[13.5,15]}$"),
+        ("[μ−3⋅σ,μ+3⋅σ]", r"$[\mu-3\sigma,\mu+3\sigma]$"),
+        ("[μ−σ,μ+σ]", r"$[\mu-\sigma,\mu+\sigma]$"),
+        ("N(1000,100^2)", r"$\mathcal{N}(1000,100^{2})$"),
+        ("λ^0/(0!⋅e^λ)", r"$\dfrac{\lambda^{0}}{0!\,e^{\lambda}}$"),
+        ("λ^1/(1!⋅e^λ)", r"$\dfrac{\lambda^{1}}{1!\,e^{\lambda}}$"),
+        ("λ^2/(2!⋅e^λ)", r"$\dfrac{\lambda^{2}}{2!\,e^{\lambda}}$"),
+        ("λ^k/(k!⋅e^λ)", r"$\dfrac{\lambda^{k}}{k!\,e^{\lambda}}$"),
+        ("μ_1=μ_2", r"$\mu_1=\mu_2$"),
+        ("μ_1≠μ_2", r"$\mu_1 \neq \mu_2$"),
+        ("рубли^2", r"рубли$^2$"),
+        ("в a^2 раз", r"в $a^2$ раз"),
+        ("x_1, x_2, ..., x_n", r"$x_1, x_2, \ldots, x_n$"),
+        ("(x_i-x_)^2", r"$(x_i-\bar{x})^2$"),
+        ("где x_", r"где $\bar{x}$"),
+        ("10×10=100", r"$10 \times 10 = 100$"),
+        ("Валовая маржинальность (рентабельность) = Валовая прибыль / Выручка * 100%",
+         r"Валовая маржинальность (рентабельность) $= \dfrac{\text{Валовая прибыль}}{\text{Выручка}} \times 100\%$"),
+        ("Операционная маржинальность = Операционная прибыль / Выручка * 100%",
+         r"Операционная маржинальность $= \dfrac{\text{Операционная прибыль}}{\text{Выручка}} \times 100\%$"),
+        ("Валовая прибыль = Оборот - Себестоимость",
+         r"Валовая прибыль $=$ Оборот $-$ Себестоимость"),
+        ("Операционная прибыль = Валовая прибыль - Операционные расходы",
+         r"Операционная прибыль $=$ Валовая прибыль $-$ Операционные расходы"),
+        ("Чистая прибыль = Операционная прибыль - Налоги - Обслуживание долга",
+         r"Чистая прибыль $=$ Операционная прибыль $-$ Налоги $-$ Обслуживание долга"),
+        ("ROI = (Итоговая прибыль - Инвестиции) / Инвестиции",
+         r"$\mathrm{ROI} = \dfrac{\text{Итоговая прибыль} - \text{Инвестиции}}{\text{Инвестиции}}$"),
+    ]
+    exact.sort(key=lambda pair: len(pair[0]), reverse=True)
+    for src, dst in exact:
+        text = text.replace(src, dst)
+    def outside_math(part: str) -> str:
+        part = re.sub(
+            r"(?<!\$)\b([A-Z])∼N\(([^)]+)\)",
+            lambda m: f"${m.group(1)} \\sim \\mathcal{{N}}({m.group(2)})$",
+            part,
+        )
+        part = re.sub(
+            r"(?<!\$)\b([A-Z])∼Pois\(([^)]+)\)",
+            lambda m: f"${m.group(1)} \\sim \\mathrm{{Pois}}({m.group(2)})$",
+            part,
+        )
+        part = part.replace("⇒", r" $\Rightarrow$ ")
+        part = re.sub(r"(?<!\$)(?<![\\])\bσ\^2\b", lambda _m: r"$\sigma^2$", part)
+        part = re.sub(r"(?<!\$)\ba=4\.9\.", "$a=4.9$.", part)
+        part = re.sub(r"(?<!\$)\bx=95\b", "$x=95$", part)
+        part = re.sub(r"(?<!\$)\by=178\b", "$y=178$", part)
+        part = re.sub(r"(?<!\$)\bλ=3\b", lambda _m: r"$\lambda=3$", part)
+        part = re.sub(r"(?<!\$)(?<![\\])\bμ\b", lambda _m: r"$\mu$", part)
+        part = re.sub(r"(?<!\$)(?<![\\])\bσ\b", lambda _m: r"$\sigma$", part)
+        part = re.sub(r"(?<!\$)(?<![\\])\bλ\b", lambda _m: r"$\lambda$", part)
+        part = re.sub(r"(?<!\$)\bs\^2\b", lambda _m: r"$s^2$", part)
+        part = re.sub(r"(?<!\$)\bx_i\b", lambda _m: r"$x_i$", part)
+        part = part.replace("P(Y=k)", r"$P(Y=k)$")
+        part = part.replace("P(X=k)", r"$P(X=k)$")
+        return part
+
+    chunks = re.split(r"(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)", text)
+    text = "".join(chunk if chunk.startswith("$") else outside_math(chunk) for chunk in chunks)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text
+
+
 APIS = (
     "LogisticRegression",
     "GridSearchCV",
@@ -325,13 +501,39 @@ def space_code(code: str) -> str:
     return text.strip("\n")
 
 
+def ascii_formula(s: str) -> str:
+    t = s.strip().rstrip(".;")
+    t = (
+        t.replace("²", "^{2}")
+        .replace("³", "^{3}")
+        .replace("σ", r"\sigma")
+        .replace("μ", r"\mu")
+        .replace("λ", r"\lambda")
+        .replace("η", r"\eta")
+        .replace("Δ", r"\Delta")
+        .replace("∇", r"\nabla")
+        .replace("∑", r"\sum")
+        .replace("∣", r"|")
+        .replace("~", r"\sim")
+        .replace("≈", r"\approx")
+    )
+    t = t.replace("arg min", r"\arg\min ")
+    t = t.replace("*", r" \cdot ")
+    t = re.sub(r"\^\(([^)]+)\)", r"^{\1}", t)
+    t = re.sub(r"\^([A-Za-z0-9])", r"^{\1}", t)
+    t = re.sub(r"([А-Яа-яЁё]+)", lambda m: r"\text{" + m.group(1) + "}", t)
+    return t
+
+
 def emit_prose_line(s: str) -> list[str]:
     s = s.strip()
     if not s:
         return []
-    s = re.sub(r"[\U0001F300-\U0001FAFF💡✅❌⚠️📊📈]", "", s).strip()
+    s = EMOJI_RE.sub("", s).strip()
     if not s:
         return []
+    if is_mathy(s) and cyr_ratio(s) < 0.5 and not s.startswith(("**", "-", "#")):
+        return ["$$", ascii_formula(s), "$$", ""]
     for name in APIS:
         s = s.replace(f"{name}()", f"`{name}()`")
     m_pen = re.match(r"^(penalty\s*=\s*['\"]?[\w]+['\"]?)\s*[—–-]\s*(.+)$", s)
@@ -353,6 +555,7 @@ def emit_prose_line(s: str) -> list[str]:
             len(term.split()) <= 10
             and "$" not in term
             and not term.startswith(("Если", "Чтобы", "Когда", "После", "-", "•"))
+            and not re.search(r"[_^∼✔✔️σμλ]", term)
         ):
             s = f"**{term}** — {rest}"
     return [s, ""]
@@ -366,7 +569,13 @@ def markdown_table(header: list[str], rows: list[list[str]]) -> str:
     return "\n".join(body)
 
 
-def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
+def to_markdown(
+    raw: str,
+    title: str,
+    figure_specs: list | None = None,
+    extra_headings: set[str] | None = None,
+    figure_inserts: dict[str, str] | None = None,
+) -> str:
     lines = raw.replace("\r\n", "\n").split("\n")
     out: list[str] = [f"# {title}", ""]
     buf: list[str] = []
@@ -507,7 +716,7 @@ def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
                     out.append(f"## {heading}")
                     out.append("")
                 break
-        if stripped in STATS_HEADINGS:
+        if stripped in STATS_HEADINGS or stripped in (extra_headings or ()):
             flush()
             if stripped not in seen_headings:
                 seen_headings.add(stripped)
@@ -585,6 +794,9 @@ def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
         if re.fullmatch(r"random_state", stripped, re.I):
             i += 1
             continue
+        if re.fullmatch(r"#(var|std)", stripped, re.I):
+            i += 1
+            continue
         buf.append(text_line)
         i += 1
     flush()
@@ -603,7 +815,7 @@ def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
         "## Конверсия и воронка\n": "## Конверсия и воронка\n\n![Воронка конверсии](figures/biz-funnel.png)\n",
         "Для них можно построить гистограмму.\n": "Для них можно построить гистограмму.\n\n![Гистограмма непрерывной величины](figures/stats-hist.png)\n",
     }
-    for src, dst in inserts.items():
+    for src, dst in {**inserts, **(figure_inserts or {})}.items():
         text = text.replace(src, dst)
     text = re.sub(r"```python\n(\$\$[\s\S]*?\$\$)\n```", r"\1", text)
     text = re.sub(r"```python\n(\$\$[\s\S]*?\$\$)\n+", r"\1\n\n```python\n", text)
@@ -612,6 +824,7 @@ def to_markdown(raw: str, title: str, figure_specs: list | None = None) -> str:
         text,
         lambda part: re.sub(r"(?<!\$)\bw_i\b(?!\$)", r"$w_i$", part),
     )
+    text = map_outside_code(text, polish_math)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.rstrip() + "\n"
 
@@ -636,6 +849,19 @@ def cards_from_notes(md: str, topic_id: str, track_id: str = "data-science") -> 
     parts = re.split(r"\n## ", md)
     items = []
     n_t = n_p = 0
+    preamble = re.sub(r"^# .+\n+", "", parts[0]).strip()
+    if preamble:
+        n_t += 1
+        h1 = re.match(r"^# (.+)$", md, re.M)
+        items.append(
+            {
+                "id": f"{track_id}-{topic_id}-t-{n_t:02d}",
+                "kind": "theory",
+                "title": h1.group(1).strip() if h1 else topic_id,
+                "tags": [topic_id],
+                "body": preamble,
+            }
+        )
     for part in parts[1:]:
         title, _, body = part.partition("\n")
         title = title.strip()
@@ -669,10 +895,19 @@ def cards_from_notes(md: str, topic_id: str, track_id: str = "data-science") -> 
     return {"topicId": topic_id, "trackId": track_id, "items": items}
 
 
-def convert_topic(src: Path, dest: Path, title: str, topic_id: str, track_id: str, figure_specs: list | None) -> None:
+def convert_topic(
+    src: Path,
+    dest: Path,
+    title: str,
+    topic_id: str,
+    track_id: str,
+    figure_specs: list | None,
+    extra_headings: set[str] | None = None,
+    figure_inserts: dict[str, str] | None = None,
+) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     raw = src.read_text(encoding="utf-8")
-    notes = to_markdown(raw, title, figure_specs)
+    notes = to_markdown(raw, title, figure_specs, extra_headings, figure_inserts)
     (dest / "notes.md").write_text(notes)
     items = cards_from_notes(notes, topic_id, track_id)
     (dest / "items.json").write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n")
@@ -681,6 +916,9 @@ def convert_topic(src: Path, dest: Path, title: str, topic_id: str, track_id: st
 
 def main() -> None:
     root = Path("/Users/luvgreyair/learn-tracks/content")
+    if os.environ.get("LT_SKIP_OLD") == "1":
+        convert_courses(root)
+        return
     convert_topic(
         root / "data-science/supervised-quality/source/supervised-quality.txt",
         root / "data-science/supervised-quality",
@@ -704,6 +942,235 @@ def main() -> None:
         "st",
         "statistics",
         [],
+    )
+    convert_courses(root)
+
+
+def convert_courses(root: Path) -> None:
+    nm = {
+        "Время обучения линейной регрессии",
+        "Итеративные методы",
+        "Метод бисекции",
+        "Сравнение методов",
+        "Минимизация функции потерь",
+        "Градиент функции",
+        "Градиентный спуск",
+        "Градиентный спуск для линейной регрессии",
+        "Стохастический градиентный спуск",
+        "Основы нейронных сетей",
+        "Обучение нейронных сетей",
+        "Ансамбли и бустинг",
+        "Градиентный бустинг",
+        "Регуляризация градиентного бустинга",
+        "Библиотеки для градиентного бустинга",
+        "Проработка запроса",
+    }
+    dl = {
+        "Этап 1. Зарождение",
+        "Этап 2. Взросление",
+        "Этап 3. Подростковый период",
+        "Этап 4. Активный рост",
+        "Типы задач для нейронных сетей",
+        "Прогнозирование временных рядов",
+        "Кластеризация",
+        "Классификация",
+        "Генерация",
+        "Работа с текстами",
+        "Связь с линейными уравнениями",
+        "Биологический и искусственный нейрон",
+        "Слои и архитектура нейронной сети",
+        "Полносвязная нейросеть прямого распространения, ПНС",
+        "Рекуррентная нейронная сеть, РНС",
+        "Свёрточная нейронная сеть, ConvNet",
+        "Генеративная нейронная сеть, GAN",
+        "Связь архитектуры нейронной сети и типа решаемой задачи",
+        "Функция активации",
+        "Роль функции активации",
+        "Пороговая функция активации",
+        "Логистическая функция и гиперболический тангенс",
+        "Функция активации ReLU",
+        "Модификации функций. Стратегия использования",
+        "Разновидности ReLU",
+        "Leaky ReLU и ELU",
+        "Выбор функции активации",
+        "Введение в PyTorch",
+        "Тензор",
+        "Создание тензора",
+        "Индексация при работе с тензорами",
+        "Операции над тензором",
+        "Построение методом линейной регрессии",
+        "Решение нейросетевым подходом",
+        "Алгоритм построения нейронной сети",
+        "Многослойная нейронная сеть",
+        "Нейронная сеть в PyTorch",
+        "Сети прямого распространения в PyTorch",
+        "Вычислительный граф",
+        "Построение вычислительного графа",
+        "Функция потерь",
+        "Задача регрессии",
+        "Задача бинарной классификации",
+        "Задача многоклассовой классификации",
+        "Обратное распространение ошибки",
+        "Производные функций потерь",
+        "Обратное распространение ошибки и вычислительный граф",
+        "Затухание градиента",
+        "Регуляризация весов",
+        "Аугментация данных",
+        "Batch Normalization",
+        "Dropout",
+    }
+    ts = {
+        "Временные ряды",
+        "Ресемплирование",
+        "Стационарные ряды",
+        "Задача прогнозирования",
+        "Качество прогноза",
+        "Создание признаков",
+    }
+    nlp = {
+        "Регулярные выражения",
+        "Мешок слов и N-граммы",
+        "TF-IDF",
+        "Классификация тональности текста",
+        "Embeddings",
+        "Word2vec",
+        "Embeddings для классификации",
+        "BERT",
+        "RuBERT и предобработка",
+        "Предобработка твитов",
+        "Эмбеддинги RuBERT",
+    }
+    cv = {
+        "Беспилотные автомобили",
+        "Медицина",
+        "Поиск по картинкам",
+        "Распознавание лиц",
+        "Компьютерное зрение для развлечения",
+        "Типы изображений",
+        "Что такое RGB?",
+        "Что такое пиксели?",
+        "Параметры изображения",
+        "Как посчитать размер изображения",
+        "Аугментации изображений",
+        "OpenCV",
+        "Отражение по горизонтали и вертикали",
+        "Яркость, контраст и гамма",
+        "Пакет albumentations",
+        "Библиотека Keras",
+        "Логистическая регрессия в Keras",
+        "Обучение многослойной сети [GPU]",
+        "Что такое ядро свёртки?",
+        "Размытие изображений",
+        "Оператор Собеля",
+        "Задачи свёрток",
+        "Одномерная свёртка",
+        "Двумерная свёртка",
+        "Свёрточный слой",
+        "Pooling",
+        "Классификационная часть свёрточной нейросети",
+        "Архитектура ResNet",
+        "Причины возникновения ResNet",
+        "Что такое ResNet?",
+        "Ограничения классов",
+        "Организация данных",
+        "Препроцессинг данных",
+        "Функции потерь и метрики качества",
+        "Обучение с переносом опыта",
+        "Голова сети",
+        "Обучение модели классификации изображений",
+        "Задача детекции объектов",
+        "Метрики качества детекции",
+        "Алгоритм детекции объектов",
+        "Функция потерь в задаче детекции",
+        "Главное в задаче детекции",
+        "Задача сегментации изображений",
+        "Метрики качества сегментации",
+        "Алгоритм сегментации объектов",
+        "Функция потерь в задаче сегментации",
+        "Основные датасеты изображений",
+        "CIFAR",
+        "ImageNet",
+        "MS COCO",
+        "Cityscapes",
+        "Алгоритм Adam",
+        "Свёрточная сеть",
+        "Предобработка",
+    }
+
+    def fig(heading: str, name: str, caption: str) -> dict[str, str]:
+        return {f"## {heading}\n": f"## {heading}\n\n![{caption}](figures/{name})\n"}
+
+    convert_topic(
+        root / "numerical-methods/overview/source/numerical-methods.txt",
+        root / "numerical-methods/overview",
+        "Численные методы",
+        "nm",
+        "numerical-methods",
+        [],
+        nm,
+        {
+            **fig("Время обучения линейной регрессии", "nm-complexity.png", "Рост T(n): константа, линейная, квадратичная и кубическая сложность"),
+            **fig("Метод бисекции", "nm-bisection.png", "Метод бисекции: деление отрезка пополам"),
+            **fig("Градиентный спуск", "nm-gd.png", "Шаги градиентного спуска к минимуму"),
+            **fig("Стохастический градиентный спуск", "nm-sgd.png", "Пакетный и стохастический градиентный спуск"),
+        },
+    )
+    convert_topic(
+        root / "deep-learning/models/source/models-algorithms.txt",
+        root / "deep-learning/models",
+        "Модели и алгоритмы в машинном обучении",
+        "dl",
+        "deep-learning",
+        [],
+        dl,
+        {
+            **fig("Биологический и искусственный нейрон", "dl-neuron.png", "Искусственный нейрон: входы, веса, сумма и активация"),
+            **fig("Функция активации", "dl-activations.png", "Сигмоида, гиперболический тангенс и ReLU"),
+            **fig("Обратное распространение ошибки", "dl-backprop.png", "Ошибка идёт от выхода сети к весам"),
+            **fig("Dropout", "dl-dropout.png", "Dropout выключает часть нейронов на шаге обучения"),
+        },
+    )
+    convert_topic(
+        root / "time-series/overview/source/time-series.txt",
+        root / "time-series/overview",
+        "Временные ряды",
+        "ts",
+        "time-series",
+        [],
+        ts,
+        {
+            **fig("Временные ряды", "ts-series.png", "Временной ряд с сезонными колебаниями"),
+            **fig("Ресемплирование", "ts-rolling.png", "Ряд и скользящее среднее"),
+            **fig("Стационарные ряды", "ts-diff.png", "Ряд и его первая разность"),
+        },
+    )
+    convert_topic(
+        root / "nlp/texts/source/texts.txt",
+        root / "nlp/texts",
+        "Машинное обучение для текстов",
+        "tx",
+        "nlp",
+        [],
+        nlp,
+        {
+            **fig("Мешок слов и N-граммы", "nlp-bow.png", "Мешок слов: частоты токенов"),
+            **fig("TF-IDF", "nlp-tfidf.png", "TF-IDF поднимает редкие содержательные слова"),
+        },
+    )
+    convert_topic(
+        root / "computer-vision/overview/source/computer-vision.txt",
+        root / "computer-vision/overview",
+        "Компьютерное зрение",
+        "cv",
+        "computer-vision",
+        [],
+        cv,
+        {
+            **fig("Что такое RGB?", "cv-rgb.png", "Каналы R, G и B складываются в цвет пикселя"),
+            **fig("Что такое ядро свёртки?", "cv-conv.png", "Ядро свёртки скользит по изображению"),
+            **fig("Pooling", "cv-pool.png", "Max pooling оставляет максимум в окне"),
+            **fig("Метрики качества детекции", "cv-iou.png", "IoU: площадь пересечения к площади объединения"),
+        },
     )
 
 
