@@ -1,0 +1,14 @@
+{
+  "id": "time-series",
+  "title": "Временные ряды",
+  "topics": [
+    {
+      "id": "time-series",
+      "title": "Временные ряды",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    }
+  ]
+}

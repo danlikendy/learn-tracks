@@ -1,5 +1,6 @@
 {
-  "id": "overview",
+  "id": "statistics",
+  "trackId": "statistics",
   "title": "Статистический анализ данных",
   "kind": ["theory", "practice"]
 }

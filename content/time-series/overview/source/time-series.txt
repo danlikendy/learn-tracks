@@ -1,0 +1,312 @@
+Временные ряды
+Временные ряды (англ. time series) — это последовательности чисел на оси времени. Например:
+- цена акций компании в начале торгов;
+- объём продаж интернет-магазина по дням;
+- количество игроков в онлайне по часам.
+Интервал между значениями ряда постоянный: скажем, день, час или 10 минут.
+
+Рассмотрим столбцы таблицы:
+- Datetime (англ. «дата-время») — значение даты и времени на временной оси. Переменная называется так же, как и тип данных datetime. В этой таблице интервал равен одному часу.
+- PJME_MW (название компании и MW; англ. megawatt, «мегаватт») — расход электроэнергии за час.ё
+
+Нужно привести данные к удобному формату, для их анализа выделить временной промежуток, а затем построить график временного ряда.
+
+Постройте график временного ряда.
+import pandas as pd
+import matplotlib.pyplot as plt
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06']
+data.plot(figsize=(15, 7))
+plt.show()
+
+Ресемплирование
+Ресемплирование, или ресемплинг (англ. resample, «повторная выборка»), — это изменение интервала со значениями ряда. Его выполняют в два этапа:
+1 Выбирают новую длину интервала. Причём значения из текущего интервала группируются. Допустим, интервал равен 10 минутам. Возьмём новый интервал — 30 минут. В него попадут значения из трёх 10-минутных интервалов.
+2 В каждой группе вычисляется агрегированное значение ряда. Это может быть медиана, среднее, максимум или минимум.
+
+Чтобы поменять интервал и сгруппировать значения, вызовем функцию resample(). В аргументе укажем новый интервал. Например:
+# 1H англ. hour, 1 час
+data.resample('1H')
+# 2W англ. week, 2 недели
+data.resample('2W') 
+Функция resample() похожа на groupby(). После группировки вызовем функции mean() и max() для агрегации значений:
+# среднее по каждому часу
+data.resample('1H').mean()
+# максимум по каждым двум неделям
+data.resample('2W').max()
+
+Постройте график энергопотребления с января по июнь 2018 года. Выберите интервал в один день, по каждому — вычислите суммарное энергопотребление.
+import pandas as pd
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06'].resample('1D').sum()
+data.plot()
+
+Чтобы во временном ряду снизить колебания, применим скользящее среднее.
+Скользящее среднее (англ. rolling mean), или движущееся среднее (англ. moving average), — метод сглаживания временных рядов. Его суть заключается в поиске значений, которые меньше всего подвержены колебаниям, то есть средних арифметических.
+Метод работает так: экспериментально подбирается размер окна (англ. window size) — интервал, в котором выполняют усреднение. Чем интервал больше, тем сильнее сглаживание. Затем окно начинает «скользить» почти от начала ряда к его концу, в каждой точке вычисляя среднее значение ряда и тем самым сглаживая его.
+В скользящем среднем окна «наслаиваются» друг на друга и не могут выходить за пределы ряда. Поэтому средних будет чуть меньше, чем исходных значений ряда.
+
+В Pandas скользящее среднее вычисляют в два этапа:
+Вызовом функции rolling() создают скользящее окно. В аргументе указывают его размер:
+# размер окна 7
+data.rolling(7)
+Для агрегации значений вызывают функцию mean():
+# скользящее среднее с окном размером 7
+data.rolling(7).mean()
+
+Добавьте в столбец 'rolling_mean' скользящее среднее с размером окна, равным 10. Выведите на экран графики энергопотребления с января по июнь 2018 года и скользящего среднего (уже в прекоде).
+import pandas as pd
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06'].resample('1D').sum()
+data['rolling_mean'] = data['PJME_MW'].rolling(10).mean()
+data.plot()
+
+Тренд (англ. trend) — плавное изменение среднего значения ряда без повторяющихся закономерностей. Например, ежегодное увеличение объёма продаж авиабилетов.
+
+Тренды и сезонность зависят от масштаба данных. Нельзя увидеть закономерности, повторяющиеся каждое лето, если есть данные только за год. 
+
+В модуле tsa.seasonal (от англ. time series analysis, «анализ временных рядов») библиотеки statsmodels (англ. «статистические модели») есть функция seasonal_decompose() (англ. «разбить на части»). Она раскладывает временной ряд на три составляющие: тренд, сезонность и остаток (англ. residuals). Это компонента, которая не объясняется трендом и сезонностью, это шум.
+from statsmodels.tsa.seasonal import seasonal_decompose
+decomposed = seasonal_decompose(data)
+
+Функция seasonal_decompose() принимает временной ряд, а возвращает объект структуры DecomposeResult (англ. «результат разделения»). В нём есть нужные атрибуты:
+- decomposed.trend — тренд;
+- decomposed.seasonal — сезонная составляющая;
+- decomposed.resid — остаток декомпозиции.
+
+Постройте график сезонной составляющей за первые 15 дней января 2018 года.
+import pandas as pd
+from statsmodels.tsa.seasonal import seasonal_decompose
+import matplotlib.pyplot as plt
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06'].resample('1D').sum()
+decomposed = seasonal_decompose(data)
+decomposed.seasonal['2018-01-01':'2018-01-15'].plot()
+plt.show()
+
+Стационарные ряды
+В задаче потребления электроэнергии найдём скользящее стандартное отклонение (англ. rolling standard deviation, rolling std) — стандартное отклонение по скользящему окну:
+import pandas as pd
+data = pd.read_csv('energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06'].resample('1D').sum()
+data['mean'] = data['PJME_MW'].rolling(15).mean()
+data['std'] = data['PJME_MW'].rolling(15).std()
+data.plot()
+
+В статистике временной ряд описывается стохастическим процессом (англ. stochastic process). Это случайная величина, у которой со временем меняется её распределение. У этой величины есть среднее и дисперсия, которые тоже меняются.
+Стохастический процесс стационарный (англ. stationary stochastic process), если его распределение со временем не меняется. Например, к такому процессу относятся периодические колебания значений.
+Если распределение меняется, то процесс называется нестационарным (англ. nonstationary stochastic process).
+
+Узнать распределение временного ряда нельзя. Поэтому стационарные временные ряды (англ. stationary time series) — это ряды, у которых среднее и стандартное отклонение не меняются. Когда среднее и стандартное отклонение первого ряда меняется медленнее второго, то первый ряд «более стационарный», чем второй.
+Нестационарные ряды (англ. nonstationary time series) прогнозировать сложнее: их свойства меняются слишком быстро.
+
+Разности временного ряда (англ. time series difference) — это набор разностей между соседними элементами временного ряда, т. е. из каждого значения вычитается предыдущее.
+Для поиска разностей временного ряда применяется метод shift() (англ. «сдвиг»). Все значения он сдвигает вдоль временной оси на один шаг вперёд:
+data = pd.Series([0.5, 0.7, 2.4, 3.2])
+print(data)
+print(data.shift())
+0    0.5
+1    0.7
+2    2.4
+3    3.2
+dtype: float64
+0    NaN
+1    0.5
+2    0.7
+3    2.4
+dtype: float64
+
+Последнее значение ряда пропадает: его сдвигать некуда. На месте нулевого — NaN, потому что для него значения нет. Добавим аргумент, чтобы заполнить недостающие значения:
+import pandas as pd
+data = pd.Series([0.5, 0.7, 2.4, 3.2])
+print(data)
+# англ. заполнить значением
+print(data.shift(fill_value=0))
+0    0.5
+1    0.7
+2    2.4
+3    3.2
+dtype: float64
+0    0.0
+1    0.5
+2    0.7
+3    2.4
+dtype: float64
+
+Вычислите разности временного ряда. Пропущенные значения заполнять не нужно. На графике изобразите скользящее среднее и скользящее стандартное отклонение.
+import pandas as pd
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data['2018-01':'2018-06'].resample('1D').sum()
+data = data - data.shift()
+data['mean'] = data['PJME_MW'].rolling(15).mean()
+data['std'] = data['PJME_MW'].rolling(15).std()
+data.plot()
+
+Задача прогнозирования
+Задача прогнозирования временного ряда состоит в построении модели, которая по историческим данным предскажет будущие значения временного ряда.
+Промежуток времени в будущем, на который строится прогноз, называется горизонтом прогнозирования (англ.  forecast horizon). В задачах этой темы он будет равен одному шагу.
+Если значения временного ряда, или функция x(t), где t — время, — это числа, то перед вами задача регрессии для временных рядов; если категории — задача классификации.
+Например, к задачам прогнозирования рядов относятся предсказания:
+- количества заказов такси на следующий час,
+- объёма доставок курьерской службы на следующий день,
+- объёма спроса на товары в интернет-магазине на следующей неделе.
+
+По исходным данным создадим обучающую (train) и тестовую (test) выборки. Перемешивать выборки в задаче прогнозирования временного ряда нельзя. Данные обучающей выборки должны предшествовать данным тестовой. Иначе тестирование модели будет некорректным: модель не должна обучаться на данных из будущего.
+
+Функция train_test_split() из модуля sklearn.model_selection по умолчанию перемешивает данные. Поэтому укажем аргумент shuffle (с англ. «перетасовывать») равным False, чтобы разделить данные корректно:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+data = pd.Series([0.1, 0.5, 2.3, 1.2, 1.5])
+train, test = train_test_split(data, shuffle=False, test_size=0.2)
+print('Обучающая выборка:')
+print(train)
+print('Тестовая выборка:')
+print(test)
+
+Разбейте датасет о потреблении электроэнергии на обучающую и тестовую выборки в соотношении 4:1. Возьмите данные за доступное время.
+import pandas as pd
+from sklearn.model_selection import train_test_split
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data.resample('1D').sum()
+train, test = train_test_split(data, shuffle=False, test_size=0.2)
+print(train.index.min(), train.index.max())
+print(test.index.min(), test.index.max())
+
+Качество прогноза
+Обучим модель с горизонтом прогнозирования в один день. Такие модели пригодятся в автоматизации принятия технических решений. Например, в задаче энергопотребления модель поможет изменять режим работы генераторов автоматически.
+Чтобы проверять качество моделей в наших задачах, возьмём метрику MAE. Её можно легко интерпретировать.
+Спрогнозировать временные ряды без обучения можно двумя способами:
+1 Все значения тестовой выборки предсказываются одним и тем же числом (константой). Для метрики MAE — это медиана.
+2 Новое значение x(t) прогнозируется предыдущим значением ряда, то есть x(t-1). Этот способ не зависит от метрики.
+
+Оцените модель вторым способом — предыдущим значением ряда. Предскажите дневной объём электропотребления и найдите для этого прогноза значение MAE.
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data.resample('1D').sum()
+train, test = train_test_split(data, shuffle=False, test_size=0.2)
+print("Средний объём электропотребления в день:", test['PJME_MW'].mean())
+pred_previous = test.shift()
+pred_previous.iloc[0] = train.iloc[-1]
+print("MAE:", mean_absolute_error(test, pred_previous))
+
+Создание признаков
+Напишем функцию для создания признаков. Разберём каждый тип признаков:
+1. Календарные признаки (англ. calendar features)
+Во многих данных тренды и сезонность привязаны к конкретной дате. Тип datetime64 в Pandas уже содержит нужную информацию, осталось лишь представить её как отдельные столбцы. Рассмотрим пример:
+data = pd.read_csv('energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data.resample('1D').sum()
+# признак, в котором хранится год как число
+data['year'] = data.index.year
+# признак, в котором хранится день недели как число
+data['dayofweek'] = data.index.dayofweek
+print(data.head(10))
+             PJME_MW  year  dayofweek
+Datetime                             
+2002-01-01  714857.0  2002          1
+2002-01-02  822277.0  2002          2
+2002-01-03  828285.0  2002          3
+2002-01-04  809171.0  2002          4
+2002-01-05  729723.0  2002          5
+2002-01-06  727766.0  2002          6
+2002-01-07  800012.0  2002          0
+2002-01-08  824710.0  2002          1
+2002-01-09  810628.0  2002          2
+2002-01-10  755317.0  2002          3
+
+2. «Отстающие значения» (англ. lag features)
+Предыдущие значения временного ряда подскажут, будет ли функция x(t) расти или уменьшаться. Получим отстающие значения знакомой функцией shift():
+data['lag_1'] = data['PJME_MW'].shift(1)
+data['lag_2'] = data['PJME_MW'].shift(2)
+data['lag_3'] = data['PJME_MW'].shift(3)
+print(data.head(10))
+             PJME_MW     lag_1     lag_2     lag_3
+Datetime                                          
+2002-01-01  714857.0       NaN       NaN       NaN
+2002-01-02  822277.0  714857.0       NaN       NaN
+2002-01-03  828285.0  822277.0  714857.0       NaN
+2002-01-04  809171.0  828285.0  822277.0  714857.0
+2002-01-05  729723.0  809171.0  828285.0  822277.0
+2002-01-06  727766.0  729723.0  809171.0  828285.0
+2002-01-07  800012.0  727766.0  729723.0  809171.0
+2002-01-08  824710.0  800012.0  727766.0  729723.0
+2002-01-09  810628.0  824710.0  800012.0  727766.0
+2002-01-10  755317.0  810628.0  824710.0  800012.0
+Для первых дат есть не все отстающие значения, поэтому в этих строках стоят NaN.
+
+3. Скользящее среднее
+Скользящее среднее как признак задаёт общий тренд временного ряда. Повторим, как его вычислять:
+data['rolling_mean'] = data['PJME_MW'].rolling(5).mean()
+print(data.head(10))
+             PJME_MW  rolling_mean
+Datetime                          
+2002-01-01  714857.0           NaN
+2002-01-02  822277.0           NaN
+2002-01-03  828285.0           NaN
+2002-01-04  809171.0           NaN
+2002-01-05  729723.0      780862.6
+2002-01-06  727766.0      783444.4
+2002-01-07  800012.0      778991.4
+2002-01-08  824710.0      778276.4
+2002-01-09  810628.0      778567.8
+2002-01-10  755317.0      783686.6
+Скользящее среднее в моменте t учитывает текущее значение ряда x(t). Это некорректно: целевой признак «убежал» в признаки. Вычисление скользящего среднего не должно включать в себя текущее значение ряда.
+
+Вычислите скользящее среднее и добавьте его как признак 'rolling_mean'. В функцию make_features() добавьте новый аргумент rolling_mean_size, который задаст ширину окна. Текущее значение ряда для расчёта скользящего среднего применять нельзя.
+import pandas as pd
+import numpy as np
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data.resample('1D').sum()
+def make_features(data, max_lag, rolling_mean_size):
+    data['year'] = data.index.year
+    data['month'] = data.index.month
+    data['day'] = data.index.day
+    data['dayofweek'] = data.index.dayofweek
+    for lag in range(1, max_lag + 1):
+        data['lag_{}'.format(lag)] = data['PJME_MW'].shift(lag)
+    data['rolling_mean'] = data['PJME_MW'].shift(1).rolling(rolling_mean_size).mean()
+make_features(data, 4, 4)
+print(data.head())
+
+В выборке выделите признаки и целевой признак. На них обучите линейную регрессию и сохраните её в переменной model. Затем напечатайте на экране значения MAE для обучающей и тестовой выборок (уже в прекоде). Подберите аргументы функции make_features() так, чтобы значение MAE на тестовой выборке было не больше 37 000.
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+data = pd.read_csv('/datasets/energy_consumption.csv', index_col=[0], parse_dates=[0])
+data.sort_index(inplace=True)
+data = data.resample('1D').sum()
+def make_features(data, max_lag, rolling_mean_size):
+    data['year'] = data.index.year
+    data['month'] = data.index.month
+    data['day'] = data.index.day
+    data['dayofweek'] = data.index.dayofweek
+    for lag in range(1, max_lag + 1):
+        data['lag_{}'.format(lag)] = data['PJME_MW'].shift(lag)
+    data['rolling_mean'] = data['PJME_MW'].shift().rolling(rolling_mean_size).mean()
+make_features(data, 6, 6)
+train, test = train_test_split(data, shuffle=False, test_size=0.2)
+train = train.dropna()
+features_train = train.drop(columns=['PJME_MW'])
+target_train = train['PJME_MW']
+features_test = test.drop(columns=['PJME_MW'])
+target_test = test['PJME_MW']
+model = LinearRegression()
+model.fit(features_train, target_train)
+pred_train = model.predict(features_train)
+pred_test = model.predict(features_test)
+print("MAE обучающей выборки:", mean_absolute_error(target_train, pred_train))
+print("MAE тестовой выборки:", mean_absolute_error(target_test, pred_test))

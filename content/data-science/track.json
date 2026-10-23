@@ -3,6 +3,11 @@
   "title": "Data Science",
   "topics": [
     {
+      "id": "ida",
+      "title": "Интеллектуальный анализ данных",
+      "kind": ["theory"]
+    },
+    {
       "id": "linear-models",
       "title": "Линейные модели в машинном обучении",
       "kind": ["theory", "practice"]

@@ -1,0 +1,14 @@
+{
+  "id": "computer-vision",
+  "title": "Компьютерное зрение",
+  "topics": [
+    {
+      "id": "computer-vision",
+      "title": "Компьютерное зрение",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "nlp",
+  "trackId": "nlp",
+  "title": "Машинное обучение для текстов",
+  "summary": "Лемматизация, мешок слов, TF-IDF, word2vec и BERT."
+}

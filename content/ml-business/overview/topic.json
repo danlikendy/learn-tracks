@@ -1,5 +1,6 @@
 {
-  "id": "overview",
+  "id": "ml-business",
+  "trackId": "ml-business",
   "title": "Машинное обучение в бизнесе",
   "kind": ["theory", "practice"]
 }

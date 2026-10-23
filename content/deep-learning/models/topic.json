@@ -1,0 +1,6 @@
+{
+  "id": "deep-learning",
+  "trackId": "deep-learning",
+  "title": "Модели и алгоритмы в машинном обучении",
+  "summary": "Нейрон, активации, PyTorch, обратное распространение, Dropout и BatchNorm."
+}

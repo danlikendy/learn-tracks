@@ -1,0 +1,14 @@
+{
+  "id": "numerical-methods",
+  "title": "Численные методы",
+  "topics": [
+    {
+      "id": "numerical-methods",
+      "title": "Численные методы",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    }
+  ]
+}

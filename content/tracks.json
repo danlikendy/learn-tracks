@@ -7,15 +7,45 @@
       "status": "in_progress"
     },
     {
+      "id": "statistics",
+      "title": "Статистический анализ данных",
+      "summary": "Комбинаторика, вероятность, распределения и гипотезы.",
+      "status": "in_progress"
+    },
+    {
+      "id": "numerical-methods",
+      "title": "Численные методы",
+      "summary": "Сложность, бисекция, градиентный спуск и бустинг.",
+      "status": "in_progress"
+    },
+    {
       "id": "ml-business",
       "title": "Машинное обучение в бизнесе",
       "summary": "Метрики бизнеса, воронки и A/B-тесты.",
       "status": "in_progress"
     },
     {
-      "id": "statistics",
-      "title": "Статистический анализ данных",
-      "summary": "Комбинаторика, вероятность, распределения и гипотезы.",
+      "id": "deep-learning",
+      "title": "Глубокое обучение",
+      "summary": "Нейрон, активации, PyTorch и обратное распространение ошибки.",
+      "status": "in_progress"
+    },
+    {
+      "id": "nlp",
+      "title": "Машинное обучение для текстов",
+      "summary": "Предобработка, мешок слов, TF-IDF, word2vec и BERT.",
+      "status": "in_progress"
+    },
+    {
+      "id": "computer-vision",
+      "title": "Компьютерное зрение",
+      "summary": "Изображения, свёртки, детекция и сегментация.",
+      "status": "in_progress"
+    },
+    {
+      "id": "time-series",
+      "title": "Временные ряды",
+      "summary": "Ресемплирование, стационарность, лаги и прогноз.",
       "status": "in_progress"
     }
   ]

@@ -3,7 +3,7 @@
   "title": "Машинное обучение в бизнесе",
   "topics": [
     {
-      "id": "overview",
+      "id": "ml-business",
       "title": "Машинное обучение в бизнесе",
       "kind": ["theory", "practice"]
     }

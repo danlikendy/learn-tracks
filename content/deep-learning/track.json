@@ -1,0 +1,14 @@
+{
+  "id": "deep-learning",
+  "title": "Глубокое обучение",
+  "topics": [
+    {
+      "id": "deep-learning",
+      "title": "Модели и алгоритмы в машинном обучении",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    }
+  ]
+}
