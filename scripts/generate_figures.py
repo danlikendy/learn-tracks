@@ -977,6 +977,74 @@ def fig_iou() -> None:
     save(fig, "cv-iou.png")
 
 
+def fig_tree_split() -> None:
+    fig, ax = plt.subplots(figsize=(5.4, 3.3))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 6.2)
+    ax.axis("off")
+
+    def box(x, y, text, color):
+        ax.add_patch(
+            FancyBboxPatch(
+                (x, y),
+                2.6,
+                0.95,
+                boxstyle="round,pad=0.04,rounding_size=0.08",
+                facecolor=BG,
+                edgecolor=color,
+                lw=1.5,
+            )
+        )
+        ax.text(x + 1.3, y + 0.48, text, ha="center", va="center", fontsize=9)
+
+    box(3.7, 4.7, "x₁ ≤ t ?", ACCENT)
+    box(0.8, 2.5, "лист: среднее y", GREEN)
+    box(6.6, 2.5, "x₂ ≤ s ?", ACCENT)
+    box(5.3, 0.45, "класс 0", BLUE)
+    box(8.0, 0.45, "класс 1", RED)
+    ax.plot([5.0, 2.1], [4.7, 3.45], color=MUTED, lw=1.1)
+    ax.plot([5.0, 7.9], [4.7, 3.45], color=MUTED, lw=1.1)
+    ax.plot([7.9, 6.6], [2.5, 1.4], color=MUTED, lw=1.1)
+    ax.plot([7.9, 9.3], [2.5, 1.4], color=MUTED, lw=1.1)
+    ax.text(2.6, 4.15, "да", color=MUTED, fontsize=8)
+    ax.text(6.6, 4.15, "нет", color=MUTED, fontsize=8)
+    save(fig, "tree-split.png")
+
+
+def fig_kmeans() -> None:
+    rng = np.random.default_rng(3)
+    centers = np.array([[0.0, 0.0], [2.4, 0.4], [1.1, 2.2]])
+    clouds = [c + rng.normal(0, 0.38, size=(18, 2)) for c in centers]
+    colors = [ACCENT, GREEN, BLUE]
+    fig, ax = plt.subplots(figsize=(5.1, 3.2))
+    for cloud, color, center in zip(clouds, colors, centers):
+        ax.scatter(cloud[:, 0], cloud[:, 1], c=color, s=28, zorder=2)
+        ax.scatter([center[0]], [center[1]], c=FG, s=70, marker="x", zorder=3)
+    ax.set_xlabel("x₁")
+    ax.set_ylabel("x₂")
+    style(ax)
+    save(fig, "kmeans.png")
+
+
+def fig_pca() -> None:
+    rng = np.random.default_rng(4)
+    z = rng.normal(size=(80, 2))
+    z[:, 1] *= 0.28
+    theta = np.deg2rad(32)
+    rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    pts = z @ rot.T
+    direction = rot[:, 0]
+    line = np.linspace(-2.6, 2.6, 2)
+    fig, ax = plt.subplots(figsize=(5.1, 3.2))
+    ax.scatter(pts[:, 0], pts[:, 1], c=ACCENT, s=22, alpha=0.9)
+    ax.plot(direction[0] * line, direction[1] * line, color=GREEN, lw=2)
+    ax.set_xlabel("x₁")
+    ax.set_ylabel("x₂")
+    ax.set_aspect("equal")
+    style(ax)
+    save(fig, "pca-axis.png")
+
+
 def course_figures() -> None:
     fig_complexity()
     fig_bisection()
@@ -1052,6 +1120,9 @@ def main() -> None:
     fig_knn()
     fig_overfit()
     fig_l1_l2()
+    fig_tree_split()
+    fig_kmeans()
+    fig_pca()
     course_figures()
     print("wrote", len(list(OUT.glob("*.png"))), "figures to", OUT)
 

@@ -194,7 +194,7 @@ matrix = np.insert(matrix, n, c, axis=1)
 w = np.linalg.inv(X.T @ X) @ X.T @ y
 ```
 
-## MAE и \(R^2\)
+## MAE и $R^2$
 
 ```python
 from sklearn.metrics import mean_absolute_error
