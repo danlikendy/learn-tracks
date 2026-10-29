@@ -43,15 +43,16 @@ plt.rcParams.update(
 )
 
 
-def save(fig, name: str) -> None:
+def save(fig, name: str, *, tight: bool = True) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     fig.suptitle("")
     for ax in fig.get_axes():
         ax.set_title("")
-    try:
-        fig.tight_layout()
-    except Exception:
-        pass
+    if tight:
+        try:
+            fig.tight_layout()
+        except Exception:
+            pass
     fig.savefig(OUT / name, dpi=130, bbox_inches="tight", facecolor=BG)
     plt.close(fig)
 
@@ -119,41 +120,84 @@ def fig_mse_mae() -> None:
     save(fig, "mse-mae.png")
 
 
-def fig_svm_hyperplane() -> None:
-    rng = np.random.default_rng(1)
+def _svm_hyperplane_ax(ax, rng: np.random.Generator, *, compact: bool = False) -> None:
     a = rng.normal([-1.4, -1.2], 0.35, (18, 2))
     b = rng.normal([1.4, 1.2], 0.35, (18, 2))
-    fig, ax = plt.subplots(figsize=(6.2, 4.2))
-    ax.scatter(a[:, 0], a[:, 1], c=ACCENT, s=40, label="класс −1")
-    ax.scatter(b[:, 0], b[:, 1], c=GREEN, s=40, label="класс +1")
+    ax.scatter(a[:, 0], a[:, 1], c=ACCENT, s=32, label="класс −1")
+    ax.scatter(b[:, 0], b[:, 1], c=GREEN, s=32, label="класс +1")
     t = np.linspace(-2.8, 2.8, 50)
-    ax.plot(t, -t, color=FG, lw=2, label=r"$w^{T}x + w_0 = 0$")
-    ax.legend(frameon=False, loc="upper left")
-    ax.set_title("SVM: разделяющая гиперплоскость")
+    ax.plot(t, -t, color=FG, lw=1.8, label=r"$w^{T}x + w_0 = 0$")
+    if compact:
+        ax.legend(
+            frameon=False,
+            loc="lower left",
+            fontsize=6.5,
+            borderaxespad=0.2,
+            handlelength=1.2,
+        )
+    else:
+        ax.legend(frameon=False, loc="upper left", fontsize=8)
     ax.set_aspect("equal")
+
+
+def _svm_margin_ax(ax, *, compact: bool = False) -> None:
+    t = np.linspace(-2.6, 2.6, 50)
+    ax.plot(t, -t, color=FG, lw=1.8, label="граница")
+    ax.plot(t, -t + 1.1, color=MUTED, ls="--", label="зазор")
+    ax.plot(t, -t - 1.1, color=MUTED, ls="--")
+    sv_neg = np.array([[-0.7, -0.4], [-1.5, -0.4], [-0.2, -0.9]])
+    sv_pos = np.array([[0.7, 0.4], [1.5, 0.4], [0.2, 0.9]])
+    ax.scatter(*sv_neg.T, c=ACCENT, s=44, edgecolors=FG, lw=1.1, zorder=4, label="опорные векторы")
+    ax.scatter(*sv_pos.T, c=GREEN, s=44, edgecolors=FG, lw=1.1, zorder=4)
+    extra_n = np.array([[-2.1, -1.6], [-1.8, -2.0], [-2.4, -0.7]])
+    extra_p = np.array([[2.1, 1.6], [1.8, 2.0], [2.4, 0.7]])
+    ax.scatter(*extra_n.T, c=ACCENT, s=22)
+    ax.scatter(*extra_p.T, c=GREEN, s=22)
+    if compact:
+        ax.legend(
+            frameon=False,
+            loc="lower right",
+            fontsize=6.5,
+            borderaxespad=0.2,
+            handlelength=1.2,
+        )
+    else:
+        ax.legend(frameon=False, loc="upper right", fontsize=7)
+    ax.set_aspect("equal")
+
+
+def fig_svm_hyperplane() -> None:
+    fig, ax = plt.subplots(figsize=(4.0, 2.85))
+    _svm_hyperplane_ax(ax, np.random.default_rng(1))
     style(ax)
     save(fig, "svm-hyperplane.png")
 
 
 def fig_svm_margin() -> None:
-    fig, ax = plt.subplots(figsize=(5.1, 3.4))
-    t = np.linspace(-2.6, 2.6, 50)
-    ax.plot(t, -t, color=FG, lw=2, label="граница")
-    ax.plot(t, -t + 1.1, color=MUTED, ls="--", label="зазор")
-    ax.plot(t, -t - 1.1, color=MUTED, ls="--")
-    sv_neg = np.array([[-0.7, -0.4], [-1.5, -0.4], [-0.2, -0.9]])
-    sv_pos = np.array([[0.7, 0.4], [1.5, 0.4], [0.2, 0.9]])
-    ax.scatter(*sv_neg.T, c=ACCENT, s=55, edgecolors=FG, lw=1.2, zorder=4, label="опорные векторы")
-    ax.scatter(*sv_pos.T, c=GREEN, s=55, edgecolors=FG, lw=1.2, zorder=4)
-    extra_n = np.array([[-2.1, -1.6], [-1.8, -2.0], [-2.4, -0.7]])
-    extra_p = np.array([[2.1, 1.6], [1.8, 2.0], [2.4, 0.7]])
-    ax.scatter(*extra_n.T, c=ACCENT, s=28)
-    ax.scatter(*extra_p.T, c=GREEN, s=28)
-    ax.legend(frameon=False, loc="upper right", fontsize=8)
-    ax.set_title("Отступ (margin) и опорные векторы")
-    ax.set_aspect("equal")
+    fig, ax = plt.subplots(figsize=(4.0, 2.85))
+    _svm_margin_ax(ax)
     style(ax)
     save(fig, "svm-margin.png")
+
+
+def fig_svm_plane_margin() -> None:
+    lim = 2.85
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(7.0, 3.15),
+        gridspec_kw={"width_ratios": [1, 1], "wspace": 0.38},
+    )
+    rng = np.random.default_rng(1)
+    _svm_hyperplane_ax(axes[0], rng, compact=True)
+    _svm_margin_ax(axes[1], compact=True)
+    for ax in axes:
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
+        ax.set_aspect("equal", adjustable="box")
+        style(ax)
+    fig.subplots_adjust(left=0.07, right=0.99, bottom=0.12, top=0.98)
+    save(fig, "svm-plane-margin.png", tight=False)
 
 
 def fig_nonlinear() -> None:
@@ -978,36 +1022,132 @@ def fig_iou() -> None:
 
 
 def fig_tree_split() -> None:
-    fig, ax = plt.subplots(figsize=(5.4, 3.3))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6.2)
+    """Depth-2 tree from a Gini search on eight points. Same numbers as the card."""
+    X = np.array(
+        [
+            [1.0, 1.0],
+            [1.2, 2.8],
+            [1.4, 1.2],
+            [1.6, 1.1],
+            [3.4, 1.0],
+            [3.6, 1.2],
+            [3.8, 2.8],
+            [4.0, 1.1],
+        ]
+    )
+    y = np.array([0, 1, 0, 0, 1, 1, 0, 1])
+
+    def gini(labels: np.ndarray) -> float:
+        if len(labels) == 0:
+            return 0.0
+        p = float(np.mean(labels == 1))
+        return 2 * p * (1 - p)
+
+    def best_split(points: np.ndarray, labels: np.ndarray):
+        parent = gini(labels)
+        best = None
+        n = len(labels)
+        for j in range(points.shape[1]):
+            order = np.argsort(points[:, j], kind="mergesort")
+            xs = points[order, j]
+            for i in range(1, n):
+                if xs[i] == xs[i - 1]:
+                    continue
+                t = 0.5 * (float(xs[i - 1]) + float(xs[i]))
+                left = points[:, j] <= t
+                gain = (
+                    n * parent
+                    - int(left.sum()) * gini(labels[left])
+                    - int((~left).sum()) * gini(labels[~left])
+                )
+                if best is None or gain > best[0] + 1e-9:
+                    best = (gain, j, t)
+        return best
+
+    root = best_split(X, y)
+    left_mask = X[:, root[1]] <= root[2]
+    left_split = best_split(X[left_mask], y[left_mask])
+    right_split = best_split(X[~left_mask], y[~left_mask])
+    if root[1] != 0 or abs(root[2] - 2.5) > 1e-9:
+        raise RuntimeError(f"root split changed: {root}")
+    if left_split[1] != 1 or abs(left_split[2] - 2.0) > 1e-9:
+        raise RuntimeError(f"left split changed: {left_split}")
+    if right_split[1] != 1 or abs(right_split[2] - 2.0) > 1e-9:
+        raise RuntimeError(f"right split changed: {right_split}")
+
+    def predict(points: np.ndarray) -> np.ndarray:
+        labels = np.empty(len(points), dtype=int)
+        for i, (x1, x2) in enumerate(points):
+            if x1 <= 2.5:
+                labels[i] = 0 if x2 <= 2.0 else 1
+            else:
+                labels[i] = 1 if x2 <= 2.0 else 0
+        return labels
+
+    fig, axes = plt.subplots(
+        2,
+        1,
+        figsize=(6.2, 7.1),
+        gridspec_kw={"height_ratios": [1.15, 1]},
+    )
+    ax = axes[0]
+    ax.set_xlim(-0.2, 10.2)
+    ax.set_ylim(0.2, 6.5)
     ax.axis("off")
 
-    def box(x, y, text, color):
+    def box(x, y0, text, color, width):
         ax.add_patch(
             FancyBboxPatch(
-                (x, y),
-                2.6,
-                0.95,
-                boxstyle="round,pad=0.04,rounding_size=0.08",
+                (x, y0),
+                width,
+                0.78,
+                boxstyle="round,pad=0.02,rounding_size=0.08",
                 facecolor=BG,
                 edgecolor=color,
-                lw=1.5,
+                lw=1.4,
             )
         )
-        ax.text(x + 1.3, y + 0.48, text, ha="center", va="center", fontsize=9)
+        ax.text(x + width / 2, y0 + 0.39, text, ha="center", va="center", fontsize=10)
 
-    box(3.7, 4.7, "x₁ ≤ t ?", ACCENT)
-    box(0.8, 2.5, "лист: среднее y", GREEN)
-    box(6.6, 2.5, "x₂ ≤ s ?", ACCENT)
-    box(5.3, 0.45, "класс 0", BLUE)
-    box(8.0, 0.45, "класс 1", RED)
-    ax.plot([5.0, 2.1], [4.7, 3.45], color=MUTED, lw=1.1)
-    ax.plot([5.0, 7.9], [4.7, 3.45], color=MUTED, lw=1.1)
-    ax.plot([7.9, 6.6], [2.5, 1.4], color=MUTED, lw=1.1)
-    ax.plot([7.9, 9.3], [2.5, 1.4], color=MUTED, lw=1.1)
-    ax.text(2.6, 4.15, "да", color=MUTED, fontsize=8)
-    ax.text(6.6, 4.15, "нет", color=MUTED, fontsize=8)
+    box(3.55, 5.35, "x₁ ≤ 2.5", ACCENT, 2.9)
+    box(0.55, 3.15, "x₂ ≤ 2.0", ACCENT, 2.7)
+    box(6.75, 3.15, "x₂ ≤ 2.0", ACCENT, 2.7)
+    box(0.15, 0.7, "класс 0 · 3", BLUE, 2.15)
+    box(2.55, 0.7, "класс 1 · 1", RED, 2.15)
+    box(5.75, 0.7, "класс 1 · 3", RED, 2.15)
+    box(8.05, 0.7, "класс 0 · 1", BLUE, 1.95)
+    segments = [
+        ((5.0, 5.35), (1.9, 3.93)),
+        ((5.0, 5.35), (8.1, 3.93)),
+        ((1.9, 3.15), (1.22, 1.48)),
+        ((1.9, 3.15), (3.62, 1.48)),
+        ((8.1, 3.15), (6.82, 1.48)),
+        ((8.1, 3.15), (9.02, 1.48)),
+    ]
+    for start, end in segments:
+        ax.plot([start[0], end[0]], [start[1], end[1]], color=MUTED, lw=1.05, zorder=0)
+
+    plane = axes[1]
+    grid = np.linspace(0.5, 4.5, 220)
+    xx, yy = np.meshgrid(grid, grid)
+    labels = predict(np.column_stack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
+    plane.contourf(
+        xx,
+        yy,
+        labels,
+        levels=[-0.1, 0.5, 1.1],
+        colors=["#d9e2ec", "#f3ddd6"],
+    )
+    plane.scatter(X[y == 0, 0], X[y == 0, 1], c=BLUE, s=42, zorder=3, label="класс 0")
+    plane.scatter(X[y == 1, 0], X[y == 1, 1], c=RED, s=42, zorder=3, label="класс 1")
+    plane.axvline(2.5, color=ACCENT, lw=1.3)
+    plane.axhline(2.0, color=GREEN, lw=1.3)
+    plane.set_xlim(0.5, 4.5)
+    plane.set_ylim(0.5, 3.3)
+    plane.set_xlabel("x₁")
+    plane.set_ylabel("x₂")
+    plane.legend(frameon=False, loc="upper left")
+    style(plane)
     save(fig, "tree-split.png")
 
 
@@ -1065,6 +1205,154 @@ def course_figures() -> None:
     fig_iou()
 
 
+def fig_llm_next_token() -> None:
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    labels = ["ковре", "диване", "луне"]
+    probs = [0.62, 0.28, 0.10]
+    colors = [GREEN, ACCENT, MUTED]
+    ax.bar(labels, probs, color=colors, width=0.62)
+    ax.set_ylim(0, 0.8)
+    ax.set_ylabel("P(следующий токен)")
+    ax.text(0.0, 0.68, "«кот сидит на …»", ha="center", fontsize=9, color=FG)
+    style(ax)
+    save(fig, "llm-next-token.png")
+
+
+def fig_llm_attention() -> None:
+    weights = np.array(
+        [
+            [1.00, 0.00, 0.00, 0.00],
+            [0.35, 0.65, 0.00, 0.00],
+            [0.15, 0.25, 0.60, 0.00],
+            [0.10, 0.20, 0.30, 0.40],
+        ]
+    )
+    fig, ax = plt.subplots(figsize=(4.8, 4.0))
+    image = ax.imshow(weights, cmap="YlOrBr", vmin=0, vmax=1)
+    tokens = ["я", "иду", "домой", "."]
+    ax.set_xticks(range(4), tokens)
+    ax.set_yticks(range(4), tokens)
+    ax.set_xlabel("ключ")
+    ax.set_ylabel("запрос")
+    for i in range(4):
+        for j in range(4):
+            ax.text(j, i, f"{weights[i, j]:.2f}", ha="center", va="center", fontsize=8, color=FG)
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    save(fig, "llm-attention.png")
+
+
+def fig_llm_block() -> None:
+    fig, ax = plt.subplots(figsize=(5.2, 4.6))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 11)
+    ax.axis("off")
+    rows = [
+        (8.8, "вход x", MUTED),
+        (7.0, "норма → внимание", ACCENT),
+        (5.2, "x + внимание", GREEN),
+        (3.4, "норма → полносвязный слой", BLUE),
+        (1.6, "x + полносвязный слой", GREEN),
+    ]
+    for y, text, color in rows:
+        ax.add_patch(
+            FancyBboxPatch(
+                (2.1, y),
+                5.8,
+                1.15,
+                boxstyle="round,pad=0.04,rounding_size=0.08",
+                facecolor=BG,
+                edgecolor=color,
+                lw=1.5,
+            )
+        )
+        ax.text(5.0, y + 0.58, text, ha="center", va="center", fontsize=10)
+    for y in (7.0, 5.2, 3.4, 1.6):
+        ax.annotate(
+            "",
+            xy=(5.0, y + 1.15),
+            xytext=(5.0, y + 1.8),
+            arrowprops={"arrowstyle": "->", "color": MUTED},
+        )
+    save(fig, "llm-block.png")
+
+
+def fig_llm_temperature() -> None:
+    labels = ["A", "B", "C", "D"]
+    logits = np.array([2.4, 1.6, 0.7, 0.2])
+    fig, ax = plt.subplots(figsize=(5.4, 3.2))
+    width = 0.25
+    xs = np.arange(len(labels))
+    for shift, tau, color in ((-width, 0.5, GREEN), (0.0, 1.0, ACCENT), (width, 2.0, BLUE)):
+        z = logits / tau
+        prob = np.exp(z - z.max())
+        prob = prob / prob.sum()
+        ax.bar(xs + shift, prob, width=width, color=color, label=f"τ = {tau}")
+    ax.set_xticks(xs, labels)
+    ax.set_ylabel("вероятность")
+    ax.legend(frameon=False)
+    style(ax)
+    save(fig, "llm-temperature.png")
+
+
+def fig_rag_embed() -> None:
+    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+    points = [
+        ("запрос", 0.35, 0.45, FG, (0, -16), "center"),
+        ("кусок про тему", 1.05, 0.95, GREEN, (12, 8), "left"),
+        ("соседний кусок", 1.85, 1.35, ACCENT, (12, 6), "left"),
+        ("другой документ", 2.7, 1.9, MUTED, (-10, 8), "right"),
+    ]
+    ax.plot([0.35, 1.05], [0.45, 0.95], color=GREEN, lw=1.2, zorder=1)
+    for label, x, y, color, offset, align in points:
+        ax.scatter([x], [y], c=color, s=48, zorder=3)
+        ax.annotate(
+            label,
+            (x, y),
+            textcoords="offset points",
+            xytext=offset,
+            ha=align,
+            va="center",
+            fontsize=8,
+            color=color,
+        )
+    ax.set_xlim(0.0, 3.35)
+    ax.set_ylim(0.05, 2.35)
+    ax.set_xlabel("ось эмбеддинга 1")
+    ax.set_ylabel("ось эмбеддинга 2")
+    style(ax)
+    save(fig, "rag-embed.png")
+
+
+def fig_rag_pipeline() -> None:
+    fig, ax = plt.subplots(figsize=(6.4, 2.6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 3.2)
+    ax.axis("off")
+    steps = [
+        (0.3, "вопрос"),
+        (2.7, "поиск"),
+        (5.1, "куски"),
+        (7.5, "промпт"),
+        (9.9, "ответ"),
+    ]
+    for x, text in steps:
+        ax.add_patch(
+            FancyBboxPatch(
+                (x, 1.15),
+                1.9,
+                0.9,
+                boxstyle="round,pad=0.04,rounding_size=0.08",
+                facecolor=BG,
+                edgecolor=ACCENT,
+                lw=1.4,
+            )
+        )
+        ax.text(x + 0.95, 1.6, text, ha="center", va="center", fontsize=9)
+    for x in (2.2, 4.6, 7.0, 9.4):
+        ax.annotate("", xy=(x + 0.45, 1.6), xytext=(x, 1.6), arrowprops={"arrowstyle": "->", "color": MUTED})
+    save(fig, "rag-pipeline.png")
+
+
 def main() -> None:
     fig_class_vs_reg()
     fig_ols()
@@ -1073,6 +1361,7 @@ def main() -> None:
     fig_mse_mae()
     fig_svm_hyperplane()
     fig_svm_margin()
+    fig_svm_plane_margin()
     fig_nonlinear()
     fig_two_blobs()
     fig_kernel_3d(False)
@@ -1123,6 +1412,12 @@ def main() -> None:
     fig_tree_split()
     fig_kmeans()
     fig_pca()
+    fig_llm_next_token()
+    fig_llm_attention()
+    fig_llm_block()
+    fig_llm_temperature()
+    fig_rag_embed()
+    fig_rag_pipeline()
     course_figures()
     print("wrote", len(list(OUT.glob("*.png"))), "figures to", OUT)
 

@@ -511,7 +511,7 @@ def ascii_formula(s: str) -> str:
         .replace("λ", r"\lambda")
         .replace("η", r"\eta")
         .replace("Δ", r"\Delta")
-        .replace("∇", r"\nabla")
+        .replace("∇", r"\nabla ")
         .replace("∑", r"\sum")
         .replace("∣", r"|")
         .replace("~", r"\sim")
@@ -520,6 +520,16 @@ def ascii_formula(s: str) -> str:
     t = t.replace("arg min", r"\arg\min ")
     t = t.replace("*", r" \cdot ")
     t = re.sub(r"\^\(([^)]+)\)", r"^{\1}", t)
+    t = re.sub(
+        r"(sum|П)\^(?:\{([^}]+)\}|([A-Za-z0-9]+))_\(([^)]+)\)",
+        lambda m: (
+            ("\\sum" if m.group(1) == "sum" else "\\prod")
+            + "_{" + m.group(4) + "}^{" + (m.group(2) or m.group(3)) + "}"
+        ),
+        t,
+    )
+    t = t.replace("log_(10)", r"\log_{10}")
+    t = t.replace("∂", r"\partial ")
     t = re.sub(r"\^([A-Za-z0-9])", r"^{\1}", t)
     t = re.sub(r"([А-Яа-яЁё]+)", lambda m: r"\text{" + m.group(1) + "}", t)
     return t
@@ -559,6 +569,42 @@ def emit_prose_line(s: str) -> list[str]:
         ):
             s = f"**{term}** — {rest}"
     return [s, ""]
+
+
+def cases_formula(table_lines: list[list[str]]) -> str | None:
+    """Tab-separated piecewise formula, not a data table."""
+    blob = " ".join(cell for row in table_lines for cell in row)
+    if not re.search(r"sum\^|П\^|Likelihood|log_\(10\)", blob):
+        return None
+    left = ""
+    branches: list[tuple[str, str]] = []
+    for row in table_lines:
+        cells = [cell for cell in row if cell]
+        if not cells:
+            continue
+        if not left and "=" in cells[0] and cells[0] not in {"{", "}"}:
+            left = cells[0]
+            cells = cells[1:]
+        if cells and cells[0] == "{":
+            cells = cells[1:]
+        if not cells:
+            continue
+        expr = cells[0].rstrip(",")
+        cond = " ".join(cells[1:]) if len(cells) > 1 else ""
+        if expr:
+            branches.append((expr, cond))
+    if not left or len(branches) < 2:
+        return None
+    lines = [ascii_formula(left), r"\begin{cases}"]
+    for expr, cond in branches:
+        right = ascii_formula(expr)
+        if cond.startswith("если "):
+            right += r" & \text{если } " + cond[len("если ") :]
+        elif cond:
+            right += r" & " + cond
+        lines.append(right + r" \\")
+    lines.append(r"\end{cases}")
+    return "\n".join(lines)
 
 
 def markdown_table(header: list[str], rows: list[list[str]]) -> str:
@@ -744,9 +790,13 @@ def to_markdown(
             while i < len(lines) and "\t" in lines[i]:
                 table_lines.append([c.strip() for c in lines[i].split("\t")])
                 i += 1
-            header, *rest = table_lines
-            out.append(markdown_table(header, rest))
-            out.append("")
+            cases = cases_formula(table_lines)
+            if cases:
+                out.extend(["$$", cases, "$$", ""])
+            else:
+                header, *rest = table_lines
+                out.append(markdown_table(header, rest))
+                out.append("")
             continue
         if stripped in HEADING_REWRITE:
             key = stripped

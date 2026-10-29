@@ -1,0 +1,6 @@
+{
+  "id": "rag",
+  "trackId": "language-models",
+  "title": "RAG",
+  "summary": "Retrieval-augmented generation: индекс, BM25, эмбеддинги и проверка ответа по источнику."
+}

@@ -76,6 +76,21 @@ const paths: {
     ],
   },
   {
+    id: 'llm',
+    title: 'Языковые модели',
+    lead: 'Сначала сама модель: токен, внимание, генерация. Потом внешняя память, когда факта в весах нет.',
+    stages: [
+      {
+        topicId: 'llm',
+        why: 'Вероятность следующего токена, трансформер, температура, выравнивание и LoRA.',
+      },
+      {
+        topicId: 'rag',
+        why: 'RAG: индекс, BM25, эмбеддинги и проверка, что ответ следует из фрагмента.',
+      },
+    ],
+  },
+  {
     id: 'cv',
     title: 'Computer Vision',
     lead: 'Пиксель, свёртка, детекция и сегментация. Классическое зрение и нейросети.',
@@ -107,6 +122,47 @@ const paths: {
   },
 ]
 
+const methodMap: { title: string; note: string; links: { to: string; label: string }[] }[] = [
+  {
+    title: 'С учителем',
+    note: 'Ответ известен: число в регрессии, метка в классификации. Веса ищут прямой формулой или шагами градиента.',
+    links: [
+      { to: '/item/data-science-ida-t-08', label: 'Линейная регрессия' },
+      { to: '/learn?topic=numerical-methods#время-обучения-линейной-регрессии', label: 'Прямой метод' },
+      { to: '/learn?topic=numerical-methods#итеративные-методы', label: 'Итеративный метод' },
+      {
+        to: '/learn?topic=numerical-methods#градиентный-спуск-для-линейной-регрессии',
+        label: 'Градиентный спуск для регрессии',
+      },
+      { to: '/item/data-science-ida-t-09', label: 'Логистическая регрессия' },
+      { to: '/item/data-science-ida-t-12', label: 'Деревья решений' },
+      { to: '/item/data-science-ida-t-15', label: 'SVM' },
+      { to: '/item/data-science-ida-t-13', label: 'Метрики классификации' },
+    ],
+  },
+  {
+    title: 'Без учителя',
+    note: 'Метки нет. Кластеризация собирает похожие объекты, снижение размерности оставляет оси с наибольшим разбросом.',
+    links: [
+      { to: '/item/data-science-ida-t-16', label: 'Кластеризация' },
+      { to: '/item/data-science-ida-t-17', label: 'Снижение размерности' },
+      { to: '/item/data-science-ida-t-19', label: 'Метод главных компонент' },
+    ],
+  },
+  {
+    title: 'Как ищут минимум',
+    note: 'Бисекция требует разных знаков на концах отрезка и останавливается, когда длина отрезка меньше error. Градиент задаёт направление шага. Тем же шагом учат регрессию, сеть и бустинг.',
+    links: [
+      { to: '/learn?topic=numerical-methods#метод-бисекции', label: 'Бисекция и остановка' },
+      { to: '/learn?topic=numerical-methods#градиент-функции', label: 'Градиент' },
+      { to: '/learn?topic=numerical-methods#стохастический-градиентный-спуск', label: 'SGD' },
+      { to: '/learn?topic=numerical-methods#основы-нейронных-сетей', label: 'Нейрон' },
+      { to: '/learn?topic=numerical-methods#градиентный-бустинг', label: 'Градиентный бустинг' },
+      { to: '/learn?topic=deep-learning', label: 'Глубокое обучение' },
+    ],
+  },
+]
+
 function topicById(id: string): Topic | undefined {
   return TOPICS.find((topic) => topic.id === id)
 }
@@ -120,8 +176,8 @@ export function Roadmaps() {
       <header>
         <h1 className="font-serif text-3xl tracking-tight sm:text-4xl">Роадмапы</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-          Шесть маршрутов по материалам курсов. В каждом шаге — модуль и все его
-          теоретические разделы. Ответ открывается в карточке, здесь только названия.
+          Сначала карта: откуда метод и в каком модуле он лежит. Ниже — те же модули
+          по маршрутам. Ссылка открывает конспект или карточку, которая уже есть в курсе.
         </p>
         <nav className="mt-5 flex flex-wrap gap-2">
           {paths.map((path) => (
@@ -135,6 +191,26 @@ export function Roadmaps() {
           ))}
         </nav>
       </header>
+      <section className="flex flex-col gap-4">
+        <h2 className="font-serif text-2xl">Карта методов</h2>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {methodMap.map((group) => (
+            <article key={group.title} className="rounded-3xl border border-[var(--line)] p-5">
+              <h3 className="font-serif text-xl">{group.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{group.note}</p>
+              <ul className="mt-4 flex flex-col gap-2 text-sm">
+                {group.links.map((link) => (
+                  <li key={link.to}>
+                    <Link to={link.to} className="underline decoration-[var(--line)] underline-offset-4">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
       {paths.map((path) => (
         <section key={path.id} id={`path-${path.id}`} className="scroll-mt-24">
           <h2 className="font-serif text-2xl">{path.title}</h2>

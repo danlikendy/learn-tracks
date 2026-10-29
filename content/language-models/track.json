@@ -1,0 +1,22 @@
+{
+  "id": "language-models",
+  "title": "Языковые модели",
+  "topics": [
+    {
+      "id": "llm",
+      "title": "Большие языковые модели",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    },
+    {
+      "id": "rag",
+      "title": "RAG",
+      "kind": [
+        "theory",
+        "practice"
+      ]
+    }
+  ]
+}

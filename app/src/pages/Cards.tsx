@@ -76,7 +76,9 @@ export function Cards() {
     const programOrder =
       sort === 'title' &&
       next.length > 0 &&
-      next.every((row) => /^data-science-ida-t-\d+$/.test(row.item.id))
+      next.every((row) =>
+        /^(?:data-science-ida|language-models-llm|language-models-rag)-[tp]-\d+$/.test(row.item.id),
+      )
     next = [...next].sort((a, b) => {
       if (programOrder) return a.item.id.localeCompare(b.item.id)
       if (sort === 'title') {

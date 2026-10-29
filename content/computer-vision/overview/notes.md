@@ -620,7 +620,7 @@ plt.imshow(lenna_x_border, cmap='gray')
 
 $$
 
-G=sqrt(G^{2}_x+G^{2}_y)
+G=\sqrt{G^{2}_x+G^{2}_y}
 
 $$
 
@@ -681,7 +681,7 @@ plt.imshow(grad, cmap='gray')
 
 $$
 
-c_k=sum^{n-1}_(t=0)(s_(k+t) \cdot w_t)
+c_k=\sum_{t=0}^{n-1}(s_{k+t} \cdot w_t)
 
 $$
 
@@ -741,19 +741,15 @@ s = [[1, 1, 1, 0, 0],
 
 $$
 
-w = [[1, 0, 1],
+w = \begin{bmatrix} 1 & 0 & 1 \\ 0 & 1 & 0 \\ 1 & 0 & 1 \end{bmatrix}
 
 $$
-
-[0, 1, 0],
-
-[1, 0, 1]]
 
 Двумерная свёртка формулой:
 
 $$
 
-c_(k1, k2)=sum^{n-1}_(t1=0)(sum^{n-1}_(t2=0)(s_(k1+t1,k2+t2) \cdot w_(t1,t2)))
+c_{k1, k2}=\sum_{t1=0}^{n-1}(\sum_{t2=0}^{n-1}(s_{k1+t1,k2+t2} \cdot w_{t1,t2}))
 
 $$
 

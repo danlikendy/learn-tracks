@@ -204,7 +204,7 @@ html[data-theme="dark"] .select-control {
 
 .prose-note .note-figure {
   display: block;
-  margin: 1.5rem auto;
+  margin: 1.5rem auto 2rem;
   max-width: 24rem;
   overflow: hidden;
 }

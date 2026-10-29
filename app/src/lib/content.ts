@@ -16,6 +16,7 @@ const TRACK_ORDER = [
   'ml-business',
   'deep-learning',
   'nlp',
+  'language-models',
   'computer-vision',
   'time-series',
 ]

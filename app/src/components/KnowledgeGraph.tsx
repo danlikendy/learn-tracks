@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { TRACKS, TOPICS, notesToc } from '../lib/content'
+import { TRACKS, TOPICS } from '../lib/content'
 
 type Node = {
   id: string
@@ -16,8 +16,6 @@ type Node = {
   oy: number
   r: number
 }
-
-type Particle = { x: number; y: number; vx: number; vy: number }
 
 function wrapLabel(text: string, max: number): string[] {
   const words = text.split(' ')
@@ -66,7 +64,6 @@ export function KnowledgeGraph({
     const mouse = { x: 0, y: 0, inside: false }
     const drag = { active: false, moved: false, x: 0, y: 0, camX: 0, camY: 0 }
     let nodes: Node[] = []
-    let particles: Particle[] = []
     let raf = 0
     let width = 0
     let height = 0
@@ -107,87 +104,67 @@ export function KnowledgeGraph({
       canvas.style.width = `${width}px`
       canvas.style.height = `${height}px`
 
-      const cx = width / 2
-      const cy = height / 2
+      const cols = 3
+      const colW = width / cols
+      const rowH = height / 3
       const next: Node[] = []
-      const trackR = Math.min(width * 0.38, height * 0.36)
       TRACKS.forEach((track, index) => {
-        const angle = -Math.PI / 2 + (index * 2 * Math.PI) / TRACKS.length
-        const x = cx + Math.cos(angle) * trackR
-        const y = cy + Math.sin(angle) * trackR * 0.92
+        const col = index % cols
+        const row = Math.floor(index / cols)
+        const topics = TOPICS.filter((topic) => topic.trackId === track.id)
+        const x = col * colW + 28
+        const top = row * rowH + 32
+        const lone = topics.length === 1 && topics[0].title === track.title
+        if (lone) {
+          const topic = topics[0]
+          next.push({
+            id: topic.id,
+            label: topic.title,
+            kind: 'topic',
+            topicId: topic.id,
+            trackId: track.id,
+            x,
+            y: top + 8,
+            vx: 0,
+            vy: 0,
+            ox: x,
+            oy: top + 8,
+            r: 6,
+          })
+          return
+        }
         next.push({
           id: `track:${track.id}`,
           label: track.title,
           kind: 'track',
           trackId: track.id,
           x,
-          y,
+          y: top,
           vx: 0,
           vy: 0,
           ox: x,
-          oy: y,
-          r: 7,
+          oy: top,
+          r: 6.5,
+        })
+        topics.forEach((topic, topicIndex) => {
+          const y = top + 52 + topicIndex * 64
+          next.push({
+            id: topic.id,
+            label: topic.title,
+            kind: 'topic',
+            topicId: topic.id,
+            trackId: track.id,
+            x,
+            y,
+            vx: 0,
+            vy: 0,
+            ox: x,
+            oy: y,
+            r: 5,
+          })
         })
       })
-      const byTrack = new Map(next.map((node) => [node.trackId, node]))
-      TOPICS.forEach((topic) => {
-        const hub = byTrack.get(topic.trackId)
-        const siblings = TOPICS.filter((entry) => entry.trackId === topic.trackId)
-        const index = siblings.findIndex((entry) => entry.id === topic.id)
-        const angle = (index / Math.max(siblings.length, 1)) * Math.PI * 1.4 - 0.6
-        const x = (hub?.ox ?? cx) + Math.cos(angle) * 92
-        const y = (hub?.oy ?? cy) + Math.sin(angle) * 42
-        next.push({
-          id: topic.id,
-          label: topic.title,
-          kind: 'topic',
-          topicId: topic.id,
-          trackId: topic.trackId,
-          x,
-          y,
-          vx: 0,
-          vy: 0,
-          ox: x,
-          oy: y,
-          r: 5.5,
-        })
-      })
-      const current = TOPICS.find((topic) => topic.id === topicIdRef.current)
-      const parent = current ? next.find((node) => node.id === current.id) : undefined
-      const headings = current
-        ? notesToc(current.notes).filter((entry) => entry.level === 2)
-        : []
-      if (current) {
-        const topic = current
-        headings.forEach((heading, index) => {
-        const angle = (index / Math.max(headings.length, 1)) * Math.PI * 2 - Math.PI / 2
-        const radius = Math.min(width * 0.28, height * 0.28)
-        const x = Math.min(width - 80, Math.max(80, (parent?.ox ?? cx) + Math.cos(angle) * radius))
-        const y = Math.min(height - 36, Math.max(36, (parent?.oy ?? cy) + Math.sin(angle) * radius * 0.7))
-        next.push({
-          id: `${topic.id}:${heading.id}`,
-          label: heading.title,
-          kind: 'heading',
-          topicId: topic.id,
-          headingId: heading.id,
-          trackId: topic.trackId,
-          x,
-          y,
-          vx: 0,
-          vy: 0,
-          ox: x,
-          oy: y,
-          r: 3,
-        })
-        })
-      }
       nodes = next
-      particles = Array.from({ length: 110 }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-      }))
     }
 
     function step() {
@@ -197,59 +174,6 @@ export function KnowledgeGraph({
       g.setTransform(dpr, 0, 0, dpr, 0, 0)
       g.clearRect(0, 0, width, height)
       g.setTransform(dpr * cam.scale, 0, 0, dpr * cam.scale, cam.x * dpr, cam.y * dpr)
-
-      const pointer = world(mouse.x, mouse.y)
-      for (const particle of particles) {
-        if (mouse.inside) {
-          const dx = particle.x - pointer.x
-          const dy = particle.y - pointer.y
-          const dist = Math.hypot(dx, dy) || 1
-          if (dist < 90 / cam.scale) {
-            const force = (90 / cam.scale - dist) / (90 / cam.scale)
-            particle.vx += (dx / dist) * force * 0.4
-            particle.vy += (dy / dist) * force * 0.4
-          }
-        }
-        particle.vx *= 0.98
-        particle.vy *= 0.98
-        particle.x += particle.vx
-        particle.y += particle.vy
-        if (particle.x < -40 || particle.x > width + 40) particle.vx *= -1
-        if (particle.y < -40 || particle.y > height + 40) particle.vy *= -1
-      }
-
-      g.fillStyle = palette.accent
-      g.globalAlpha = 0.45
-      for (const particle of particles) {
-        g.beginPath()
-        g.arc(particle.x, particle.y, 1.5 / cam.scale, 0, Math.PI * 2)
-        g.fill()
-      }
-      g.globalAlpha = 0.16
-      g.strokeStyle = palette.accent
-      for (let i = 0; i < particles.length; i += 1) {
-        for (let j = i + 1; j < particles.length; j += 1) {
-          const a = particles[i]
-          const b = particles[j]
-          const dist = Math.hypot(a.x - b.x, a.y - b.y)
-          if (dist < 58) {
-            g.beginPath()
-            g.moveTo(a.x, a.y)
-            g.lineTo(b.x, b.y)
-            g.stroke()
-          }
-        }
-      }
-      g.globalAlpha = 1
-
-      for (const node of nodes) {
-        node.vx += (node.ox - node.x) * 0.04
-        node.vy += (node.oy - node.y) * 0.04
-        node.vx *= 0.86
-        node.vy *= 0.86
-        node.x += node.vx
-        node.y += node.vy
-      }
 
       g.lineWidth = 1 / cam.scale
       g.strokeStyle = palette.line
@@ -277,7 +201,7 @@ export function KnowledgeGraph({
         g.globalAlpha = 1
       }
 
-      g.textAlign = 'center'
+      g.textAlign = 'left'
       g.textBaseline = 'top'
       for (const node of nodes) {
         const active = node.kind === 'topic' && node.topicId === topicIdRef.current
@@ -289,11 +213,15 @@ export function KnowledgeGraph({
         g.globalAlpha = 1
         g.fillStyle = node.kind === 'heading' ? palette.muted : palette.fg
         const size =
-          (node.kind === 'track' ? 12 : node.kind === 'topic' ? 11 : 10) / cam.scale
+          (node.kind === 'track' ? 13 : node.kind === 'topic' ? 12 : 10) / cam.scale
         g.font = `${node.kind === 'track' ? 600 : node.kind === 'topic' ? 500 : 400} ${size}px "IBM Plex Sans", system-ui`
-        const max = node.kind === 'heading' ? 18 : 20
+        const max = node.kind === 'heading' ? 22 : 32
         wrapLabel(node.label, max).forEach((line, index) => {
-          g.fillText(line, node.x, node.y + node.r + 5 / cam.scale + index * (size + 2))
+          g.fillText(
+            line,
+            node.x + node.r + 8 / cam.scale,
+            node.y - size * 0.35 + index * (size + 2),
+          )
         })
       }
 
@@ -304,7 +232,12 @@ export function KnowledgeGraph({
       const point = world(px, py)
       return [...nodes]
         .reverse()
-        .find((node) => Math.hypot(node.x - point.x, node.y - point.y) < 56)
+        .find((node) => {
+          const dx = point.x - node.x
+          const dy = point.y - node.y
+          if (Math.hypot(dx, dy) < 18) return true
+          return dx > 0 && dx < 260 && Math.abs(dy) < 16
+        })
     }
 
     function onMove(event: PointerEvent) {
