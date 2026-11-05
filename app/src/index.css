@@ -253,86 +253,101 @@ html[data-theme="dark"] .select-control {
   border-radius: 99px;
 }
 
-.map-detail .prose-note p {
-  margin: 0.35rem 0 0;
-}
 
 .kg-card {
   position: absolute;
+  z-index: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.85rem;
+  flex-direction: column;
+  overflow: visible;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--fg);
+  transform-origin: top center;
+}
+
+.kg-card-root .kg-card-head {
+  color: var(--fg);
+}
+
+.kg-card-open {
+  z-index: 8;
+  overflow: hidden;
+  border-color: var(--accent);
+}
+
+.kg-card-head {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  height: 38px;
+  padding: 0 0.85rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
-  transform-origin: center;
 }
 
-.kg-card-root {
-  font-size: 0.95rem;
-  border-color: var(--accent);
+.kg-card-label {
+  min-width: 0;
+  text-align: center;
 }
 
-.kg-card-in {
-  animation: kg-in 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+.kg-card-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 0 0.85rem 0.85rem;
+  cursor: default;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.kg-card-active {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+.kg-card-body .prose-note {
+  max-width: none;
+  font-size: 0.9rem;
+}
+
+.kg-card-body .prose-note h1,
+.kg-card-body .prose-note h2,
+.kg-card-body .prose-note h3 {
+  font-size: 1.05rem;
+  margin: 0.6rem 0 0.35rem;
+}
+
+.kg-card-body .prose-note p,
+.kg-card-body .prose-note ul,
+.kg-card-body .prose-note ol {
+  margin: 0.45rem 0;
+  line-height: 1.55;
+}
+
+.kg-card-body .note-figure {
+  margin: 0.7rem auto;
+}
+
+.kg-card-body .note-figure img {
+  max-height: 9rem;
 }
 
 .kg-mark {
-  position: absolute;
-  right: -0.35rem;
-  top: -0.35rem;
-  display: grid;
-  width: 1.05rem;
-  height: 1.05rem;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  font-size: 0.7rem;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
   color: var(--muted);
+  cursor: pointer;
 }
 
-.kg-panel {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 5;
-  width: min(22rem, calc(100% - 1.5rem));
-  max-height: min(58vh, 28rem);
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 1.25rem;
-  background: color-mix(in oklab, var(--bg) 94%, transparent);
-  padding: 1.1rem 1.15rem 1.3rem;
-  backdrop-filter: blur(10px);
-}
-
-.kg-formula {
-  display: block;
-  margin-top: 0.85rem;
-  overflow-x: auto;
+.kg-mark:hover {
   color: var(--fg);
-}
-
-.kg-formula .katex {
-  font-size: 1.05em;
-}
-
-@keyframes kg-in {
-  from {
-    opacity: 0;
-    transform: scale(0.86);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }

@@ -1,87 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import katex from 'katex'
+import { MarkdownBody } from './MarkdownBody'
 import {
   CONCEPT_BY_ID,
   INITIAL_OPEN,
   ROOT_ID,
   childrenOf,
   hasChildren,
+  notesFor,
   visibleFrom,
-  type Concept,
 } from '../lib/knowledge'
 
-type Laid = { id: string; x: number; y: number; w: number; h: number }
+type Point = { x: number; y: number }
 
-function Formula({ tex }: { tex: string }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  useEffect(() => {
-    if (!ref.current) return
-    katex.render(tex, ref.current, { throwOnError: false, displayMode: true })
-  }, [tex])
-  return <span ref={ref} className="kg-formula" />
-}
+const ORIGIN = 4000
+const WORLD = 8000
+const GAP = 22
+const READ_W = 360
+const READ_H = 300
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
+const DUR = '0.42s'
+const CHIP_MOTION = `left ${DUR} ${EASE}, top ${DUR} ${EASE}, opacity ${DUR} ${EASE}`
+const READ_MOTION = `width ${DUR} ${EASE}, height ${DUR} ${EASE}, border-radius ${DUR} ${EASE}`
 
-function cardSize(id: string): { w: number; h: number } {
+function chipSize(id: string): { w: number; h: number } {
   const label = CONCEPT_BY_ID.get(id)?.label ?? id
-  const w = Math.min(280, Math.max(108, 36 + label.length * 9.1))
-  return { w, h: 38 }
-}
-
-function subtreeWeight(id: string, opened: Set<string>): number {
-  if (!opened.has(id)) return 1
-  const kids = childrenOf(id)
-  if (!kids.length) return 1
-  return Math.max(
-    1,
-    kids.reduce((sum, child) => sum + subtreeWeight(child, opened), 0),
-  )
-}
-
-function layoutRadial(visible: Set<string>, opened: Set<string>): Map<string, Laid> {
-  const laid = new Map<string, Laid>()
-  const placed = new Set<string>()
-
-  function place(
-    id: string,
-    x: number,
-    y: number,
-    fromAngle: number,
-    sweep: number,
-  ) {
-    if (placed.has(id) || !visible.has(id)) return
-    const size = cardSize(id)
-    laid.set(id, { id, x: x - size.w / 2, y: y - size.h / 2, w: size.w, h: size.h })
-    placed.add(id)
-    if (!opened.has(id)) return
-    const kids = childrenOf(id).filter((child) => visible.has(child) && !placed.has(child))
-    if (!kids.length) return
-    const weights = kids.map((child) => subtreeWeight(child, opened))
-    const total = weights.reduce((sum, w) => sum + w, 0)
-    const span = id === ROOT_ID ? Math.PI * 2 : Math.min(Math.PI * 1.35, 0.55 + kids.length * 0.38)
-    const start = id === ROOT_ID ? -Math.PI / 2 : fromAngle - span / 2
-    const widest = Math.max(...kids.map((child) => cardSize(child).w))
-    const radius = Math.max(
-      id === ROOT_ID ? 250 : 150,
-      (kids.length * (widest + 28)) / Math.max(span, 0.6),
-    )
-    let cursor = start
-    kids.forEach((child, index) => {
-      const slice = (weights[index] / total) * span
-      const angle = cursor + slice / 2
-      place(
-        child,
-        x + Math.cos(angle) * radius,
-        y + Math.sin(angle) * radius,
-        angle,
-        slice,
-      )
-      cursor += slice
-    })
-  }
-
-  place(ROOT_ID, 0, 0, 0, Math.PI * 2)
-  return laid
+  const extra = hasChildren(id) ? 12 : 0
+  return { w: Math.min(300, Math.max(112, 40 + extra + label.length * 8.6)), h: 38 }
 }
 
 function parentOf(id: string): string | undefined {
@@ -91,8 +36,99 @@ function parentOf(id: string): string | undefined {
   return undefined
 }
 
+function hits(box: { x: number; y: number; w: number; h: number }, others: Map<string, Point>, skip: string): boolean {
+  for (const [id, pos] of others) {
+    if (id === skip) continue
+    const size = chipSize(id)
+    if (
+      box.x < pos.x + size.w + GAP &&
+      box.x + box.w + GAP > pos.x &&
+      box.y < pos.y + size.h + GAP &&
+      box.y + box.h + GAP > pos.y
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
+function chipCenter(id: string, laid: Map<string, Point>): { x: number; y: number } {
+  const pos = laid.get(id)
+  const size = chipSize(id)
+  if (!pos) return { x: 0, y: 0 }
+  return { x: pos.x + size.w / 2, y: pos.y + size.h / 2 }
+}
+
+function spawnAtParent(id: string, laid: Map<string, Point>): Point {
+  const parent = parentOf(id)
+  const size = chipSize(id)
+  if (!parent) {
+    const dest = laid.get(id) ?? { x: -size.w / 2, y: -size.h / 2 }
+    return dest
+  }
+  const parentPos = laid.get(parent)
+  if (!parentPos) return laid.get(id) ?? { x: 0, y: 0 }
+  const parentSize = chipSize(parent)
+  return {
+    x: parentPos.x + parentSize.w / 2 - size.w / 2,
+    y: parentPos.y + parentSize.h / 2 - size.h / 2,
+  }
+}
+
+function placeChildren(parentId: string, kids: string[], laid: Map<string, Point>) {
+  const missing = kids.filter((id) => !laid.has(id))
+  if (!missing.length) return
+  const origin = chipCenter(parentId, laid)
+  const ancestor = parentOf(parentId)
+  const from = ancestor ? chipCenter(ancestor, laid) : { x: 0, y: 1 }
+  const base =
+    parentId === ROOT_ID ? -Math.PI / 2 : Math.atan2(origin.y - from.y, origin.x - from.x)
+  const span =
+    parentId === ROOT_ID ? Math.PI * 2 : Math.min(Math.PI * 1.25, 0.55 + kids.length * 0.36)
+  const start = parentId === ROOT_ID ? -Math.PI / 2 : base - span / 2
+  kids.forEach((child, index) => {
+    if (laid.has(child)) return
+    const size = chipSize(child)
+    const angle =
+      kids.length === 1 && parentId !== ROOT_ID
+        ? base
+        : start + ((index + 0.5) / kids.length) * span
+    let radius = parentId === ROOT_ID ? 280 : 170
+    let next = { x: 0, y: 0, w: size.w, h: size.h }
+    for (let step = 0; step < 28; step += 1) {
+      next = {
+        x: origin.x + Math.cos(angle) * radius - size.w / 2,
+        y: origin.y + Math.sin(angle) * radius - size.h / 2,
+        w: size.w,
+        h: size.h,
+      }
+      if (!hits(next, laid, child)) break
+      radius += 36
+    }
+    laid.set(child, { x: next.x, y: next.y })
+  })
+}
+
+function layoutChips(visible: Set<string>, opened: Set<string>, laid: Map<string, Point>) {
+  const root = chipSize(ROOT_ID)
+  if (!laid.has(ROOT_ID)) laid.set(ROOT_ID, { x: -root.w / 2, y: -root.h / 2 })
+  const queue = [ROOT_ID]
+  const seen = new Set<string>()
+  while (queue.length) {
+    const id = queue.shift()!
+    if (seen.has(id) || !visible.has(id)) continue
+    seen.add(id)
+    if (!opened.has(id)) continue
+    const kids = childrenOf(id).filter((child) => visible.has(child))
+    placeChildren(id, kids, laid)
+    for (const child of kids) queue.push(child)
+  }
+}
+
 export function KnowledgeGraph() {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const worldRef = useRef<HTMLDivElement>(null)
+  const laidRef = useRef(new Map<string, Point>())
   const camRef = useRef({ x: 0, y: 0, scale: 1 })
   const dragRef = useRef<{
     x: number
@@ -101,72 +137,86 @@ export function KnowledgeGraph() {
     camY: number
     moved: boolean
   } | null>(null)
-  const [opened, setOpened] = useState<Set<string>>(() => new Set(INITIAL_OPEN))
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [entering, setEntering] = useState<Set<string>>(() => new Set())
-  const [scaleLabel, setScaleLabel] = useState(100)
-  const prevVisible = useRef<Set<string>>(new Set([ROOT_ID, ...childrenOf(ROOT_ID)]))
   const fittedRef = useRef(false)
+  const [opened, setOpened] = useState<Set<string>>(() => new Set(INITIAL_OPEN))
+  const [reading, setReading] = useState<string | null>(null)
+  const [notesShown, setNotesShown] = useState<Set<string>>(() => new Set())
+  const [fading, setFading] = useState<Set<string>>(() => new Set())
+  const [motionReady, setMotionReady] = useState<Set<string>>(() => visibleFrom(new Set(INITIAL_OPEN)))
+  const [scaleLabel, setScaleLabel] = useState(100)
 
-  const visible = useMemo(() => visibleFrom(opened), [opened])
-  const laid = useMemo(() => layoutRadial(visible, opened), [visible, opened])
-  const edges = useMemo(() => {
-    const list: [string, string][] = []
-    for (const id of visible) {
-      if (!opened.has(id)) continue
-      for (const child of childrenOf(id)) {
-        if (visible.has(child) && laid.has(id) && laid.has(child)) list.push([id, child])
-      }
-    }
-    return list
-  }, [visible, opened, laid])
-
-  const bounds = useMemo(() => {
-    let minX = -240
-    let maxX = 240
-    let minY = -240
-    let maxY = 240
-    for (const box of laid.values()) {
-      minX = Math.min(minX, box.x)
-      maxX = Math.max(maxX, box.x + box.w)
-      minY = Math.min(minY, box.y)
-      maxY = Math.max(maxY, box.y + box.h)
-    }
-    return { minX: minX - 48, minY: minY - 48, maxX: maxX + 48, maxY: maxY + 48 }
-  }, [laid])
-
-  useEffect(() => {
-    const next = new Set<string>()
-    for (const id of visible) {
-      if (!prevVisible.current.has(id)) next.add(id)
-    }
-    prevVisible.current = visible
-    setEntering(next)
-    if (!next.size) return
-    const timer = window.setTimeout(() => setEntering(new Set()), 420)
-    return () => window.clearTimeout(timer)
-  }, [visible])
-
-  function applyCamera(viewport: HTMLDivElement) {
-    const world = viewport.querySelector<HTMLElement>('[data-world]')
+  function applyCamera() {
+    const world = worldRef.current
     if (!world) return
     const cam = camRef.current
     world.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})`
   }
 
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-    const rect = viewport.getBoundingClientRect()
-    if (!fittedRef.current) {
-      camRef.current.x = rect.width / 2 + bounds.minX
-      camRef.current.y = rect.height / 2 + bounds.minY
-      fittedRef.current = true
-    }
-    applyCamera(viewport)
-  }, [bounds])
+  const visible = visibleFrom(opened)
+  layoutChips(visible, opened, laidRef.current)
+  const liveIds = new Set([...visible, ...fading, ...notesShown])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current
+    if (viewport && !fittedRef.current) {
+      const rect = viewport.getBoundingClientRect()
+      camRef.current.x = rect.width / 2 - ORIGIN
+      camRef.current.y = rect.height / 2 - ORIGIN
+      fittedRef.current = true
+      applyCamera()
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const pending = [...liveIds].filter((id) => !motionReady.has(id) && !fading.has(id))
+    if (!pending.length) return
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        setMotionReady((prev) => {
+          const next = new Set(prev)
+          for (const id of pending) next.add(id)
+          return next
+        })
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [liveIds, fading, motionReady])
+
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current
+    const world = worldRef.current
+    if (!viewport || !world || !reading) return
+    const pos = laidRef.current.get(reading)
+    if (!pos) return
+    const view = viewport.getBoundingClientRect()
+    const cam = camRef.current
+    const pad = 20
+    const left = cam.x + (ORIGIN + pos.x) * cam.scale
+    const top = cam.y + (ORIGIN + pos.y) * cam.scale
+    const right = left + READ_W * cam.scale
+    const bottom = top + READ_H * cam.scale
+    let dx = 0
+    let dy = 0
+    if (left < pad) dx = pad - left
+    if (top < pad) dy = pad - top
+    if (right > view.width - pad) dx = view.width - pad - right
+    if (bottom > view.height - pad) dy = view.height - pad - bottom
+    if (!dx && !dy) return
+    world.style.transition = `transform ${DUR} ${EASE}`
+    cam.x += dx
+    cam.y += dy
+    applyCamera()
+    const timer = window.setTimeout(() => {
+      world.style.transition = 'none'
+    }, 420)
+    return () => window.clearTimeout(timer)
+  }, [reading])
+
+  useLayoutEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return
 
@@ -178,7 +228,7 @@ export function KnowledgeGraph() {
       if (Math.hypot(dx, dy) > 4) drag.moved = true
       camRef.current.x = drag.camX + dx
       camRef.current.y = drag.camY + dy
-      applyCamera(viewport!)
+      applyCamera()
     }
 
     function onUp() {
@@ -186,8 +236,9 @@ export function KnowledgeGraph() {
     }
 
     function onWheel(event: WheelEvent) {
+      if ((event.target as HTMLElement).closest('[data-scroll]')) return
       event.preventDefault()
-      const rect = viewport!.getBoundingClientRect()
+      const rect = viewport.getBoundingClientRect()
       const cam = camRef.current
       const px = event.clientX - rect.left
       const py = event.clientY - rect.top
@@ -197,16 +248,18 @@ export function KnowledgeGraph() {
       cam.scale = next
       cam.x = px - wx * next
       cam.y = py - wy * next
-      applyCamera(viewport!)
+      applyCamera()
       setScaleLabel(Math.round(next * 100))
     }
 
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
     viewport.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
       viewport.removeEventListener('wheel', onWheel)
     }
   }, [])
@@ -224,40 +277,95 @@ export function KnowledgeGraph() {
     cam.scale = next
     cam.x = px - wx * next
     cam.y = py - wy * next
-    applyCamera(viewport)
+    applyCamera()
     setScaleLabel(Math.round(next * 100))
   }
 
-  function toggle(id: string) {
-    setSelectedId(id)
-    if (!hasChildren(id)) return
-    setOpened((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        const stack = [id]
-        while (stack.length) {
-          const cur = stack.pop()!
-          next.delete(cur)
-          for (const child of childrenOf(cur)) stack.push(child)
-        }
-      } else {
-        next.add(id)
+  function toggleChildren(id: string) {
+    if (opened.has(id)) {
+      const before = visibleFrom(opened)
+      const nextOpened = new Set(opened)
+      const stack = [id]
+      while (stack.length) {
+        const cur = stack.pop()!
+        nextOpened.delete(cur)
+        for (const child of childrenOf(cur)) stack.push(child)
       }
-      return next
-    })
+      const after = visibleFrom(nextOpened)
+      const leaving = [...before].filter((item) => !after.has(item))
+      if (leaving.length) setFading((fade) => new Set([...fade, ...leaving]))
+      setOpened(nextOpened)
+      if (reading && leaving.includes(reading)) setReading(null)
+    } else {
+      setOpened((prev) => {
+        const next = new Set(prev)
+        next.add(id)
+        return next
+      })
+    }
   }
 
-  const selected: Concept | undefined = selectedId ? CONCEPT_BY_ID.get(selectedId) : undefined
-  const selectedKids = selected ? childrenOf(selected.id) : []
-  const worldW = bounds.maxX - bounds.minX
-  const worldH = bounds.maxY - bounds.minY
+  function finishLeave(id: string) {
+    setFading((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+    setMotionReady((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+    if (reading !== id) {
+      setNotesShown((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  function nodeStyle(id: string): CSSProperties {
+    const dest = laidRef.current.get(id) ?? { x: 0, y: 0 }
+    const chip = chipSize(id)
+    const leaving = fading.has(id)
+    const readingOpen = reading === id && !leaving
+    const settled = motionReady.has(id) && !leaving
+    const pos = settled ? dest : spawnAtParent(id, laidRef.current)
+    const transitions = [settled || leaving ? CHIP_MOTION : 'none']
+    if (readingOpen || (notesShown.has(id) && !leaving)) transitions.push(READ_MOTION)
+    return {
+      left: ORIGIN + pos.x,
+      top: ORIGIN + pos.y,
+      width: readingOpen ? READ_W : chip.w,
+      height: readingOpen ? READ_H : chip.h,
+      opacity: settled ? 1 : 0,
+      borderRadius: readingOpen ? '1rem' : '999px',
+      zIndex: readingOpen ? 8 : 1,
+      transition: transitions.join(', '),
+    }
+  }
+
+  function lineOpacity(targetId: string): number {
+    if (fading.has(targetId)) return 0
+    if (!motionReady.has(targetId)) return 0
+    return 1
+  }
+
+  const edgeKeys = new Set<string>()
+  for (const id of liveIds) {
+    const parent = parentOf(id)
+    if (parent && liveIds.has(parent)) edgeKeys.add(`${parent}>${id}`)
+  }
 
   return (
     <div
       ref={viewportRef}
       className="relative h-full min-h-[70vh] cursor-grab overflow-hidden active:cursor-grabbing"
       onPointerDown={(event) => {
-        if ((event.target as HTMLElement).closest('[data-node],[data-panel]')) return
+        if ((event.target as HTMLElement).closest('[data-node]')) return
+        if (worldRef.current) worldRef.current.style.transition = 'none'
         dragRef.current = {
           x: event.clientX,
           y: event.clientY,
@@ -268,76 +376,123 @@ export function KnowledgeGraph() {
       }}
     >
       <div
+        ref={worldRef}
         data-world
-        className="absolute left-0 top-0 origin-top-left"
-        style={{
-          width: worldW,
-          height: worldH,
-        }}
+        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        style={{ width: WORLD, height: WORLD }}
       >
-        <svg
-          className="pointer-events-none absolute left-0 top-0 overflow-visible"
-          width={worldW}
-          height={worldH}
-        >
-          {edges.map(([parent, child]) => {
-            const a = laid.get(parent)
-            const b = laid.get(child)
-            if (!a || !b) return null
-            const x1 = a.x - bounds.minX + a.w / 2
-            const y1 = a.y - bounds.minY + a.h / 2
-            const x2 = b.x - bounds.minX + b.w / 2
-            const y2 = b.y - bounds.minY + b.h / 2
+        <svg className="pointer-events-none absolute left-0 top-0 overflow-visible" width={WORLD} height={WORLD}>
+          {[...edgeKeys].map((key) => {
+            const [source, target] = key.split('>')
+            if (!source || !target) return null
+            const a = chipCenter(source, laidRef.current)
+            const b = chipCenter(target, laidRef.current)
             return (
               <line
-                key={`${parent}->${child}`}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
+                key={key}
+                x1={ORIGIN + a.x}
+                y1={ORIGIN + a.y}
+                x2={ORIGIN + b.x}
+                y2={ORIGIN + b.y}
                 stroke="var(--line)"
                 strokeWidth="1.15"
+                opacity={lineOpacity(target)}
+                style={{ transition: `opacity ${DUR} ${EASE}` }}
               />
             )
           })}
         </svg>
-        {[...visible].map((id) => {
+        {[...liveIds].map((id) => {
           const concept = CONCEPT_BY_ID.get(id)
-          const box = laid.get(id)
-          if (!concept || !box) return null
-          const open = opened.has(id)
+          if (!concept) return null
           const kids = hasChildren(id)
-          const active = selectedId === id
+          const open = opened.has(id)
+          const showNotes = notesShown.has(id)
+          const body = notesFor(concept)
           return (
-            <button
+            <div
               key={id}
-              type="button"
               data-node
-              className={`kg-card ${entering.has(id) ? 'kg-card-in' : ''} ${active ? 'kg-card-active' : ''} ${id === ROOT_ID ? 'kg-card-root' : ''}`}
-              style={{
-                left: box.x - bounds.minX,
-                top: box.y - bounds.minY,
-                width: box.w,
-                height: box.h,
-              }}
-              onClick={(event) => {
-                event.stopPropagation()
-                if (dragRef.current?.moved) return
-                toggle(id)
+              className={`kg-card ${showNotes ? 'kg-card-open' : ''} ${id === ROOT_ID ? 'kg-card-root' : ''}`}
+              style={nodeStyle(id)}
+              onTransitionEnd={(event) => {
+                if (event.target !== event.currentTarget) return
+                if (event.propertyName === 'opacity' && fading.has(id)) finishLeave(id)
+                if (event.propertyName === 'height' && reading !== id && !fading.has(id)) {
+                  setNotesShown((prev) => {
+                    if (!prev.has(id)) return prev
+                    const next = new Set(prev)
+                    next.delete(id)
+                    return next
+                  })
+                }
               }}
             >
-              <span className="block whitespace-nowrap font-serif text-[13px] leading-none">
-                {concept.label}
-              </span>
-              {kids ? (
-                <span className="kg-mark">{open ? '−' : '+'}</span>
+              <div
+                role="button"
+                tabIndex={0}
+                className="kg-card-head"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  if (reading === id) {
+                    setReading(null)
+                    return
+                  }
+                  setReading(id)
+                  setNotesShown((prev) => new Set([...prev, id]))
+                }}
+              >
+                <span className="kg-card-label whitespace-nowrap font-serif text-[13px] leading-none">
+                  {concept.label}
+                </span>
+                {kids ? (
+                  <button
+                    type="button"
+                    className="kg-mark"
+                    aria-label={open ? 'Свернуть' : 'Раскрыть'}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      toggleChildren(id)
+                    }}
+                  >
+                    {open ? '−' : '+'}
+                  </button>
+                ) : null}
+              </div>
+              {showNotes ? (
+                <div
+                  data-scroll
+                  className="kg-card-body"
+                  onWheel={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
+                  {body ? <MarkdownBody source={body} /> : (
+                    <p className="text-sm leading-6 text-[var(--muted)]">
+                      В конспектах этого узла пока нет отдельного раздела.
+                    </p>
+                  )}
+                  {concept.topicId ? (
+                    <Link
+                      className="mt-3 inline-block text-sm text-[var(--accent)]"
+                      to={{
+                        pathname: '/learn',
+                        search: `?topic=${concept.topicId}`,
+                        hash: concept.headingId ? `#${concept.headingId}` : '',
+                      }}
+                    >
+                      Весь раздел в конспекте
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
-            </button>
+            </div>
           )
         })}
       </div>
 
-      <div className="absolute right-3 top-3 flex items-center gap-2">
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
         <button
           type="button"
           className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm"
@@ -354,72 +509,6 @@ export function KnowledgeGraph() {
           +
         </button>
       </div>
-
-      {selected ? (
-        <aside data-panel className="kg-panel">
-          <div className="flex items-start justify-between gap-3">
-            <p className="font-serif text-xl leading-snug">{selected.label}</p>
-            <button
-              type="button"
-              className="rounded-full border border-[var(--line)] px-3 py-1 text-sm text-[var(--muted)]"
-              onClick={() => setSelectedId(null)}
-            >
-              Закрыть
-            </button>
-          </div>
-          {selected.blurb ? (
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{selected.blurb}</p>
-          ) : null}
-          {selected.formula ? <Formula tex={selected.formula} /> : null}
-          {selectedKids.length ? (
-            <div className="mt-4">
-              <p className="mb-2 text-xs uppercase tracking-wide text-[var(--muted)]">Дальше</p>
-              <div className="flex flex-wrap gap-2">
-                {selectedKids.map((id) => {
-                  const child = CONCEPT_BY_ID.get(id)
-                  if (!child) return null
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className="rounded-full border border-[var(--line)] px-3 py-1 text-sm"
-                      onClick={() => {
-                        setOpened((prev) => new Set(prev).add(selected.id))
-                        setSelectedId(id)
-                      }}
-                    >
-                      {child.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ) : null}
-          <div className="mt-4 flex flex-col items-start gap-2">
-            {parentOf(selected.id) ? (
-              <button
-                type="button"
-                className="text-sm text-[var(--muted)]"
-                onClick={() => setSelectedId(parentOf(selected.id) ?? null)}
-              >
-                ← {CONCEPT_BY_ID.get(parentOf(selected.id) ?? '')?.label}
-              </button>
-            ) : null}
-            {selected.topicId ? (
-              <Link
-                className="text-sm text-[var(--accent)]"
-                to={{
-                  pathname: '/learn',
-                  search: `?topic=${selected.topicId}`,
-                  hash: selected.headingId ? `#${selected.headingId}` : '',
-                }}
-              >
-                Открыть в конспекте
-              </Link>
-            ) : null}
-          </div>
-        </aside>
-      ) : null}
     </div>
   )
 }

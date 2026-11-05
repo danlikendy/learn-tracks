@@ -1,4 +1,4 @@
-import { slugifyHeading } from './content'
+import { TOPICS, slugifyHeading } from './content'
 
 export type Concept = {
   id: string
@@ -45,13 +45,12 @@ export const CONCEPTS: Concept[] = [
     'specialize',
     'search',
   ], {
-    blurb:
-      'Карта знаний: фундамент, парадигмы обучения, классический ML, сети, LLM, генерация, прод и специализации. Клик раскрывает следующий слой.',
+    ...at(ida, 'Интеллектуальный анализ данных, большие данные и машинное обучение: основные понятия и методы'),
   }),
 
-  // —— Трек 1. Фундамент ——
+  // —— Трек 1. Фундамент (roadmap: Python, math, stats, tools) ——
   node('foundation', 'Фундамент', ['math', 'stats', 'tools'], {
-    blurb: 'Python, математика, статистика и инструменты. Без этого формулы и циклы обучения остаются чёрным ящиком.',
+    ...at(ida, 'Введение в науку о данных. Виды и типы данных. Источники данных. Разведывательный анализ данных'),
   }),
   node('math', 'Математика для ML', [
     'vectors',
@@ -65,7 +64,9 @@ export const CONCEPTS: Concept[] = [
     'mle',
     'opt-math',
     'info-theory',
-  ]),
+  ], {
+    ...at(lm, 'Векторы и расстояния'),
+  }),
   node('vectors', 'Векторы'),
   node('matrices', 'Матрицы', [], {
     formula: 'w = (X^{T} X)^{-1} X^{T} y',
@@ -98,14 +99,16 @@ export const CONCEPTS: Concept[] = [
   }),
   node('info-theory', 'Теория информации'),
   node('stats', 'Статистика', ['hypothesis', 'ci', 'sampling'], {
-    ...at('statistics', 'Генеральная совокупность. Случайные и стратифицированные выборки'),
+    ...at(ida, 'Статистические основы обработки данных'),
   }),
   node('hypothesis', 'Проверка гипотез', [], {
     ...at('statistics', 'Гипотеза о равенстве средних двух генеральных совокупностей'),
   }),
   node('ci', 'Доверительные интервалы'),
   node('sampling', 'Выборки'),
-  node('tools', 'Инструменты', ['python', 'numpy', 'pandas', 'sklearn-tool']),
+  node('tools', 'Инструменты', ['python', 'numpy', 'pandas', 'sklearn-tool'], {
+    ...at(lm, 'sklearn и размерности'),
+  }),
   node('python', 'Python'),
   node('numpy', 'NumPy'),
   node('pandas', 'Pandas'),
@@ -119,12 +122,15 @@ export const CONCEPTS: Concept[] = [
     'rl',
   ], {
     blurb: 'Есть ли метка y, и что система должна вернуть.',
+    ...at(ida, 'Основные классы моделей машинного обучения'),
   }),
   node('supervised', 'С учителем', ['regression', 'classification', 'ranking'], {
     blurb: 'В выборке есть ответ y. По новым X предсказывают y.',
+    ...at(lm, 'Задача и модель'),
   }),
   node('unsupervised', 'Без учителя', ['cluster', 'dimred', 'density'], {
     blurb: 'Метки нет. Ищут структуру в X.',
+    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
   }),
   node('self-supervised', 'Self-supervised', [], {
     blurb: 'Метку строят из самих данных: следующий токен, маскированный кусок, аугментация.',
@@ -145,8 +151,7 @@ export const CONCEPTS: Concept[] = [
     'regularization',
     'features',
   ], {
-    blurb:
-      'Табличные данные, sklearn, бустинг. Задачи с учителем и без — в «Парадигмы обучения»; здесь ансамбли, метрики и валидация.',
+    ...at(ida, 'Современные технологии машинного обучения'),
   }),
 
   node('regression', 'Регрессия', [
@@ -274,7 +279,9 @@ export const CONCEPTS: Concept[] = [
     formula: '\\mathrm{precision} = \\frac{\\mathrm{TP}}{\\mathrm{TP}+\\mathrm{FP}},\\ \\mathrm{recall} = \\frac{\\mathrm{TP}}{\\mathrm{TP}+\\mathrm{FN}}',
     ...at(lm, 'Precision и Recall'),
   }),
-  node('f1', 'F1'),
+  node('f1', 'F1', [], {
+    ...at(lm, 'Precision и Recall'),
+  }),
   node('roc', 'ROC-AUC', [], {
     ...at(sq, 'Метрики TPR, FPR'),
   }),
@@ -335,11 +342,17 @@ export const CONCEPTS: Concept[] = [
     ...at(ida, 'Методы оценки качества моделей классификации'),
   }),
   node('validation', 'Валидация', ['holdout', 'kfold', 'leak'], {
-    ...at(sq, 'Стратификация выборок'),
+    ...at(ida, 'Цикл обработки данных'),
   }),
-  node('holdout', 'Train / val / test'),
-  node('kfold', 'Кросс-валидация', [], { ...at(sq, 'GridSearchCV в sklearn') }),
-  node('leak', 'Утечка данных'),
+  node('holdout', 'Train / val / test', [], {
+    ...at(ida, 'Как отделяют оценку от обучения'),
+  }),
+  node('kfold', 'Кросс-валидация', [], {
+    ...at(ida, 'Как отделяют оценку от обучения'),
+  }),
+  node('leak', 'Утечка данных', [], {
+    ...at(ida, 'Как отделяют оценку от обучения'),
+  }),
   node('regularization', 'Регуляризация', ['ridge', 'lasso', 'dropout', 'early-stop'], {
     ...at(sq, 'Сравнение L1 и L2'),
   }),
@@ -367,6 +380,7 @@ export const CONCEPTS: Concept[] = [
     'batchnorm',
   ], {
     blurb: 'Нейросети на PyTorch: от персептрона до трансформера.',
+    ...at('deep-learning', 'Типы задач для нейронных сетей'),
   }),
   node('neuron', 'Нейрон', [], { ...at(nm, 'Основы нейронных сетей') }),
   node('mlp', 'MLP / полносвязная сеть', [], {
@@ -651,12 +665,42 @@ export function visibleFrom(opened: Set<string>): Set<string> {
   return visible
 }
 
-export function treeEdges(visible: Set<string>): [string, string][] {
-  const edges: [string, string][] = []
-  for (const id of visible) {
-    for (const child of childrenOf(id)) {
-      if (visible.has(child)) edges.push([id, child])
+function extractSection(topicId?: string, headingId?: string): string {
+  if (!topicId) return ''
+  const topic = TOPICS.find((entry) => entry.id === topicId)
+  if (!topic) return ''
+  if (!headingId) return topic.notes.trim()
+  const lines = topic.notes.split('\n')
+  const chunks: string[] = []
+  let take = false
+  let startLevel = 2
+  let inCode = false
+  for (const line of lines) {
+    if (line.trim().startsWith('```')) inCode = !inCode
+    const heading = !inCode ? /^(#{1,3})\s+(.+)$/.exec(line) : null
+    if (heading) {
+      const level = heading[1].length
+      const id = slugifyHeading(heading[2])
+      if (take && level <= startLevel) break
+      if (id === headingId) {
+        take = true
+        startLevel = level
+        chunks.push(line)
+        continue
+      }
     }
+    if (take) chunks.push(line)
   }
-  return edges
+  return chunks.join('\n').trim()
+}
+
+export function notesFor(concept: Concept): string {
+  let section = extractSection(concept.topicId, concept.headingId)
+  if (!section && concept.topicId) {
+    section = extractSection(concept.topicId, slugifyHeading(concept.label))
+  }
+  const parts: string[] = []
+  if (concept.formula) parts.push(`$$\n${concept.formula}\n$$`)
+  if (section) parts.push(section)
+  return parts.join('\n\n')
 }
