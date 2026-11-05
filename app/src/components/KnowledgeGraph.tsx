@@ -1,347 +1,347 @@
-import { useEffect, useRef, useState } from 'react'
-import { TRACKS, TOPICS } from '../lib/content'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import katex from 'katex'
+import {
+  CONCEPT_BY_ID,
+  INITIAL_OPEN,
+  ROOT_ID,
+  childrenOf,
+  hasChildren,
+  visibleFrom,
+  type Concept,
+} from '../lib/knowledge'
 
-type Node = {
-  id: string
-  label: string
-  kind: 'track' | 'topic' | 'heading'
-  topicId?: string
-  headingId?: string
-  trackId?: string
-  x: number
-  y: number
-  vx: number
-  vy: number
-  ox: number
-  oy: number
-  r: number
-}
+type Laid = { id: string; x: number; y: number; w: number; h: number }
 
-function wrapLabel(text: string, max: number): string[] {
-  const words = text.split(' ')
-  const lines: string[] = []
-  let current = ''
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word
-    if (next.length > max && current) {
-      lines.push(current)
-      current = word
-    } else {
-      current = next
-    }
-  }
-  if (current) lines.push(current)
-  return lines
-}
-
-export function KnowledgeGraph({
-  topicId,
-  onSelectTopic,
-}: {
-  topicId: string | null
-  onSelectTopic: (id: string) => void
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const topicIdRef = useRef<string | null>(topicId)
-  const onSelectRef = useRef(onSelectTopic)
-  const camRef = useRef({ x: 0, y: 0, scale: 1 })
-  const zoomFnRef = useRef<(factor: number) => void>(() => {})
-  const [scaleLabel, setScaleLabel] = useState(100)
-  topicIdRef.current = topicId
-  onSelectRef.current = onSelectTopic
-
+function Formula({ tex }: { tex: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
-    const canvasEl = canvasRef.current
-    const wrapEl = wrapRef.current
-    if (!canvasEl || !wrapEl) return
-    const drawn = canvasEl.getContext('2d')
-    if (!drawn) return
-    const canvas: HTMLCanvasElement = canvasEl
-    const wrap: HTMLDivElement = wrapEl
-    const g: CanvasRenderingContext2D = drawn
+    if (!ref.current) return
+    katex.render(tex, ref.current, { throwOnError: false, displayMode: true })
+  }, [tex])
+  return <span ref={ref} className="kg-formula" />
+}
 
-    const mouse = { x: 0, y: 0, inside: false }
-    const drag = { active: false, moved: false, x: 0, y: 0, camX: 0, camY: 0 }
-    let nodes: Node[] = []
-    let raf = 0
-    let width = 0
-    let height = 0
+function cardSize(id: string): { w: number; h: number } {
+  const label = CONCEPT_BY_ID.get(id)?.label ?? id
+  const w = Math.min(280, Math.max(108, 36 + label.length * 9.1))
+  return { w, h: 38 }
+}
 
-    function colors() {
-      const styles = getComputedStyle(document.documentElement)
-      return {
-        fg: styles.getPropertyValue('--fg').trim() || '#1c1917',
-        muted: styles.getPropertyValue('--muted').trim() || '#57534e',
-        accent: styles.getPropertyValue('--accent').trim() || '#8b5a2b',
-        line: styles.getPropertyValue('--line').trim() || '#e7e0d4',
+function subtreeWeight(id: string, opened: Set<string>): number {
+  if (!opened.has(id)) return 1
+  const kids = childrenOf(id)
+  if (!kids.length) return 1
+  return Math.max(
+    1,
+    kids.reduce((sum, child) => sum + subtreeWeight(child, opened), 0),
+  )
+}
+
+function layoutRadial(visible: Set<string>, opened: Set<string>): Map<string, Laid> {
+  const laid = new Map<string, Laid>()
+  const placed = new Set<string>()
+
+  function place(
+    id: string,
+    x: number,
+    y: number,
+    fromAngle: number,
+    sweep: number,
+  ) {
+    if (placed.has(id) || !visible.has(id)) return
+    const size = cardSize(id)
+    laid.set(id, { id, x: x - size.w / 2, y: y - size.h / 2, w: size.w, h: size.h })
+    placed.add(id)
+    if (!opened.has(id)) return
+    const kids = childrenOf(id).filter((child) => visible.has(child) && !placed.has(child))
+    if (!kids.length) return
+    const weights = kids.map((child) => subtreeWeight(child, opened))
+    const total = weights.reduce((sum, w) => sum + w, 0)
+    const span = id === ROOT_ID ? Math.PI * 2 : Math.min(Math.PI * 1.35, 0.55 + kids.length * 0.38)
+    const start = id === ROOT_ID ? -Math.PI / 2 : fromAngle - span / 2
+    const widest = Math.max(...kids.map((child) => cardSize(child).w))
+    const radius = Math.max(
+      id === ROOT_ID ? 250 : 150,
+      (kids.length * (widest + 28)) / Math.max(span, 0.6),
+    )
+    let cursor = start
+    kids.forEach((child, index) => {
+      const slice = (weights[index] / total) * span
+      const angle = cursor + slice / 2
+      place(
+        child,
+        x + Math.cos(angle) * radius,
+        y + Math.sin(angle) * radius,
+        angle,
+        slice,
+      )
+      cursor += slice
+    })
+  }
+
+  place(ROOT_ID, 0, 0, 0, Math.PI * 2)
+  return laid
+}
+
+function parentOf(id: string): string | undefined {
+  for (const concept of CONCEPT_BY_ID.values()) {
+    if (concept.children.includes(id)) return concept.id
+  }
+  return undefined
+}
+
+export function KnowledgeGraph() {
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const camRef = useRef({ x: 0, y: 0, scale: 1 })
+  const dragRef = useRef<{
+    x: number
+    y: number
+    camX: number
+    camY: number
+    moved: boolean
+  } | null>(null)
+  const [opened, setOpened] = useState<Set<string>>(() => new Set(INITIAL_OPEN))
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [entering, setEntering] = useState<Set<string>>(() => new Set())
+  const [scaleLabel, setScaleLabel] = useState(100)
+  const prevVisible = useRef<Set<string>>(new Set([ROOT_ID, ...childrenOf(ROOT_ID)]))
+  const fittedRef = useRef(false)
+
+  const visible = useMemo(() => visibleFrom(opened), [opened])
+  const laid = useMemo(() => layoutRadial(visible, opened), [visible, opened])
+  const edges = useMemo(() => {
+    const list: [string, string][] = []
+    for (const id of visible) {
+      if (!opened.has(id)) continue
+      for (const child of childrenOf(id)) {
+        if (visible.has(child) && laid.has(id) && laid.has(child)) list.push([id, child])
       }
     }
+    return list
+  }, [visible, opened, laid])
 
-    function world(px: number, py: number) {
-      const cam = camRef.current
-      return { x: (px - cam.x) / cam.scale, y: (py - cam.y) / cam.scale }
+  const bounds = useMemo(() => {
+    let minX = -240
+    let maxX = 240
+    let minY = -240
+    let maxY = 240
+    for (const box of laid.values()) {
+      minX = Math.min(minX, box.x)
+      maxX = Math.max(maxX, box.x + box.w)
+      minY = Math.min(minY, box.y)
+      maxY = Math.max(maxY, box.y + box.h)
+    }
+    return { minX: minX - 48, minY: minY - 48, maxX: maxX + 48, maxY: maxY + 48 }
+  }, [laid])
+
+  useEffect(() => {
+    const next = new Set<string>()
+    for (const id of visible) {
+      if (!prevVisible.current.has(id)) next.add(id)
+    }
+    prevVisible.current = visible
+    setEntering(next)
+    if (!next.size) return
+    const timer = window.setTimeout(() => setEntering(new Set()), 420)
+    return () => window.clearTimeout(timer)
+  }, [visible])
+
+  function applyCamera(viewport: HTMLDivElement) {
+    const world = viewport.querySelector<HTMLElement>('[data-world]')
+    if (!world) return
+    const cam = camRef.current
+    world.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})`
+  }
+
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+    const rect = viewport.getBoundingClientRect()
+    if (!fittedRef.current) {
+      camRef.current.x = rect.width / 2 + bounds.minX
+      camRef.current.y = rect.height / 2 + bounds.minY
+      fittedRef.current = true
+    }
+    applyCamera(viewport)
+  }, [bounds])
+
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    function onMove(event: PointerEvent) {
+      const drag = dragRef.current
+      if (!drag) return
+      const dx = event.clientX - drag.x
+      const dy = event.clientY - drag.y
+      if (Math.hypot(dx, dy) > 4) drag.moved = true
+      camRef.current.x = drag.camX + dx
+      camRef.current.y = drag.camY + dy
+      applyCamera(viewport!)
     }
 
-    function zoomAt(px: number, py: number, factor: number) {
+    function onUp() {
+      dragRef.current = null
+    }
+
+    function onWheel(event: WheelEvent) {
+      event.preventDefault()
+      const rect = viewport!.getBoundingClientRect()
       const cam = camRef.current
-      const next = Math.min(10, Math.max(0.4, cam.scale * factor))
+      const px = event.clientX - rect.left
+      const py = event.clientY - rect.top
+      const next = Math.min(1.7, Math.max(0.35, cam.scale * (event.deltaY > 0 ? 0.92 : 1.08)))
       const wx = (px - cam.x) / cam.scale
       const wy = (py - cam.y) / cam.scale
       cam.scale = next
       cam.x = px - wx * next
       cam.y = py - wy * next
+      applyCamera(viewport!)
       setScaleLabel(Math.round(next * 100))
     }
 
-    function layout() {
-      const rect = wrap.getBoundingClientRect()
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      width = Math.max(320, rect.width)
-      height = Math.max(220, rect.height)
-      canvas.width = width * dpr
-      canvas.height = height * dpr
-      canvas.style.width = `${width}px`
-      canvas.style.height = `${height}px`
-
-      const cols = 3
-      const colW = width / cols
-      const rowH = height / 3
-      const next: Node[] = []
-      TRACKS.forEach((track, index) => {
-        const col = index % cols
-        const row = Math.floor(index / cols)
-        const topics = TOPICS.filter((topic) => topic.trackId === track.id)
-        const x = col * colW + 28
-        const top = row * rowH + 32
-        const lone = topics.length === 1 && topics[0].title === track.title
-        if (lone) {
-          const topic = topics[0]
-          next.push({
-            id: topic.id,
-            label: topic.title,
-            kind: 'topic',
-            topicId: topic.id,
-            trackId: track.id,
-            x,
-            y: top + 8,
-            vx: 0,
-            vy: 0,
-            ox: x,
-            oy: top + 8,
-            r: 6,
-          })
-          return
-        }
-        next.push({
-          id: `track:${track.id}`,
-          label: track.title,
-          kind: 'track',
-          trackId: track.id,
-          x,
-          y: top,
-          vx: 0,
-          vy: 0,
-          ox: x,
-          oy: top,
-          r: 6.5,
-        })
-        topics.forEach((topic, topicIndex) => {
-          const y = top + 52 + topicIndex * 64
-          next.push({
-            id: topic.id,
-            label: topic.title,
-            kind: 'topic',
-            topicId: topic.id,
-            trackId: track.id,
-            x,
-            y,
-            vx: 0,
-            vy: 0,
-            ox: x,
-            oy: y,
-            r: 5,
-          })
-        })
-      })
-      nodes = next
-    }
-
-    function step() {
-      const palette = colors()
-      const cam = camRef.current
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      g.setTransform(dpr, 0, 0, dpr, 0, 0)
-      g.clearRect(0, 0, width, height)
-      g.setTransform(dpr * cam.scale, 0, 0, dpr * cam.scale, cam.x * dpr, cam.y * dpr)
-
-      g.lineWidth = 1 / cam.scale
-      g.strokeStyle = palette.line
-      for (const track of nodes.filter((node) => node.kind === 'track')) {
-        for (const topic of nodes) {
-          if (topic.kind !== 'topic' || topic.trackId !== track.trackId) continue
-          g.beginPath()
-          g.moveTo(track.x, track.y)
-          g.lineTo(topic.x, topic.y)
-          g.stroke()
-        }
-      }
-      const currentTopic = nodes.find(
-        (node) => node.kind === 'topic' && node.topicId === topicIdRef.current,
-      )
-      if (currentTopic) {
-        g.globalAlpha = 0.5
-        for (const node of nodes) {
-          if (node.kind !== 'heading') continue
-          g.beginPath()
-          g.moveTo(currentTopic.x, currentTopic.y)
-          g.lineTo(node.x, node.y)
-          g.stroke()
-        }
-        g.globalAlpha = 1
-      }
-
-      g.textAlign = 'left'
-      g.textBaseline = 'top'
-      for (const node of nodes) {
-        const active = node.kind === 'topic' && node.topicId === topicIdRef.current
-        g.beginPath()
-        g.fillStyle = node.kind === 'track' || active ? palette.accent : palette.fg
-        g.globalAlpha = node.kind === 'heading' ? 0.7 : 1
-        g.arc(node.x, node.y, node.r, 0, Math.PI * 2)
-        g.fill()
-        g.globalAlpha = 1
-        g.fillStyle = node.kind === 'heading' ? palette.muted : palette.fg
-        const size =
-          (node.kind === 'track' ? 13 : node.kind === 'topic' ? 12 : 10) / cam.scale
-        g.font = `${node.kind === 'track' ? 600 : node.kind === 'topic' ? 500 : 400} ${size}px "IBM Plex Sans", system-ui`
-        const max = node.kind === 'heading' ? 22 : 32
-        wrapLabel(node.label, max).forEach((line, index) => {
-          g.fillText(
-            line,
-            node.x + node.r + 8 / cam.scale,
-            node.y - size * 0.35 + index * (size + 2),
-          )
-        })
-      }
-
-      raf = requestAnimationFrame(step)
-    }
-
-    function hit(px: number, py: number) {
-      const point = world(px, py)
-      return [...nodes]
-        .reverse()
-        .find((node) => {
-          const dx = point.x - node.x
-          const dy = point.y - node.y
-          if (Math.hypot(dx, dy) < 18) return true
-          return dx > 0 && dx < 260 && Math.abs(dy) < 16
-        })
-    }
-
-    function onMove(event: PointerEvent) {
-      const rect = canvas.getBoundingClientRect()
-      mouse.x = event.clientX - rect.left
-      mouse.y = event.clientY - rect.top
-      mouse.inside = true
-      if (drag.active) {
-        const dx = mouse.x - drag.x
-        const dy = mouse.y - drag.y
-        if (Math.hypot(dx, dy) > 4) drag.moved = true
-        camRef.current.x = drag.camX + dx
-        camRef.current.y = drag.camY + dy
-        canvas.style.cursor = 'grabbing'
-        return
-      }
-      canvas.style.cursor = hit(mouse.x, mouse.y) ? 'pointer' : 'grab'
-    }
-
-    function onDown(event: PointerEvent) {
-      if (event.button !== 0) return
-      const rect = canvas.getBoundingClientRect()
-      drag.active = true
-      drag.moved = false
-      drag.x = event.clientX - rect.left
-      drag.y = event.clientY - rect.top
-      drag.camX = camRef.current.x
-      drag.camY = camRef.current.y
-      canvas.setPointerCapture(event.pointerId)
-    }
-
-    function onUp(event: PointerEvent) {
-      const wasDrag = drag.moved
-      drag.active = false
-      canvas.releasePointerCapture(event.pointerId)
-      canvas.style.cursor = 'grab'
-      if (wasDrag) return
-      const rect = canvas.getBoundingClientRect()
-      const node = hit(event.clientX - rect.left, event.clientY - rect.top)
-      if (node?.topicId) {
-        onSelectRef.current(node.topicId)
-        if (node.headingId) {
-          requestAnimationFrame(() => {
-            document.getElementById(node.headingId ?? '')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            })
-          })
-        }
-        return
-      }
-      if (node?.kind === 'track') {
-        const first = TOPICS.find((topic) => topic.trackId === node.trackId)
-        if (first) onSelectRef.current(first.id)
-      }
-    }
-
-    function onLeave() {
-      mouse.inside = false
-      if (!drag.active) canvas.style.cursor = 'default'
-    }
-
-    function onWheel(event: WheelEvent) {
-      event.preventDefault()
-      const rect = canvas.getBoundingClientRect()
-      zoomAt(event.clientX - rect.left, event.clientY - rect.top, event.deltaY > 0 ? 0.9 : 1.12)
-    }
-
-    const observer = new ResizeObserver(layout)
-    observer.observe(wrap)
-    layout()
-    raf = requestAnimationFrame(step)
-    canvas.addEventListener('pointermove', onMove)
-    canvas.addEventListener('pointerleave', onLeave)
-    canvas.addEventListener('pointerdown', onDown)
-    canvas.addEventListener('pointerup', onUp)
-    canvas.addEventListener('wheel', onWheel, { passive: false })
-    zoomFnRef.current = (factor) => zoomAt(width / 2, height / 2, factor)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    viewport.addEventListener('wheel', onWheel, { passive: false })
     return () => {
-      observer.disconnect()
-      cancelAnimationFrame(raf)
-      canvas.removeEventListener('pointermove', onMove)
-      canvas.removeEventListener('pointerleave', onLeave)
-      canvas.removeEventListener('pointerdown', onDown)
-      canvas.removeEventListener('pointerup', onUp)
-      canvas.removeEventListener('wheel', onWheel)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      viewport.removeEventListener('wheel', onWheel)
     }
-  }, [topicId])
+  }, [])
 
-  function bump(factor: number) {
-    zoomFnRef.current(factor)
+  function zoomBy(factor: number) {
+    const viewport = viewportRef.current
+    if (!viewport) return
+    const rect = viewport.getBoundingClientRect()
+    const cam = camRef.current
+    const px = rect.width / 2
+    const py = rect.height / 2
+    const next = Math.min(1.7, Math.max(0.35, cam.scale * factor))
+    const wx = (px - cam.x) / cam.scale
+    const wy = (py - cam.y) / cam.scale
+    cam.scale = next
+    cam.x = px - wx * next
+    cam.y = py - wy * next
+    applyCamera(viewport)
+    setScaleLabel(Math.round(next * 100))
   }
+
+  function toggle(id: string) {
+    setSelectedId(id)
+    if (!hasChildren(id)) return
+    setOpened((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        const stack = [id]
+        while (stack.length) {
+          const cur = stack.pop()!
+          next.delete(cur)
+          for (const child of childrenOf(cur)) stack.push(child)
+        }
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const selected: Concept | undefined = selectedId ? CONCEPT_BY_ID.get(selectedId) : undefined
+  const selectedKids = selected ? childrenOf(selected.id) : []
+  const worldW = bounds.maxX - bounds.minX
+  const worldH = bounds.maxY - bounds.minY
 
   return (
     <div
-      ref={wrapRef}
-      className="relative h-full min-h-[70vh] overflow-hidden"
+      ref={viewportRef}
+      className="relative h-full min-h-[70vh] cursor-grab overflow-hidden active:cursor-grabbing"
+      onPointerDown={(event) => {
+        if ((event.target as HTMLElement).closest('[data-node],[data-panel]')) return
+        dragRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+          camX: camRef.current.x,
+          camY: camRef.current.y,
+          moved: false,
+        }
+      }}
     >
-      <canvas ref={canvasRef} className="block h-full w-full" />
+      <div
+        data-world
+        className="absolute left-0 top-0 origin-top-left"
+        style={{
+          width: worldW,
+          height: worldH,
+        }}
+      >
+        <svg
+          className="pointer-events-none absolute left-0 top-0 overflow-visible"
+          width={worldW}
+          height={worldH}
+        >
+          {edges.map(([parent, child]) => {
+            const a = laid.get(parent)
+            const b = laid.get(child)
+            if (!a || !b) return null
+            const x1 = a.x - bounds.minX + a.w / 2
+            const y1 = a.y - bounds.minY + a.h / 2
+            const x2 = b.x - bounds.minX + b.w / 2
+            const y2 = b.y - bounds.minY + b.h / 2
+            return (
+              <line
+                key={`${parent}->${child}`}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="var(--line)"
+                strokeWidth="1.15"
+              />
+            )
+          })}
+        </svg>
+        {[...visible].map((id) => {
+          const concept = CONCEPT_BY_ID.get(id)
+          const box = laid.get(id)
+          if (!concept || !box) return null
+          const open = opened.has(id)
+          const kids = hasChildren(id)
+          const active = selectedId === id
+          return (
+            <button
+              key={id}
+              type="button"
+              data-node
+              className={`kg-card ${entering.has(id) ? 'kg-card-in' : ''} ${active ? 'kg-card-active' : ''} ${id === ROOT_ID ? 'kg-card-root' : ''}`}
+              style={{
+                left: box.x - bounds.minX,
+                top: box.y - bounds.minY,
+                width: box.w,
+                height: box.h,
+              }}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (dragRef.current?.moved) return
+                toggle(id)
+              }}
+            >
+              <span className="block whitespace-nowrap font-serif text-[13px] leading-none">
+                {concept.label}
+              </span>
+              {kids ? (
+                <span className="kg-mark">{open ? '−' : '+'}</span>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="absolute right-3 top-3 flex items-center gap-2">
         <button
           type="button"
           className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm"
-          onClick={() => bump(0.88)}
+          onClick={() => zoomBy(0.9)}
         >
           −
         </button>
@@ -349,11 +349,77 @@ export function KnowledgeGraph({
         <button
           type="button"
           className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm"
-          onClick={() => bump(1.14)}
+          onClick={() => zoomBy(1.1)}
         >
           +
         </button>
       </div>
+
+      {selected ? (
+        <aside data-panel className="kg-panel">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-serif text-xl leading-snug">{selected.label}</p>
+            <button
+              type="button"
+              className="rounded-full border border-[var(--line)] px-3 py-1 text-sm text-[var(--muted)]"
+              onClick={() => setSelectedId(null)}
+            >
+              Закрыть
+            </button>
+          </div>
+          {selected.blurb ? (
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{selected.blurb}</p>
+          ) : null}
+          {selected.formula ? <Formula tex={selected.formula} /> : null}
+          {selectedKids.length ? (
+            <div className="mt-4">
+              <p className="mb-2 text-xs uppercase tracking-wide text-[var(--muted)]">Дальше</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedKids.map((id) => {
+                  const child = CONCEPT_BY_ID.get(id)
+                  if (!child) return null
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className="rounded-full border border-[var(--line)] px-3 py-1 text-sm"
+                      onClick={() => {
+                        setOpened((prev) => new Set(prev).add(selected.id))
+                        setSelectedId(id)
+                      }}
+                    >
+                      {child.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+          <div className="mt-4 flex flex-col items-start gap-2">
+            {parentOf(selected.id) ? (
+              <button
+                type="button"
+                className="text-sm text-[var(--muted)]"
+                onClick={() => setSelectedId(parentOf(selected.id) ?? null)}
+              >
+                ← {CONCEPT_BY_ID.get(parentOf(selected.id) ?? '')?.label}
+              </button>
+            ) : null}
+            {selected.topicId ? (
+              <Link
+                className="text-sm text-[var(--accent)]"
+                to={{
+                  pathname: '/learn',
+                  search: `?topic=${selected.topicId}`,
+                  hash: selected.headingId ? `#${selected.headingId}` : '',
+                }}
+              >
+                Открыть в конспекте
+              </Link>
+            ) : null}
+          </div>
+        </aside>
+      ) : null}
     </div>
   )
 }

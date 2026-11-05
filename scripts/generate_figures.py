@@ -36,9 +36,9 @@ plt.rcParams.update(
         "font.size": 10,
         "axes.titlesize": 12,
         "legend.fontsize": 9,
-        "figure.dpi": 120,
+        "figure.dpi": 160,
         "savefig.bbox": "tight",
-        "savefig.pad_inches": 0.12,
+        "savefig.pad_inches": 0.16,
     }
 )
 
@@ -46,14 +46,12 @@ plt.rcParams.update(
 def save(fig, name: str, *, tight: bool = True) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     fig.suptitle("")
-    for ax in fig.get_axes():
-        ax.set_title("")
     if tight:
         try:
             fig.tight_layout()
         except Exception:
             pass
-    fig.savefig(OUT / name, dpi=130, bbox_inches="tight", facecolor=BG)
+    fig.savefig(OUT / name, dpi=180, bbox_inches="tight", facecolor=BG)
     plt.close(fig)
 
 
@@ -167,15 +165,21 @@ def _svm_margin_ax(ax, *, compact: bool = False) -> None:
 
 
 def fig_svm_hyperplane() -> None:
-    fig, ax = plt.subplots(figsize=(4.0, 2.85))
+    fig, ax = plt.subplots(figsize=(4.6, 4.6))
     _svm_hyperplane_ax(ax, np.random.default_rng(1))
+    ax.set_xlim(-2.9, 2.9)
+    ax.set_ylim(-2.9, 2.9)
+    ax.set_aspect("equal", adjustable="box")
     style(ax)
     save(fig, "svm-hyperplane.png")
 
 
 def fig_svm_margin() -> None:
-    fig, ax = plt.subplots(figsize=(4.0, 2.85))
+    fig, ax = plt.subplots(figsize=(4.6, 4.6))
     _svm_margin_ax(ax)
+    ax.set_xlim(-2.9, 2.9)
+    ax.set_ylim(-2.9, 2.9)
+    ax.set_aspect("equal", adjustable="box")
     style(ax)
     save(fig, "svm-margin.png")
 
@@ -277,7 +281,7 @@ def fig_bias_variance_curves() -> None:
 
 
 def fig_targets() -> None:
-    fig, axes = plt.subplots(2, 2, figsize=(6.2, 6.2))
+    fig, axes = plt.subplots(2, 2, figsize=(5.6, 5.6))
     titles = [
         ("низкое смещение,\nнизкий разброс", [(0.0, 0.0)] * 10),
         ("низкое смещение,\nвысокий разброс", None),
@@ -287,9 +291,9 @@ def fig_targets() -> None:
     rng = np.random.default_rng(3)
     for ax, (title, pts) in zip(axes.ravel(), titles):
         ax.set_aspect("equal")
-        ax.add_patch(Circle((0, 0), 1, fill=False, color=MUTED, lw=1))
-        ax.add_patch(Circle((0, 0), 0.62, fill=False, color=MUTED, lw=0.8))
-        ax.add_patch(Circle((0, 0), 0.28, fill=False, color=MUTED, lw=0.8))
+        for radius, lw in ((1.0, 1.1), (0.62, 0.8), (0.28, 0.8)):
+            ax.add_patch(Circle((0, 0), radius, fill=False, color=MUTED, lw=lw))
+        ax.plot(0, 0, marker="+", color=MUTED, ms=7)
         if pts is None:
             if "низкое смещение" in title:
                 xy = rng.normal(0, 0.42, (12, 2))
@@ -298,12 +302,11 @@ def fig_targets() -> None:
         else:
             jitter = rng.normal(0, 0.06, (10, 2))
             xy = np.array(pts) + jitter
-        ax.scatter(xy[:, 0], xy[:, 1], c=ACCENT, s=18)
-        ax.set_xlim(-1.2, 1.2)
-        ax.set_ylim(-1.2, 1.2)
+        ax.scatter(xy[:, 0], xy[:, 1], c=ACCENT, s=28, zorder=3)
+        ax.set_xlim(-1.25, 1.25)
+        ax.set_ylim(-1.25, 1.25)
         ax.axis("off")
-        ax.set_title(title, fontsize=10)
-    fig.suptitle("Смещение и разброс: мишени")
+        ax.set_title(title, fontsize=10, pad=8)
     save(fig, "bias-variance-targets.png")
 
 
@@ -364,38 +367,48 @@ def fig_confusion(multi: bool) -> None:
 
 
 def fig_macro_micro() -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 3.4))
-    ax.axis("off")
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 4)
-    boxes = [("P, R по классам", 0.4, 1.6), ("среднее", 4.1, 1.6), ("macro F1", 7.2, 1.6)]
-    for text, x, y in boxes:
-        ax.add_patch(FancyBboxPatch((x, y), 2.4, 1.2, boxstyle="round,pad=0.15", fc="#fffaf3", ec=ACCENT))
-        ax.text(x + 1.2, y + 0.6, text, ha="center", va="center")
-    ax.annotate("", xy=(4.1, 2.2), xytext=(2.8, 2.2), arrowprops=dict(arrowstyle="->", color=FG))
-    ax.annotate("", xy=(7.2, 2.2), xytext=(6.5, 2.2), arrowprops=dict(arrowstyle="->", color=FG))
-    ax.set_title("Макро-усреднение: сначала метрики классов, потом среднее")
+    labels = ["класс A", "класс B", "класс C"]
+    precision = np.array([0.90, 0.50, 0.70])
+    recall = np.array([0.40, 0.80, 0.70])
+    xs = np.arange(len(labels))
+    width = 0.36
+    fig, ax = plt.subplots(figsize=(5.8, 3.6))
+    ax.bar(xs - width / 2, precision, width, color=ACCENT, label="precision")
+    ax.bar(xs + width / 2, recall, width, color=GREEN, label="recall")
+    ax.axhline(precision.mean(), color=ACCENT, ls="--", lw=1, label=f"macro P = {precision.mean():.2f}")
+    ax.axhline(recall.mean(), color=GREEN, ls="--", lw=1, label=f"macro R = {recall.mean():.2f}")
+    ax.set_xticks(xs, labels)
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("значение")
+    ax.legend(frameon=False, fontsize=8)
+    ax.set_title("Макро: среднее метрик по классам")
+    style(ax)
     save(fig, "macro-avg.png")
-    fig, ax = plt.subplots(figsize=(6.4, 3.4))
-    ax.axis("off")
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 4)
-    boxes = [("суммарные TP/FP/FN", 0.3, 1.6), ("P и R", 4.1, 1.6), ("micro F1", 7.2, 1.6)]
-    for text, x, y in boxes:
-        ax.add_patch(FancyBboxPatch((x, y), 2.6, 1.2, boxstyle="round,pad=0.15", fc="#fffaf3", ec=GREEN))
-        ax.text(x + 1.3, y + 0.6, text, ha="center", va="center")
-    ax.annotate("", xy=(4.1, 2.2), xytext=(2.9, 2.2), arrowprops=dict(arrowstyle="->", color=FG))
-    ax.annotate("", xy=(7.2, 2.2), xytext=(6.7, 2.2), arrowprops=dict(arrowstyle="->", color=FG))
-    ax.set_title("Микро-усреднение: сначала ответы, потом метрики")
+
+    tp = np.array([40, 80, 70])
+    fp = np.array([4, 80, 30])
+    fn = np.array([60, 20, 30])
+    p_micro = tp.sum() / (tp.sum() + fp.sum())
+    r_micro = tp.sum() / (tp.sum() + fn.sum())
+    fig, ax = plt.subplots(figsize=(5.8, 3.6))
+    ax.bar(["TP", "FP", "FN"], [tp.sum(), fp.sum(), fn.sum()], color=[GREEN, RED, ACCENT], width=0.55)
+    ax.set_ylabel("число объектов")
+    ax.set_title(f"Микро: сначала сумма, затем P = {p_micro:.2f}, R = {r_micro:.2f}")
+    style(ax)
     save(fig, "micro-avg.png")
 
 
 def fig_f1() -> None:
-    fig, ax = plt.subplots(figsize=(6.2, 3.6))
-    ax.bar([0, 1, 2], [0.71, 0.68, 0.69], color=[ACCENT, GREEN, BLUE], width=0.55)
-    ax.set_xticks([0, 1, 2], ["macro F1", "micro F1", "среднее F1 классов"])
-    ax.set_ylim(0, 1)
-    ax.set_title("Три способа получить итоговую F1")
+    names = ["класс A", "класс B", "класс C", "macro", "micro"]
+    vals = [0.55, 0.62, 0.70, 0.62, 0.68]
+    colors = [ACCENT, ACCENT, ACCENT, GREEN, BLUE]
+    fig, ax = plt.subplots(figsize=(5.8, 3.6))
+    bars = ax.bar(names, vals, color=colors, width=0.62)
+    for bar, val in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 0.03, f"{val:.2f}", ha="center", va="bottom", fontsize=9)
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("F1")
+    ax.set_title("F1 классов и два способа усреднения")
     style(ax)
     save(fig, "f1-avg.png")
 
@@ -607,18 +620,34 @@ def fig_shap_bar(name: str) -> None:
 
 
 def fig_pipeline(name: str, boxes: list[str], title: str) -> None:
-    fig, ax = plt.subplots(figsize=(7.2, 2.4))
-    ax.set_xlim(0, len(boxes) * 2.2)
-    ax.set_ylim(0, 2)
+    n = len(boxes)
+    fig, ax = plt.subplots(figsize=(6.4, 3.2))
+    ax.set_xlim(0, n * 2.35 + 0.2)
+    ax.set_ylim(0, 3.0)
     ax.axis("off")
+    ax.set_title(title, fontsize=12, pad=10)
+    y = 1.15
     for i, text in enumerate(boxes):
-        x = 0.15 + i * 2.2
-        ax.add_patch(FancyBboxPatch((x, 0.55), 1.9, 0.9, boxstyle="round,pad=0.12", fc="#fffaf3", ec=ACCENT))
-        ax.text(x + 0.95, 1.0, text, ha="center", va="center", fontsize=9)
-        if i < len(boxes) - 1:
-            ax.annotate("", xy=(x + 2.15, 1.0), xytext=(x + 2.05, 1.0),
-                        arrowprops=dict(arrowstyle="->", color=FG))
-    ax.set_title(title)
+        x = 0.25 + i * 2.35
+        ax.add_patch(
+            FancyBboxPatch(
+                (x, y),
+                1.95,
+                0.95,
+                boxstyle="round,pad=0.08,rounding_size=0.12",
+                fc="#fffaf3",
+                ec=ACCENT,
+                lw=1.4,
+            )
+        )
+        ax.text(x + 0.97, y + 0.48, text, ha="center", va="center", fontsize=10)
+        if i < n - 1:
+            ax.annotate(
+                "",
+                xy=(x + 2.28, y + 0.48),
+                xytext=(x + 2.05, y + 0.48),
+                arrowprops=dict(arrowstyle="-|>", color=MUTED, lw=1.2),
+            )
     save(fig, name)
 
 
@@ -674,20 +703,27 @@ def fig_overfit() -> None:
 
 
 def fig_l1_l2() -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.6))
-    t = np.linspace(-2, 2, 400)
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 3.5))
+    t = np.linspace(-1.8, 1.8, 420)
     w1, w2 = np.meshgrid(t, t)
-    axes[0].contour(w1, w2, np.abs(w1) + np.abs(w2), levels=[1], colors=ACCENT, linewidths=2)
-    axes[0].contour(w1, w2, (w1 - 1.2) ** 2 + (w2 - 0.8) ** 2, levels=[0.4, 0.9, 1.5], colors=MUTED)
-    axes[0].set_title("L1: ромб, веса могут обнулиться")
-    axes[1].contour(w1, w2, w1**2 + w2**2, levels=[1], colors=GREEN, linewidths=2)
-    axes[1].contour(w1, w2, (w1 - 1.2) ** 2 + (w2 - 0.8) ** 2, levels=[0.4, 0.9, 1.5], colors=MUTED)
-    axes[1].set_title("L2: круг, веса сжимаются")
+    loss = (w1 - 1.15) ** 2 + (w2 - 0.85) ** 2
+    axes[0].contour(w1, w2, np.abs(w1) + np.abs(w2), levels=[1], colors=ACCENT, linewidths=2.2)
+    axes[0].contour(w1, w2, loss, levels=[0.35, 0.8, 1.4], colors=MUTED, linewidths=1)
+    axes[0].scatter([0], [1], c=ACCENT, s=36, zorder=4)
+    axes[0].text(0.08, 1.12, "ось, вес = 0", color=ACCENT, fontsize=8)
+    axes[0].set_title("L1, ромб")
+    axes[1].contour(w1, w2, w1**2 + w2**2, levels=[1], colors=GREEN, linewidths=2.2)
+    axes[1].contour(w1, w2, loss, levels=[0.35, 0.8, 1.4], colors=MUTED, linewidths=1)
+    axes[1].scatter([0.78], [0.63], c=GREEN, s=36, zorder=4)
+    axes[1].text(0.2, 0.28, "оба веса сжаты", color=GREEN, fontsize=8)
+    axes[1].set_title("L2, круг")
     for ax in axes:
-        ax.set_aspect("equal")
+        ax.set_aspect("equal", adjustable="box")
+        ax.set_xlim(-1.7, 1.7)
+        ax.set_ylim(-1.7, 1.7)
         style(ax)
-        ax.set_xlabel("$w_1$")
-        ax.set_ylabel("$w_2$")
+        ax.set_xlabel(r"$w_1$")
+        ax.set_ylabel(r"$w_2$")
     save(fig, "l1-l2.png")
 
 

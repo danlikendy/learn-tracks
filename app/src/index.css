@@ -204,17 +204,19 @@ html[data-theme="dark"] .select-control {
 
 .prose-note .note-figure {
   display: block;
-  margin: 1.5rem auto 2rem;
-  max-width: 24rem;
+  margin: 1.35rem auto 1.85rem;
+  max-width: min(100%, 34rem);
   overflow: hidden;
 }
 
 .prose-note .note-figure img {
   display: block;
-  width: 100%;
-  max-width: 24rem;
+  width: auto;
+  max-width: 100%;
+  max-height: min(52vh, 22rem);
   height: auto;
   margin: 0 auto;
+  object-fit: contain;
   background: transparent;
 }
 
@@ -249,4 +251,88 @@ html[data-theme="dark"] .select-control {
 .toc-nav::-webkit-scrollbar-thumb {
   background: color-mix(in oklab, var(--muted) 45%, transparent);
   border-radius: 99px;
+}
+
+.map-detail .prose-note p {
+  margin: 0.35rem 0 0;
+}
+
+.kg-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.kg-card-root {
+  font-size: 0.95rem;
+  border-color: var(--accent);
+}
+
+.kg-card-in {
+  animation: kg-in 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.kg-card-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.kg-mark {
+  position: absolute;
+  right: -0.35rem;
+  top: -0.35rem;
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.kg-panel {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 5;
+  width: min(22rem, calc(100% - 1.5rem));
+  max-height: min(58vh, 28rem);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: color-mix(in oklab, var(--bg) 94%, transparent);
+  padding: 1.1rem 1.15rem 1.3rem;
+  backdrop-filter: blur(10px);
+}
+
+.kg-formula {
+  display: block;
+  margin-top: 0.85rem;
+  overflow-x: auto;
+  color: var(--fg);
+}
+
+.kg-formula .katex {
+  font-size: 1.05em;
+}
+
+@keyframes kg-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
