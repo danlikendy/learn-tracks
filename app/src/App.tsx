@@ -1,9 +1,8 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Account } from './pages/Account'
 import { Cards } from './pages/Cards'
 import { Home } from './pages/Home'
-import { Knowledge } from './pages/Knowledge'
 import { ItemPage } from './pages/ItemPage'
 import { Learn } from './pages/Learn'
 import { NotificationsPage } from './pages/Notifications'
@@ -16,7 +15,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="learn" element={<Learn />} />
-        <Route path="knowledge" element={<Knowledge />} />
+        <Route path="knowledge" element={<Navigate to="/" replace />} />
         <Route path="cards" element={<Cards />} />
         <Route path="item/:id" element={<ItemPage />} />
         <Route path="account" element={<Account />} />

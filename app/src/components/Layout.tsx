@@ -5,8 +5,7 @@ import { loadNotifications, loadTheme, saveTheme } from '../lib/storage'
 import type { Theme } from '../lib/types'
 
 const primary: { to: string; label: string; end?: boolean }[] = [
-  { to: '/', label: 'Обучение', end: true },
-  { to: '/knowledge', label: 'Знания', end: true },
+  { to: '/learn', label: 'Обучение', end: true },
   { to: '/cards', label: 'Карточки' },
   { to: '/community', label: 'Сообщество' },
   { to: '/roadmaps', label: 'Роадмапы' },
@@ -43,7 +42,7 @@ export function Layout() {
     <div className="min-h-svh">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-          <NavLink to="/" className="shrink-0 font-serif text-lg tracking-tight">
+          <NavLink to="/" end className="shrink-0 font-serif text-lg tracking-tight">
             Learn Tracks
           </NavLink>
           <nav className="hidden min-w-0 flex-1 items-center gap-1 text-sm md:flex">

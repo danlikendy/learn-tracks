@@ -1,1 +1,9 @@
-export { Learn as Home } from './Learn'
+import { KnowledgeGraph } from '../components/KnowledgeGraph'
+
+export function Home() {
+  return (
+    <div className="-mx-4 h-[calc(100svh-7.5rem)] sm:mx-0">
+      <KnowledgeGraph />
+    </div>
+  )
+}

@@ -132,12 +132,14 @@ html[data-theme="dark"] .select-control {
   position: absolute;
   top: 0.55rem;
   right: 0.55rem;
+  z-index: 1;
+  opacity: 1;
   background: var(--bg);
 }
 
 .prose-note pre {
   overflow-x: auto;
-  padding: 2.7rem 1.1rem 1rem;
+  padding: 1rem 1.1rem 1rem;
   border-radius: 0.75rem;
   background: color-mix(in oklab, var(--fg) 6%, var(--bg));
   color: var(--fg);

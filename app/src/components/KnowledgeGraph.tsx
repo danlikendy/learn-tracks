@@ -217,8 +217,8 @@ export function KnowledgeGraph() {
   }, [reading])
 
   useLayoutEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
+    const viewportEl = viewportRef.current
+    if (!viewportEl) return
 
     function onMove(event: PointerEvent) {
       const drag = dragRef.current
@@ -236,9 +236,11 @@ export function KnowledgeGraph() {
     }
 
     function onWheel(event: WheelEvent) {
+      const vp = viewportRef.current
+      if (!vp) return
       if ((event.target as HTMLElement).closest('[data-scroll]')) return
       event.preventDefault()
-      const rect = viewport.getBoundingClientRect()
+      const rect = vp.getBoundingClientRect()
       const cam = camRef.current
       const px = event.clientX - rect.left
       const py = event.clientY - rect.top
@@ -255,12 +257,12 @@ export function KnowledgeGraph() {
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     window.addEventListener('pointercancel', onUp)
-    viewport.addEventListener('wheel', onWheel, { passive: false })
+    viewportEl.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
-      viewport.removeEventListener('wheel', onWheel)
+      viewportEl.removeEventListener('wheel', onWheel)
     }
   }, [])
 

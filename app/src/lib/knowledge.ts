@@ -10,9 +10,16 @@ export type Concept = {
   children: string[]
 }
 
-const nm = 'numerical-methods'
-const lm = 'linear-models'
 const ida = 'ida'
+const lm = 'linear-models'
+const stats = 'statistics'
+const nm = 'numerical-methods'
+const dl = 'deep-learning'
+const cv = 'computer-vision'
+const nlp = 'nlp'
+const llm = 'llm'
+const rag = 'rag'
+const ts = 'time-series'
 const sq = 'supervised-quality'
 
 function at(topicId: string, heading: string): Pick<Concept, 'topicId' | 'headingId'> {
@@ -29,653 +36,416 @@ function node(
 }
 
 /**
- * Top-level order follows roadmap.sh «Machine Learning Roadmap» (PDF machine-learning.pdf):
- * foundation → data → paradigms → model evaluation → classical ML → deep learning →
- * generative → NLP & LLM → MLOps → specialization → XAI; plus numerical «search» for optimization.
+ * Machine Learning roadmap aligned with machine-learning.pdf / roadmap.sh outline.
+ * Leaf nodes link to existing conspect sections where available.
  */
 export const CONCEPTS: Concept[] = [
-  node('ml', 'Machine Learning', [
-    'foundation',
-    'data',
-    'paradigms',
-    'model-eval',
-    'classical',
-    'deep',
-    'generative',
-    'nlp-llm',
-    'mlops',
-    'specialize',
-    'xai',
-    'search',
-  ], {
-    ...at(ida, 'Интеллектуальный анализ данных, большие данные и машинное обучение: основные понятия и методы'),
+  node(
+    'ml',
+    'Machine Learning',
+    [
+      'intro',
+      'math-found',
+      'prog-fund',
+      'data-collection',
+      'data-cleaning',
+      'ml-core',
+      'supervised',
+      'unsupervised',
+      'reinforcement',
+      'model-eval',
+      'deep',
+      'advanced-ml',
+    ],
+    {
+      ...at(ida, 'Интеллектуальный анализ данных, большие данные и машинное обучение: основные понятия и методы'),
+    },
+  ),
+
+  // —— Introduction ——
+  node('intro', 'Introduction', ['intro-ml-eng', 'intro-vs-ai', 'intro-skills'], {
+    blurb: 'Роли, отличия, зона ответственности.',
+  }),
+  node('intro-ml-eng', 'What is an ML Engineer?'),
+  node('intro-vs-ai', 'ML Engineer vs AI Engineer'),
+  node('intro-skills', 'Skills and Responsibilities'),
+
+  // —— Mathematical Foundations ——
+  node('math-found', 'Mathematical Foundations', ['la', 'calc', 'disc-math', 'stats-block', 'prob-block'], {
+    ...at(lm, 'Векторы и расстояния'),
   }),
 
-  // —— Foundation: math, statistics, Python stack (roadmap PDF) ——
-  node('foundation', 'Фундамент', ['math', 'stats', 'tools'], {
+  node('la', 'Linear Algebra', ['la-matrices', 'la-vectors-tensors', 'la-svd', 'la-det-inv', 'la-eigen'], {
+    ...at(lm, 'Матрицы и нормальное уравнение'),
+  }),
+  node('la-matrices', 'Matrix & Matrix Operations', [], { ...at(lm, 'Матрицы и нормальное уравнение') }),
+  node('la-vectors-tensors', 'Scalars, Vectors, Tensors', [], {
+    ...at(dl, 'Тензор'),
+  }),
+  node('la-svd', 'Singular Value Decomposition', [], { ...at(ida, 'Методы снижения размерности и их использование') }),
+  node('la-det-inv', 'Determinants, inverse of Matrix'),
+  node('la-eigen', 'Eigenvalues, Diagonalization', [], { ...at(ida, 'Снижение размерности. Метод главных компонент') }),
+
+  node('calc', 'Calculus', ['calc-grad', 'calc-chain', 'calc-partial'], {
+    ...at(nm, 'Градиент функции'),
+  }),
+  node('calc-grad', 'Gradient, Jacobian, Hessian', [], { ...at(nm, 'Градиент функции') }),
+  node('calc-chain', 'Chain rule of derivation', [], { ...at(dl, 'Обратное распространение ошибки') }),
+  node('calc-partial', 'Derivatives, Partial Derivatives', [], { ...at(nm, 'Градиент функции') }),
+
+  node('disc-math', 'Discrete Mathematics'),
+
+  node('stats-block', 'Statistics', ['stats-basic', 'stats-descr', 'stats-graphs', 'stats-inf'], {
+    ...at(ida, 'Статистические основы обработки данных'),
+  }),
+  node('stats-basic', 'Basic concepts', [], { ...at(ida, 'Статистические основы обработки данных') }),
+  node('stats-descr', 'Descriptive Statistics', [], { ...at(stats, 'Мода') }),
+  node('stats-graphs', 'Graphs & Charts'),
+  node('stats-inf', 'Inferential Statistics', [], { ...at(stats, 'Гипотеза о равенстве средних двух генеральных совокупностей') }),
+
+  node('prob-block', 'Probability', ['prob-basics', 'prob-dist', 'prob-rv-pdf', 'prob-bayes'], {
+    ...at(stats, 'Вероятность: классическое и геометрическое определения'),
+  }),
+  node('prob-basics', 'Basics of Probability', [], { ...at(stats, 'Классическое определение вероятности') }),
+  node('prob-dist', 'Types of Distribution', ['prob-normal', 'prob-binom', 'prob-poisson'], {
+    ...at(stats, 'Непрерывное равномерное и нормальное распределения'),
+  }),
+  node('prob-normal', 'Normal distribution', [], { ...at(stats, 'Нормальное распределение') }),
+  node('prob-binom', 'Binomial', [], { ...at(stats, 'Биномиальное распределение') }),
+  node('prob-poisson', 'Poisson', [], { ...at(stats, 'Распределение Пуассона') }),
+  node('prob-rv-pdf', 'Random Variances, PDFs', [], { ...at(stats, 'Функция нормального распределения') }),
+  node('prob-bayes', 'Bayes Theorem'),
+
+  // —— Programming Fundamentals ——
+  node('prog-fund', 'Programming Fundamentals', ['prog-syntax', 'prog-python', 'prog-oop', 'prog-libs'], {
+    ...at(lm, 'sklearn и размерности'),
+  }),
+
+  node('prog-syntax', 'Basic Syntax (overview)'),
+
+  node('prog-python', 'Python', ['py-ds', 'py-vars', 'py-loops', 'py-cond', 'py-exc', 'py-func'], {
+    ...at(lm, 'Матрицы numpy'),
+  }),
+  node('py-ds', 'Data Structures', [], { ...at(lm, 'Матрицы numpy') }),
+  node('py-vars', 'Variables and Data Types'),
+  node('py-loops', 'Loops'),
+  node('py-cond', 'Conditionals'),
+  node('py-exc', 'Exceptions'),
+  node('py-func', 'Functions, Builtin Functions'),
+
+  node('prog-oop', 'Object Oriented Programming'),
+
+  node('prog-libs', 'Essential libraries', ['lib-numpy', 'lib-pandas', 'lib-mpl', 'lib-seaborn'], {
+    ...at(lm, 'sklearn и размерности'),
+  }),
+  node('lib-numpy', 'NumPy', [], { ...at(lm, 'Матрицы numpy') }),
+  node('lib-pandas', 'Pandas'),
+  node('lib-mpl', 'Matplotlib', [], { ...at(cv, 'Выводим изображение в Jupyter Notebook с помощью matplotlib') }),
+  node('lib-seaborn', 'Seaborn', [], { ...at(lm, 'Матрица корреляции') }),
+
+  // —— Data Collection ——
+  node('data-collection', 'Data Collection', ['dc-sources', 'dc-formats'], {
     ...at(ida, 'Введение в науку о данных. Виды и типы данных. Источники данных. Разведывательный анализ данных'),
   }),
 
-  // —— Data: sources, formats, EDA, preparation (roadmap PDF) ——
-  node('data', 'Данные', ['data-sources', 'data-formats', 'eda', 'data-prep'], {
+  node('dc-sources', 'Data Sources', ['ds-iot', 'ds-mobile', 'ds-internet', 'ds-api', 'ds-db'], {
+    ...at(ida, 'Источники данных'),
+  }),
+  node('ds-iot', 'IoT'),
+  node('ds-mobile', 'Mobile Apps'),
+  node('ds-internet', 'Internet'),
+  node('ds-api', 'APIs'),
+  node('ds-db', 'Databases (SQL, No-SQL)'),
+
+  node('dc-formats', 'Data Formats', ['df-excel', 'df-csv', 'df-json', 'df-parquet', 'df-other'], {
+    ...at(ida, 'Виды и типы данных'),
+  }),
+  node('df-excel', 'Excel'),
+  node('df-csv', 'CSV'),
+  node('df-json', 'JSON'),
+  node('df-parquet', 'Parquet'),
+  node('df-other', 'Other Data Formats'),
+
+  // —— Data Cleaning / Preprocessing ——
+  node('data-cleaning', 'Data Cleaning', ['prep-tech'], {
     ...at(ida, 'Цикл обработки данных'),
   }),
-  node('data-sources', 'Источники данных', [], {
-    ...at(ida, '2-понимание-данных'),
+  node('prep-tech', 'Preprocessing Techniques', ['prep-clean', 'prep-fe', 'prep-scale', 'prep-dimred', 'prep-fsel'], {
+    ...at(ida, '3. Подготовка'),
   }),
-  node('data-formats', 'Форматы данных', [], {
-    ...at(ida, '2-понимание-данных'),
+  node('prep-clean', 'Data Cleaning', [], { ...at(ida, '3. Подготовка') }),
+  node('prep-fe', 'Feature Engineering', [], { ...at(lm, 'Типы признаков и подготовка данных') }),
+  node('prep-scale', 'Feature Scaling & Normalization', [], { ...at(lm, 'Стандартизация и нормализация') }),
+  node('prep-dimred', 'Dimensionality Reduction', ['prep-pca', 'prep-ae'], {
+    ...at(ida, 'Снижение размерности. Метод главных компонент'),
   }),
-  node('eda', 'EDA', [], {
-    ...at(ida, '2-понимание-данных'),
-  }),
-  node('data-prep', 'Подготовка данных', ['features'], {
-    ...at(ida, '3-подготовка'),
-  }),
-  node('math', 'Математика для ML', [
-    'vectors',
-    'matrices',
-    'eigen',
-    'derivatives',
-    'chain',
-    'matrix-calc',
-    'prob',
-    'dist',
-    'mle',
-    'opt-math',
-    'info-theory',
-  ], {
-    ...at(lm, 'Векторы и расстояния'),
-  }),
-  node('vectors', 'Векторы'),
-  node('matrices', 'Матрицы', [], {
-    formula: 'w = (X^{T} X)^{-1} X^{T} y',
-    ...at(lm, 'Матрицы и нормальное уравнение'),
-  }),
-  node('eigen', 'Собственные значения и SVD'),
-  node('derivatives', 'Производные'),
-  node('chain', 'Цепное правило', [], {
-    ...at('deep-learning', 'Обратное распространение ошибки'),
-  }),
-  node('matrix-calc', 'Матричное дифференцирование'),
-  node('prob', 'Вероятность', [], {
-    ...at('statistics', 'Вероятность: классическое и геометрическое определения'),
-  }),
-  node('dist', 'Распределения', ['normal-dist', 'binomial', 'poisson'], {
-    ...at('statistics', 'Непрерывное равномерное и нормальное распределения'),
-  }),
-  node('normal-dist', 'Нормальное распределение', [], {
-    ...at('statistics', 'Нормальное распределение'),
-  }),
-  node('binomial', 'Биномиальное распределение', [], {
-    ...at('statistics', 'Биномиальное распределение'),
-  }),
-  node('poisson', 'Распределение Пуассона', [], {
-    ...at('statistics', 'Распределение Пуассона'),
-  }),
-  node('mle', 'MLE и MAP'),
-  node('opt-math', 'Оптимизация', [], {
-    blurb: 'Минимум функции потерь. Связана с градиентным спуском и прямым решением.',
-  }),
-  node('info-theory', 'Теория информации'),
-  node('stats', 'Статистика', ['hypothesis', 'ci', 'sampling'], {
-    ...at(ida, 'Статистические основы обработки данных'),
-  }),
-  node('hypothesis', 'Проверка гипотез', [], {
-    ...at('statistics', 'Гипотеза о равенстве средних двух генеральных совокупностей'),
-  }),
-  node('ci', 'Доверительные интервалы'),
-  node('sampling', 'Выборки'),
-  node('tools', 'Инструменты', ['python', 'numpy', 'pandas', 'sklearn-tool'], {
-    ...at(lm, 'sklearn и размерности'),
-  }),
-  node('python', 'Python'),
-  node('numpy', 'NumPy'),
-  node('pandas', 'Pandas'),
-  node('sklearn-tool', 'scikit-learn'),
+  node('prep-pca', 'PCA', [], { ...at(ida, 'Снижение размерности. Метод главных компонент') }),
+  node('prep-ae', 'Autoencoders'),
+  node('prep-fsel', 'Feature Selection', [], { ...at(ida, 'Снижение размерности. Выделение признаков. Отбор признаков') }),
 
-  // —— Парадигмы ——
-  node('paradigms', 'Парадигмы обучения', [
-    'supervised',
-    'unsupervised',
-    'self-supervised',
-    'rl',
-  ], {
-    blurb: 'Есть ли метка y, и что система должна вернуть.',
+  // —— Machine Learning (overview, types, sklearn) ——
+  node('ml-core', 'ML overview & Scikit-learn', ['ml-what', 'ml-types', 'sklearn-block'], {
     ...at(ida, 'Основные классы моделей машинного обучения'),
   }),
-  node('supervised', 'С учителем', ['regression', 'classification', 'ranking'], {
-    blurb: 'В выборке есть ответ y. По новым X предсказывают y.',
+  node('ml-what', 'What is Machine Learning?', [], { ...at(ida, 'Машинное обучение') }),
+  node('ml-types', 'Types of Machine Learning', ['mt-sup', 'mt-unsup', 'mt-self', 'mt-semi', 'mt-rl'], {
+    ...at(ida, 'Основные классы моделей машинного обучения'),
+  }),
+  node('mt-sup', 'Supervised Learning', [], { ...at(ida, 'Обучение с учителем') }),
+  node('mt-unsup', 'Unsupervised Learning', [], { ...at(ida, 'Обучение без учителя') }),
+  node('mt-self', 'Self-supervised Learning'),
+  node('mt-semi', 'Semi-supervised Learning'),
+  node('mt-rl', 'Reinforcement Learning', [], { ...at(ida, 'Обучение с подкреплением') }),
+
+  node('sklearn-block', 'Scikit-learn', ['sk-load', 'sk-split', 'sk-prep', 'sk-select', 'sk-predict', 'sk-tune'], {
+    ...at(lm, 'sklearn и размерности'),
+  }),
+  node('sk-load', 'Data Loading', [], { ...at(lm, 'sklearn и размерности') }),
+  node('sk-split', 'Train - Test Data', [], { ...at(ida, 'Как отделяют оценку от обучения') }),
+  node('sk-prep', 'Data Preparation', [], { ...at(lm, 'Стандартизация и нормализация') }),
+  node('sk-select', 'Model Selection', [], { ...at(ida, '4. Моделирование') }),
+  node('sk-predict', 'Prediction', [], { ...at(lm, 'Линейная регрессия') }),
+  node('sk-tune', 'Tuning', [], { ...at(nm, 'Регуляризация градиентного бустинга') }),
+
+  // —— Supervised Learning (detail) ——
+  node('supervised', 'Supervised Learning', ['sup-what', 'sup-cls', 'sup-reg'], {
+    ...at(ida, 'Обучение с учителем'),
+  }),
+  node('sup-what', 'What is Supervised Learning?', [], { ...at(lm, 'Задача и модель') }),
+
+  node('sup-cls', 'Classification', ['cls-knn', 'cls-logreg', 'cls-svm', 'cls-trees', 'cls-gbm'], {
+    ...at(lm, 'Классификация'),
+  }),
+  node('cls-knn', 'K-Nearest Neighbors (KNN)', [], { ...at(sq, 'Модель kNN') }),
+  node('cls-logreg', 'Logistic Regression', [], {
+    formula: 'y(x) = \\frac{1}{1+e^{-x}}',
+    ...at(ida, 'Логистическая регрессия. Метрики качества логистической регрессии'),
+  }),
+  node('cls-svm', 'Support Vector Machines', [], { ...at(ida, 'Машины опорных векторов') }),
+  node('cls-trees', 'Decision Trees, Random Forest', ['cls-tree-gini', 'cls-tree-ent', 'cls-rf'], {
+    ...at(ida, 'Деревья решений'),
+  }),
+  node('cls-tree-gini', 'Gini', [], { ...at(ida, 'Джини из квадрата вероятностей') }),
+  node('cls-tree-ent', 'Entropy', [], { ...at(ida, 'Энтропия из правдоподобия') }),
+  node('cls-rf', 'Random Forest', [], { ...at(nm, 'Ансамбли и бустинг') }),
+  node('cls-gbm', 'Gradient Boosting Machines', ['cls-xgb', 'cls-lgbm', 'cls-cat'], {
+    ...at(nm, 'Градиентный бустинг'),
+  }),
+  node('cls-xgb', 'XGBoost', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
+  node('cls-lgbm', 'LightGBM', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
+  node('cls-cat', 'CatBoost', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
+
+  node('sup-reg', 'Regression', ['reg-lin', 'reg-poly', 'reg-elastic', 'reg-lasso', 'reg-ridge'], {
+    ...at(ida, 'Линейная регрессия. Метрики качества регрессионной модели'),
+  }),
+  node('reg-lin', 'Linear Regression', ['reg-pred', 'reg-ols', 'reg-mse-task', 'reg-normal', 'reg-train-cost'], {
     ...at(lm, 'Задача и модель'),
   }),
-  node('unsupervised', 'Без учителя', ['cluster', 'dimred', 'density'], {
-    blurb: 'Метки нет. Ищут структуру в X.',
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
-  }),
-  node('self-supervised', 'Self-supervised', [], {
-    blurb: 'Метку строят из самих данных: следующий токен, маскированный кусок, аугментация.',
-  }),
-  node('rl', 'Обучение с подкреплением', [], {
-    blurb: 'Агент действует в среде и максимизирует награду.',
-  }),
-
-  // —— Оценка модели: метрики и валидация (roadmap PDF, Model evaluation) ——
-  node('model-eval', 'Оценка модели', ['metrics', 'validation'], {
-    ...at(ida, 'Методы оценки качества моделей классификации'),
-  }),
-
-  // —— Трек 2. Классический ML ——
-  node('classical', 'Классический ML', ['ensembles', 'regularization'], {
-    ...at(ida, 'Современные технологии машинного обучения'),
-  }),
-
-  node('regression', 'Регрессия', [
-    'linreg',
-    'metrics-reg',
-    'poly',
-    'tree-reg',
-  ], {
-    blurb: 'Ответ y — число.',
-    ...at(ida, 'Линейная регрессия. Метрики качества регрессионной модели'),
-  }),
-  node('linreg', 'Линейная регрессия', [
-    'pred',
-    'ols',
-    'mse-task',
-    'normal',
-    'train-cost',
-    'ridge',
-    'lasso',
-    'elastic',
-  ], {
-    blurb: 'Предсказание линейно по признакам. Веса — прямой формулой или градиентом.',
-    ...at(ida, 'Линейная регрессия. Метрики качества регрессионной модели'),
-  }),
-  node('pred', 'Предсказание', [], {
+  node('reg-pred', 'Prediction', [], {
     formula: 'y_{\\mathrm{pred}} = Xw',
     ...at(nm, 'Время обучения линейной регрессии'),
   }),
-  node('ols', 'Метод наименьших квадратов', [], {
-    formula: 'S = \\sum_{i=1}^{n} (y_{\\mathrm{true}, i} - y_{\\mathrm{pred}, i})^2 \\to \\min',
-    ...at(lm, 'Задача и модель'),
+  node('reg-ols', 'МНК / OLS', [], {
+    formula: 'w = (X^{T} X)^{-1} X^{T} y',
+    ...at(lm, 'Матрицы и нормальное уравнение'),
   }),
-  node('mse-task', 'Задача обучения', [], {
+  node('reg-mse-task', 'Задача обучения (MSE)', [], {
     formula: 'w = \\arg\\min \\mathrm{MSE}(Xw, y)',
     ...at(nm, 'Время обучения линейной регрессии'),
   }),
-  node('normal', 'Нормальное уравнение', [], {
-    formula: 'w = (X^{T} X)^{-1} X^{T} y',
-    blurb: 'Прямой метод: точные веса одной формулой.',
-    ...at(nm, 'Время обучения линейной регрессии'),
-  }),
-  node('train-cost', 'Сложность обучения', [], {
+  node('reg-normal', 'Нормальное уравнение', [], { ...at(nm, 'Время обучения линейной регрессии') }),
+  node('reg-train-cost', 'Сложность обучения', [], {
     formula: 'T(n, p) \\sim np^{2}',
-    blurb: 'При p < n после XᵀX, обращения и Xᵀy остаётся np².',
     ...at(nm, 'Время обучения линейной регрессии'),
   }),
-  node('ridge', 'Ridge (L2)', [], {
-    ...at(sq, 'L2-регуляризация'),
+  node('reg-poly', 'Polynomial Regression', [], { ...at(ida, 'Подгонка нелинейных признаков (полиномиальные признаки в линейной регрессии)') }),
+  node('reg-elastic', 'ElasticNet Regularization', [], { ...at(sq, 'Сравнение L1 и L2') }),
+  node('reg-lasso', 'Lasso', [], { ...at(sq, 'L1-регуляризация') }),
+  node('reg-ridge', 'Ridge', [], { ...at(sq, 'L2-регуляризация') }),
+
+  // —— Unsupervised Learning ——
+  node('unsupervised', 'Unsupervised Learning', ['unsup-what', 'unsup-cluster', 'unsup-dimred'], {
+    ...at(ida, 'Обучение без учителя'),
   }),
-  node('lasso', 'Lasso (L1)', [], {
-    ...at(sq, 'L1-регуляризация'),
+  node('unsup-what', 'What is Unsupervised Learning?', [], { ...at(ida, 'Обучение без учителя') }),
+
+  node('unsup-cluster', 'Clustering', ['cl-kmeans', 'cl-exclusive', 'cl-overlap', 'cl-hier', 'cl-prob'], {
+    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
   }),
-  node('elastic', 'ElasticNet'),
-  node('poly', 'Полиномиальные признаки', [], {
-    ...at(ida, 'Подгонка нелинейных признаков (полиномиальные признаки в линейной регрессии)'),
+  node('cl-kmeans', 'k-means', [], { ...at(ida, 'Метод k-средних') }),
+  node('cl-exclusive', 'Exclusive', [], { ...at(ida, 'Метод k-средних') }),
+  node('cl-overlap', 'Overlapping', [], { ...at(ida, 'DBSCAN') }),
+  node('cl-hier', 'Hierarchical', [], { ...at(ida, 'Иерархическое слияние') }),
+  node('cl-prob', 'Probabilistic', [], { ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния') }),
+
+  node('unsup-dimred', 'Dimensionality Reduction (unsupervised)', ['ud-pca', 'ud-ae'], {
+    ...at(ida, 'Снижение размерности. Метод главных компонент'),
   }),
-  node('tree-reg', 'Дерево (регрессия)', [], {
-    blurb: 'В листе — среднее y.',
-    ...at(ida, 'Деревья решений'),
+  node('ud-pca', 'Principal Component Analysis', [], { ...at(ida, 'Снижение размерности. Метод главных компонент') }),
+  node('ud-ae', 'Autoencoders'),
+
+  // —— Reinforcement Learning ——
+  node('reinforcement', 'Reinforcement Learning', ['rl-what', 'rl-dqn', 'rl-pg', 'rl-ac', 'rl-q'], {
+    ...at(ida, 'Обучение с подкреплением'),
   }),
-  node('metrics-reg', 'Метрики регрессии', ['mse', 'rmse', 'mae', 'r2'], {
+  node('rl-what', 'What is Reinforcement Learning?', [], { ...at(ida, 'Обучение с подкреплением') }),
+  node('rl-dqn', 'Deep-Q Networks'),
+  node('rl-pg', 'Policy Gradient'),
+  node('rl-ac', 'Actor-Critic Methods'),
+  node('rl-q', 'Q-Learning'),
+
+  // —— Model Evaluation ——
+  node('model-eval', 'Model Evaluation', ['me-what', 'me-why', 'me-metrics', 'me-metrics-reg', 'me-val'], {
+    ...at(ida, 'Методы оценки качества моделей классификации'),
+  }),
+  node('me-what', 'What is Model Evaluation?', [], { ...at(ida, '5. Оценка') }),
+  node('me-why', 'Why is it important?', [], { ...at(ida, 'Как отделяют оценку от обучения') }),
+  node('me-metrics', 'Metrics to Evaluate', ['m-f1', 'm-logloss', 'm-roc', 'm-cm', 'm-acc', 'm-prec', 'm-rec'], {
+    ...at(ida, 'Методы оценки качества моделей классификации'),
+  }),
+  node('m-f1', 'F1-Score', [], { ...at(lm, 'Precision и Recall') }),
+  node('m-logloss', 'Log Loss', [], { ...at(dl, 'Функция потерь') }),
+  node('m-roc', 'ROC-AUC', [], { ...at(sq, 'Метрики TPR, FPR') }),
+  node('m-cm', 'Confusion Matrix', [], { ...at(lm, 'Матрица ошибок') }),
+  node('m-acc', 'Accuracy', [], { ...at(lm, 'Матрица ошибок') }),
+  node('m-prec', 'Precision', [], { ...at(lm, 'Precision и Recall') }),
+  node('m-rec', 'Recall', [], { ...at(lm, 'Precision и Recall') }),
+  node('me-metrics-reg', 'Regression metrics', ['mr-mse', 'mr-rmse', 'mr-mae', 'mr-r2'], {
     ...at(lm, 'Метрики регрессии'),
   }),
-  node('mse', 'MSE', [], {
+  node('mr-mse', 'MSE', [], {
     formula: '\\mathrm{MSE} = \\frac{1}{N} \\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^2',
     ...at(lm, 'Метрики регрессии'),
   }),
-  node('rmse', 'RMSE', [], {
+  node('mr-rmse', 'RMSE', [], {
     formula: '\\mathrm{RMSE} = \\sqrt{\\frac{1}{N} \\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^2}',
     ...at(lm, 'Метрики регрессии'),
   }),
-  node('mae', 'MAE', [], {
+  node('mr-mae', 'MAE', [], {
     formula: '\\mathrm{MAE} = \\frac{1}{N} \\sum_{i=1}^{n} |y_{\\mathrm{true}} - y_{\\mathrm{pred}}|',
     ...at(lm, 'Средняя абсолютная ошибка и $R^2$'),
   }),
-  node('r2', 'R²', [], {
+  node('mr-r2', 'R²', [], {
     formula: 'R^{2} = 1 - \\frac{\\sum_{i=1}^{n} (y_{\\mathrm{true}} - y_{\\mathrm{pred}})^{2}}{\\sum_{i=1}^{n} (y_{\\mathrm{true}} - \\overline{y})^{2}}',
     ...at(lm, 'Средняя абсолютная ошибка и $R^2$'),
   }),
-
-  node('classification', 'Классификация', [
-    'logreg',
-    'svm',
-    'tree',
-    'knn',
-    'naive-bayes',
-    'metrics-cls',
-    'imbalance',
-  ], {
-    blurb: 'Ответ y — метка класса. Бинарная, многоклассовая или мультилейбл.',
-    ...at(lm, 'Классификация'),
+  node('me-val', 'Validation Techniques', ['v-kfold', 'v-loocv'], {
+    ...at(ida, 'Как отделяют оценку от обучения'),
   }),
-  node('logreg', 'Логистическая регрессия', [], {
+  node('v-kfold', 'K-Fold Cross Validation', [], { ...at(ida, 'Как отделяют оценку от обучения') }),
+  node('v-loocv', 'LOOCV', [], { ...at(ida, 'Как отделяют оценку от обучения') }),
+
+  // —— Deep Learning ——
+  node(
+    'deep',
+    'Deep Learning',
+    [
+      'dl-nn-basics',
+      'dl-libs',
+      'dl-arch',
+      'dl-cnn',
+      'dl-cnn-apps',
+      'dl-rnn',
+      'dl-attn',
+      'dl-ae',
+      'dl-gan',
+    ],
+    {
+      ...at(dl, 'Типы задач для нейронных сетей'),
+    },
+  ),
+
+  node('dl-nn-basics', 'Neural Network (NN) Basics', ['nn-perc', 'nn-fwd', 'nn-bp', 'nn-act', 'nn-loss'], {
+    ...at(dl, 'Биологический и искусственный нейрон'),
+  }),
+  node('nn-perc', 'Perceptron, Multi-layer Perceptrons', [], { ...at(dl, 'Полносвязная нейросеть прямого распространения, ПНС') }),
+  node('nn-fwd', 'Forward propagation', [], { ...at(dl, 'Полносвязная нейросеть прямого распространения, ПНС') }),
+  node('nn-bp', 'Back Propagation', [], { ...at(dl, 'Обратное распространение ошибки') }),
+  node('nn-act', 'Activation Functions', ['act-relu', 'act-sig', 'act-tanh'], {
+    ...at(dl, 'Функция активации'),
+  }),
+  node('act-relu', 'ReLU', [], { ...at(dl, 'Функция активации ReLU') }),
+  node('act-sig', 'Sigmoid', [], {
     formula: 'y(x) = \\frac{1}{1+e^{-x}}',
-    blurb: 'Линейный счёт → вероятность. Веса ищут градиентом.',
-    ...at(ida, 'Логистическая регрессия. Метрики качества логистической регрессии'),
+    ...at(dl, 'Логистическая функция и гиперболический тангенс'),
   }),
-  node('svm', 'SVM', [], {
-    blurb: 'Гиперплоскость с максимальным зазором.',
-    ...at(ida, 'Машины опорных векторов'),
+  node('act-tanh', 'tanh', [], { ...at(dl, 'Логистическая функция и гиперболический тангенс') }),
+  node('nn-loss', 'Loss Functions', [], { ...at(dl, 'Функция потерь') }),
+
+  node('dl-libs', 'Deep Learning Libraries', ['lib-tf', 'lib-keras', 'lib-pt', 'lib-sklearn-dl'], {
+    ...at(dl, 'Введение в PyTorch'),
   }),
-  node('tree', 'Дерево решений', ['gini', 'entropy', 'cart'], {
-    blurb: 'Один вид модели для классов и для числа.',
-    ...at(ida, 'Деревья решений'),
+  node('lib-tf', 'TensorFlow'),
+  node('lib-keras', 'Keras', [], { ...at(cv, 'Библиотека Keras') }),
+  node('lib-pt', 'PyTorch', [], { ...at(dl, 'Введение в PyTorch') }),
+  node('lib-sklearn-dl', 'Scikit-learn', [], { ...at(lm, 'sklearn и размерности') }),
+
+  node('dl-arch', 'Deep Learning Architectures', [], { ...at(dl, 'Слои и архитектура нейронной сети') }),
+
+  node('dl-cnn', 'Convolutional Neural Network', ['cnn-conv', 'cnn-pool', 'cnn-stride', 'cnn-pad'], {
+    ...at(dl, 'Свёрточная нейронная сеть, ConvNet'),
   }),
-  node('gini', 'Gini'),
-  node('entropy', 'Энтропия'),
-  node('cart', 'CART'),
-  node('knn', 'k ближайших соседей', [], {
-    ...at(sq, 'Модель kNN'),
+  node('cnn-conv', 'Convolution', [], { ...at(cv, 'Что такое ядро свёртки?') }),
+  node('cnn-pool', 'Pooling', [], { ...at(cv, 'Pooling') }),
+  node('cnn-stride', 'Strides', [], { ...at(cv, 'Двумерная свёртка') }),
+  node('cnn-pad', 'Padding', [], { ...at(cv, 'Свёрточный слой') }),
+
+  node('dl-cnn-apps', 'Applications of CNNs', ['cnn-imgvid', 'cnn-cls', 'cnn-seg', 'cnn-reco'], {
+    ...at(cv, 'Задача классификации изображений'),
   }),
-  node('naive-bayes', 'Naive Bayes'),
-  node('metrics-cls', 'Метрики классификации', [
-    'confusion',
-    'precision',
-    'f1',
-    'roc',
-  ], {
-    ...at(lm, 'Матрица ошибок'),
+  node('cnn-imgvid', 'Image & Video Recognition', [], { ...at(cv, 'Типы изображений') }),
+  node('cnn-cls', 'Image Classification', [], { ...at(cv, 'Задача классификации изображений') }),
+  node('cnn-seg', 'Image Segmentation', [], { ...at(cv, 'Задача сегментации изображений') }),
+  node('cnn-reco', 'Recommendation Systems', [], { ...at(ts, 'Задача прогнозирования') }),
+
+  node('dl-rnn', 'Recurrent Neural Networks', ['rnn-rnn', 'rnn-lstm', 'rnn-gru'], {
+    ...at(dl, 'Рекуррентная нейронная сеть, РНС'),
   }),
-  node('confusion', 'Матрица ошибок', [], {
-    ...at(lm, 'Матрица ошибок'),
+  node('rnn-rnn', 'RNN', [], { ...at(dl, 'Рекуррентная нейронная сеть, РНС') }),
+  node('rnn-lstm', 'LSTM', [], { ...at(dl, 'Рекуррентная нейронная сеть, РНС') }),
+  node('rnn-gru', 'GRU', [], { ...at(dl, 'Рекуррентная нейронная сеть, РНС') }),
+
+  node('dl-attn', 'Attention Mechanisms', ['att-self', 'att-tr', 'att-mh'], {
+    ...at(llm, 'Самовнимание'),
   }),
-  node('precision', 'Precision и recall', [], {
-    formula: '\\mathrm{precision} = \\frac{\\mathrm{TP}}{\\mathrm{TP}+\\mathrm{FP}},\\ \\mathrm{recall} = \\frac{\\mathrm{TP}}{\\mathrm{TP}+\\mathrm{FN}}',
-    ...at(lm, 'Precision и Recall'),
-  }),
-  node('f1', 'F1', [], {
-    ...at(lm, 'Precision и Recall'),
-  }),
-  node('roc', 'ROC-AUC', [], {
-    ...at(sq, 'Метрики TPR, FPR'),
-  }),
-  node('imbalance', 'Дисбаланс классов', ['smote', 'undersample', 'class-weight'], {
-    ...at(sq, 'Базовый оверсэмплинг'),
-  }),
-  node('smote', 'SMOTE', [], { ...at(sq, 'SMOTE') }),
-  node('undersample', 'Undersampling', [], { ...at(sq, 'Undersampling') }),
-  node('class-weight', 'Веса классов', [], { ...at(sq, 'Взвешивание классов') }),
-  node('ranking', 'Ранжирование', [], {
-    blurb: 'Нужен порядок объектов, а не абсолютное число.',
+  node('att-self', 'Self-Attention', [], { ...at(llm, 'Самовнимание') }),
+  node('att-tr', 'Transformers', [], { ...at(llm, 'Блок декодера. Энкодер, декодер и энкодер-декодер') }),
+  node('att-mh', 'Multi-head Attention', [], { ...at(llm, 'Блок декодера. Энкодер, декодер и энкодер-декодер') }),
+
+  node('dl-ae', 'Autoencoders'),
+  node('dl-gan', 'Generative Adversarial Networks', [], { ...at(dl, 'Генеративная нейронная сеть, GAN') }),
+
+  // —— Advanced Concepts ——
+  node('advanced-ml', 'Advanced Concepts in ML', ['adv-nlp', 'adv-xai'], {
+    blurb: 'NLP, объяснимость.',
   }),
 
-  node('cluster', 'Кластеризация', ['kmeans', 'dbscan', 'meanshift', 'hier', 'gmm'], {
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
+  node('adv-nlp', 'Natural Language Processing', ['nlp-tok', 'nlp-lem', 'nlp-emb', 'nlp-att', 'nlp-stem', 'nlp-rag'], {
+    ...at(nlp, 'Мешок слов и N-граммы'),
   }),
-  node('kmeans', 'k средних', [], {
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
+  node('nlp-tok', 'Tokenization', [], { ...at(llm, 'Токены. Как текст превращается в числа') }),
+  node('nlp-lem', 'Lemmatization', [], { ...at(nlp, 'Регулярные выражения') }),
+  node('nlp-emb', 'Embeddings', [], { ...at(nlp, 'Embeddings') }),
+  node('nlp-att', 'Attention Models', [], { ...at(llm, 'Самовнимание') }),
+  node('nlp-stem', 'Stemming', [], { ...at(nlp, 'Регулярные выражения') }),
+  node('nlp-rag', 'RAG / retrieval', ['rag-chunk', 'rag-bm25', 'rag-vec'], {
+    ...at(rag, 'Зачем RAG'),
   }),
-  node('dbscan', 'DBSCAN', [], {
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
-  }),
-  node('meanshift', 'Сдвиг к среднему', [], {
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
-  }),
-  node('hier', 'Иерархическое слияние', [], {
-    ...at(ida, 'Кластерный анализ. Метод k-средних. Метод сдвига к среднему. Метод DBSCAN. Метод иерархического слияния'),
-  }),
-  node('gmm', 'GMM / EM'),
-  node('density', 'Оценка плотности'),
-  node('dimred', 'Снижение размерности', ['pca', 'tsne', 'umap', 'feat'], {
-    ...at(ida, 'Методы снижения размерности и их использование'),
-  }),
-  node('pca', 'PCA', [], {
-    ...at(ida, 'Снижение размерности. Метод главных компонент'),
-  }),
-  node('tsne', 't-SNE'),
-  node('umap', 'UMAP'),
-  node('feat', 'Отбор и выделение признаков', [], {
-    ...at(ida, 'Снижение размерности. Выделение признаков. Отбор признаков'),
-  }),
+  node('rag-chunk', 'Chunks & index', [], { ...at(rag, 'Документ, кусок и индекс') }),
+  node('rag-bm25', 'BM25', [], { ...at(rag, 'Разреженный поиск и поиск по векторам') }),
+  node('rag-vec', 'Vector search', [], { ...at(rag, 'Разреженный поиск и поиск по векторам') }),
 
-  node('ensembles', 'Ансамбли', ['bagging', 'rf', 'boost', 'stacking'], {
-    ...at(nm, 'Ансамбли и бустинг'),
-  }),
-  node('bagging', 'Bagging'),
-  node('rf', 'Random Forest'),
-  node('boost', 'Градиентный бустинг', ['xgb', 'lgbm', 'catboost'], {
-    blurb: 'Следующее дерево учится на градиенте потерь текущего ансамбля.',
-    ...at(nm, 'Градиентный бустинг'),
-  }),
-  node('xgb', 'XGBoost', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
-  node('lgbm', 'LightGBM', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
-  node('catboost', 'CatBoost', [], { ...at(nm, 'Библиотеки для градиентного бустинга') }),
-  node('stacking', 'Стекинг и блендинг'),
-
-  node('metrics', 'Метрики качества', ['metrics-reg', 'metrics-cls'], {
-    ...at(ida, 'Методы оценки качества моделей классификации'),
-  }),
-  node('validation', 'Валидация', ['holdout', 'kfold', 'leak'], {
-    ...at(ida, 'Как отделяют оценку от обучения'),
-  }),
-  node('holdout', 'Train / val / test', [], {
-    ...at(ida, 'Как отделяют оценку от обучения'),
-  }),
-  node('kfold', 'Кросс-валидация', [], {
-    ...at(ida, 'Как отделяют оценку от обучения'),
-  }),
-  node('leak', 'Утечка данных', [], {
-    ...at(ida, 'Как отделяют оценку от обучения'),
-  }),
-  node('regularization', 'Регуляризация', ['ridge', 'lasso', 'dropout', 'early-stop'], {
-    ...at(sq, 'Сравнение L1 и L2'),
-  }),
-  node('dropout', 'Dropout', [], { ...at('deep-learning', 'Dropout') }),
-  node('early-stop', 'Early stopping'),
-  node('features', 'Признаки', ['scale', 'ohe', 'feature-eng'], {
-    ...at(lm, 'Типы признаков и подготовка данных'),
-  }),
-  node('scale', 'Масштабирование', [], { ...at(lm, 'Стандартизация и нормализация') }),
-  node('ohe', 'One-Hot Encoding', [], { ...at(lm, 'One-Hot Encoding') }),
-  node('feature-eng', 'Feature engineering'),
-
-  // —— Трек 3. Deep Learning ——
-  node('deep', 'Deep Learning', [
-    'neuron',
-    'mlp',
-    'activations',
-    'loss',
-    'backprop',
-    'optimizers',
-    'cnn',
-    'rnn',
-    'attention',
-    'transformer',
-    'batchnorm',
-  ], {
-    blurb: 'Нейросети на PyTorch: от персептрона до трансформера.',
-    ...at('deep-learning', 'Типы задач для нейронных сетей'),
-  }),
-  node('neuron', 'Нейрон', [], { ...at(nm, 'Основы нейронных сетей') }),
-  node('mlp', 'MLP / полносвязная сеть', [], {
-    ...at('deep-learning', 'Полносвязная нейросеть прямого распространения, ПНС'),
-  }),
-  node('activations', 'Функции активации', ['relu', 'sigmoid-act', 'tanh'], {
-    ...at('deep-learning', 'Функция активации'),
-  }),
-  node('relu', 'ReLU', [], { ...at('deep-learning', 'Функция активации ReLU') }),
-  node('sigmoid-act', 'Сигмоида', [], {
-    formula: 'y(x) = \\frac{1}{1+e^{-x}}',
-    ...at('deep-learning', 'Логистическая функция и гиперболический тангенс'),
-  }),
-  node('tanh', 'tanh', [], {
-    ...at('deep-learning', 'Логистическая функция и гиперболический тангенс'),
-  }),
-  node('loss', 'Функция потерь', ['ce'], {
-    ...at('deep-learning', 'Функция потерь'),
-  }),
-  node('ce', 'Cross-entropy'),
-  node('backprop', 'Обратное распространение', [], {
-    ...at('deep-learning', 'Обратное распространение ошибки'),
-  }),
-  node('optimizers', 'Оптимизаторы', ['gd', 'sgd', 'adam'], {
-    ...at(nm, 'Градиентный спуск'),
-  }),
-  node('gd', 'Градиентный спуск', [], {
-    blurb: 'Шаг против градиента. Им учат регрессию, логистическую регрессию, сеть и бустинг.',
-    ...at(nm, 'Градиентный спуск'),
-  }),
-  node('sgd', 'SGD', [], {
-    ...at(nm, 'Стохастический градиентный спуск'),
-  }),
-  node('adam', 'Adam', [], {
-    ...at('computer-vision', 'Алгоритм Adam'),
-  }),
-  node('cnn', 'CNN', ['conv', 'pooling', 'resnet'], {
-    ...at('deep-learning', 'Свёрточная нейронная сеть, ConvNet'),
-  }),
-  node('conv', 'Свёртка', [], {
-    ...at('computer-vision', 'Что такое ядро свёртки?'),
-  }),
-  node('pooling', 'Pooling', [], { ...at('computer-vision', 'Pooling') }),
-  node('resnet', 'ResNet', [], { ...at('computer-vision', 'Что такое ResNet?') }),
-  node('rnn', 'RNN / LSTM', [], {
-    ...at('deep-learning', 'Рекуррентная нейронная сеть, РНС'),
-  }),
-  node('attention', 'Внимание', [], {
-    ...at('llm', 'Самовнимание'),
-  }),
-  node('transformer', 'Трансформер', ['encoder-decoder', 'kv-cache'], {
-    ...at('llm', 'Блок декодера. Энкодер, декодер и энкодер-декодер'),
-  }),
-  node('encoder-decoder', 'Энкодер / декодер', [], {
-    ...at('llm', 'Блок декодера. Энкодер, декодер и энкодер-декодер'),
-  }),
-  node('kv-cache', 'KV-кэш', [], {
-    ...at('llm', 'Генерация. Температура, контекст и KV-кэш'),
-  }),
-  node('batchnorm', 'BatchNorm', [], {
-    ...at('deep-learning', 'Batch Normalization'),
-  }),
-
-  // —— NLP и LLM (roadmap PDF: NLP + Transformers block) ——
-  node('nlp-llm', 'NLP и LLM', ['nlp', 'llm'], {
-    ...at('llm', 'Что такое языковая модель'),
-  }),
-
-  // —— Трек 4. LLM ——
-  node('llm', 'LLM и трансформеры', [
-    'tokens',
-    'embed',
-    'attention',
-    'transformer',
-    'next-token',
-    'generation',
-    'alignment',
-    'finetune',
-    'rag',
-    'agents',
-  ], {
-    blurb: 'Внутренности GPT, fine-tuning, RAG, агенты.',
-    ...at('llm', 'Что такое языковая модель'),
-  }),
-  node('tokens', 'Токены', [], {
-    ...at('llm', 'Токены. Как текст превращается в числа'),
-  }),
-  node('embed', 'Эмбеддинги', [], {
-    ...at('llm', 'Эмбеддинги и позиция токена'),
-  }),
-  node('next-token', 'Следующий токен', [], {
-    blurb: 'Классификация по словарю на каждом шаге.',
-    ...at('llm', 'Обучение предсказанию следующего токена'),
-  }),
-  node('generation', 'Генерация', ['temperature'], {
-    ...at('llm', 'Генерация. Температура, контекст и KV-кэш'),
-  }),
-  node('temperature', 'Температура', [], {
-    ...at('llm', 'Генерация. Температура, контекст и KV-кэш'),
-  }),
-  node('alignment', 'Выравнивание', ['rlhf'], {
-    ...at('llm', 'Инструкции, предпочтения и выравнивание'),
-  }),
-  node('rlhf', 'RLHF / DPO', [], {
-    ...at('llm', 'Инструкции, предпочтения и выравнивание'),
-  }),
-  node('finetune', 'Дообучение', ['lora', 'quantize'], {
-    ...at('llm', 'Дообучение без полной копии весов. LoRA и квантизация'),
-  }),
-  node('lora', 'LoRA', [], {
-    ...at('llm', 'Дообучение без полной копии весов. LoRA и квантизация'),
-  }),
-  node('quantize', 'Квантизация', [], {
-    ...at('llm', 'Дообучение без полной копии весов. LoRA и квантизация'),
-  }),
-  node('rag', 'RAG', ['chunk', 'bm25', 'vector-search', 'hybrid'], {
-    ...at('rag', 'Зачем RAG'),
-  }),
-  node('chunk', 'Чанки и индекс', [], {
-    ...at('rag', 'Документ, кусок и индекс'),
-  }),
-  node('bm25', 'BM25', [], {
-    ...at('rag', 'Разреженный поиск и поиск по векторам'),
-  }),
-  node('vector-search', 'Векторный поиск', [], {
-    ...at('rag', 'Разреженный поиск и поиск по векторам'),
-  }),
-  node('hybrid', 'Гибридный поиск', [], {
-    ...at('rag', 'Разреженный поиск и поиск по векторам'),
-  }),
-  node('agents', 'Агенты', ['agent-tools', 'react']),
-  node('agent-tools', 'Инструменты агента'),
-  node('react', 'ReAct'),
-
-  // —— Трек 5. Generative ——
-  node('generative', 'Generative AI', ['gan', 'diffusion', 'multimodal', 'prompt'], {
-    ...at('deep-learning', 'Генеративная нейронная сеть, GAN'),
-  }),
-  node('gan', 'GAN', [], {
-    ...at('deep-learning', 'Генеративная нейронная сеть, GAN'),
-  }),
-  node('diffusion', 'Diffusion'),
-  node('multimodal', 'Мультимодальность', ['clip', 'vlm']),
-  node('clip', 'CLIP'),
-  node('vlm', 'VLM'),
-  node('prompt', 'Prompt engineering'),
-
-  // —— Трек 6. MLOps ——
-  node('mlops', 'MLOps и прод', [
-    'serving',
-    'docker',
-    'cicd',
-    'monitor',
-    'ab',
-    'business',
-  ], {
-    blurb: 'От ноутбука до сервиса: Docker, мониторинг, A/B.',
-  }),
-  node('serving', 'Serving'),
-  node('docker', 'Docker / K8s'),
-  node('cicd', 'CI/CD'),
-  node('monitor', 'Мониторинг и drift'),
-  node('ab', 'A/B-тесты', [], {
-    ...at('ml-business', 'A/B-тестирование'),
-  }),
-  node('business', 'Метрики бизнеса', [], {
-    ...at('ml-business', 'Метрики бизнеса'),
-  }),
-
-  // —— Трек 7. Специализация ——
-  node('specialize', 'Специализация', ['vision', 'series', 'recsys', 'safety'], {
-    blurb: 'CV, ряды, рекомендации, safety — на выбор.',
-  }),
-  node('vision', 'Computer Vision', [
-    'pixels',
-    'cnn',
-    'detection',
-    'segmentation',
-    'aug',
-  ], {
-    ...at('computer-vision', 'Типы изображений'),
-  }),
-  node('pixels', 'Пиксели и RGB', [], {
-    ...at('computer-vision', 'Что такое пиксели?'),
-  }),
-  node('detection', 'Детекция', [], {
-    ...at('computer-vision', 'Задача детекции объектов'),
-  }),
-  node('segmentation', 'Сегментация', [], {
-    ...at('computer-vision', 'Задача сегментации изображений'),
-  }),
-  node('aug', 'Аугментации', [], {
-    ...at('computer-vision', 'Аугментации изображений'),
-  }),
-  node('nlp', 'NLP', ['bow', 'tfidf', 'w2v', 'bert'], {
-    ...at('nlp', 'Мешок слов и N-граммы'),
-  }),
-  node('bow', 'Мешок слов', [], { ...at('nlp', 'Мешок слов и N-граммы') }),
-  node('tfidf', 'TF-IDF', [], { ...at('nlp', 'TF-IDF') }),
-  node('w2v', 'Word2vec', [], { ...at('nlp', 'Word2vec') }),
-  node('bert', 'BERT / RuBERT', [], { ...at('nlp', 'BERT') }),
-  node('series', 'Временные ряды', ['forecast', 'stationarity', 'lags'], {
-    ...at('time-series', 'Временные ряды'),
-  }),
-  node('forecast', 'Прогноз', [], {
-    blurb: 'Следующее значение — регрессия по лагам.',
-    ...at('time-series', 'Задача прогнозирования'),
-  }),
-  node('stationarity', 'Стационарность', [], {
-    ...at('time-series', 'Стационарные ряды'),
-  }),
-  node('lags', 'Лаги и признаки', [], {
-    ...at('time-series', 'Создание признаков'),
-  }),
-  node('recsys', 'Рекомендательные системы'),
-  node('safety', 'Safety и оценка'),
-
-  // —— Explainable AI (roadmap PDF) ——
-  node('xai', 'Explainable AI', ['shap'], {
+  node('adv-xai', 'Explainable AI', ['xai-shap'], {
     ...at(sq, 'Методы отбора признаков'),
   }),
-  node('shap', 'SHAP', [], {
-    ...at(sq, 'Методы отбора признаков'),
-  }),
-
-  // —— Поиск решения / численные методы ——
-  node('search', 'Поиск решения', ['direct', 'iterative', 'complexity'], {
-    blurb: 'Как находят веса: формулой, итерациями или градиентом. Один поиск обслуживает разные задачи.',
-  }),
-  node('direct', 'Прямой метод', ['normal', 'train-cost'], {
-    blurb: 'Точное решение по формуле. Сложность не зависит от значений в выборке.',
-    ...at(nm, 'Итеративные методы'),
-  }),
-  node('iterative', 'Итеративный метод', ['bisection', 'gd', 'sgd'], {
-    blurb: 'Приближение за шаги. Сложность зависит от числа шагов и от данных.',
-    ...at(nm, 'Итеративные методы'),
-  }),
-  node('bisection', 'Бисекция', ['mid', 'stop'], {
-    ...at(nm, 'Метод бисекции'),
-  }),
-  node('mid', 'Середина отрезка', [], {
-    formula: 'c = \\frac{a+b}{2}',
-    ...at(nm, 'Метод бисекции'),
-  }),
-  node('stop', 'Остановка', [], {
-    formula: 'b - a < \\mathrm{error}',
-    ...at(nm, 'Метод бисекции'),
-  }),
-  node('complexity', 'Время работы', [
-    'alg-time',
-    'real-time',
-    'wall',
-    'asymp',
-  ], {
-    blurb: 'Секунды на разных машинах несравнимы. Считают операции и рост с n.',
-  }),
-  node('alg-time', 'algorithm running time', [], {
-    formula: 'T(n)',
-    blurb: 'Число элементарных операций. Для increase: T(n) = 4n + 3.',
-  }),
-  node('real-time', 'real running time', [], {
-    blurb: 'Время на конкретном компьютере.',
-  }),
-  node('wall', 'wall-clock time', [], {
-    blurb: 'Время по часам, не процессорное.',
-  }),
-  node('asymp', 'asymptotic running time', ['lin', 'quad', 'cub', 'konst'], {
-    blurb: 'Как растёт T(n) при больших n. У многочлена оставляют старший одночлен.',
-  }),
-  node('lin', 'Линейная сложность', [], { formula: 'T(n) \\sim n' }),
-  node('quad', 'Квадратичная сложность', [], { formula: 'T(n) \\sim n^{2}' }),
-  node('cub', 'Кубическая сложность', [], { formula: 'T(n) \\sim n^{3}' }),
-  node('konst', 'Константная сложность', [], { formula: 'T(n) \\sim 1' }),
+  node('xai-shap', 'SHAP', [], { ...at(sq, 'Методы отбора признаков') }),
 ]
 
 export const CONCEPT_BY_ID = new Map(CONCEPTS.map((c) => [c.id, c]))
 
 export const ROOT_ID = 'ml'
 
-/** First screen: root + its immediate children only. */
+/** First screen: root only (expand branches as needed). */
 export const INITIAL_OPEN = new Set<string>([ROOT_ID])
 
 export function childrenOf(id: string): string[] {
