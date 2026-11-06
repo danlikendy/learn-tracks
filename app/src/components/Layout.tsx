@@ -43,7 +43,7 @@ export function Layout() {
     <div className="min-h-svh">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-          <NavLink to="/learn" className="shrink-0 font-serif text-lg tracking-tight">
+          <NavLink to="/" className="shrink-0 font-serif text-lg tracking-tight">
             Learn Tracks
           </NavLink>
           <nav className="hidden min-w-0 flex-1 items-center gap-1 text-sm md:flex">
