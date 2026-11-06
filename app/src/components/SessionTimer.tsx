@@ -21,7 +21,12 @@ function targetFromLocation(pathname: string, search: string): StudyTarget | nul
       title: displayHeading(found.item.title),
     }
   }
-  if (pathname === '/learn' || pathname === '/learn/') {
+  if (
+    pathname === '/learn' ||
+    pathname === '/learn/' ||
+    pathname === '/' ||
+    pathname === ''
+  ) {
     const topic = getTopic(new URLSearchParams(search).get('topic'))
     return { kind: 'module', id: topic.id, title: topic.title }
   }

@@ -29,28 +29,48 @@ function node(
 }
 
 /**
- * Hierarchy follows MachineLearningRoadmap (justxor):
- * foundation → classical ML → deep learning → LLM → generative → MLOps → specialization,
- * plus learning paradigms and numerical search that cut across tasks.
+ * Top-level order follows roadmap.sh «Machine Learning Roadmap» (PDF machine-learning.pdf):
+ * foundation → data → paradigms → model evaluation → classical ML → deep learning →
+ * generative → NLP & LLM → MLOps → specialization → XAI; plus numerical «search» for optimization.
  */
 export const CONCEPTS: Concept[] = [
-  node('ml', 'Машинное обучение', [
+  node('ml', 'Machine Learning', [
     'foundation',
+    'data',
     'paradigms',
+    'model-eval',
     'classical',
     'deep',
-    'llm',
     'generative',
+    'nlp-llm',
     'mlops',
     'specialize',
+    'xai',
     'search',
   ], {
     ...at(ida, 'Интеллектуальный анализ данных, большие данные и машинное обучение: основные понятия и методы'),
   }),
 
-  // —— Трек 1. Фундамент (roadmap: Python, math, stats, tools) ——
+  // —— Foundation: math, statistics, Python stack (roadmap PDF) ——
   node('foundation', 'Фундамент', ['math', 'stats', 'tools'], {
     ...at(ida, 'Введение в науку о данных. Виды и типы данных. Источники данных. Разведывательный анализ данных'),
+  }),
+
+  // —— Data: sources, formats, EDA, preparation (roadmap PDF) ——
+  node('data', 'Данные', ['data-sources', 'data-formats', 'eda', 'data-prep'], {
+    ...at(ida, 'Цикл обработки данных'),
+  }),
+  node('data-sources', 'Источники данных', [], {
+    ...at(ida, '2-понимание-данных'),
+  }),
+  node('data-formats', 'Форматы данных', [], {
+    ...at(ida, '2-понимание-данных'),
+  }),
+  node('eda', 'EDA', [], {
+    ...at(ida, '2-понимание-данных'),
+  }),
+  node('data-prep', 'Подготовка данных', ['features'], {
+    ...at(ida, '3-подготовка'),
   }),
   node('math', 'Математика для ML', [
     'vectors',
@@ -135,22 +155,17 @@ export const CONCEPTS: Concept[] = [
   node('self-supervised', 'Self-supervised', [], {
     blurb: 'Метку строят из самих данных: следующий токен, маскированный кусок, аугментация.',
   }),
-  node('rl', 'Обучение с подкреплением', ['rlhf'], {
+  node('rl', 'Обучение с подкреплением', [], {
     blurb: 'Агент действует в среде и максимизирует награду.',
   }),
-  node('rlhf', 'RLHF / DPO', [], {
-    blurb: 'Выравнивание языковой модели по предпочтениям человека.',
-    ...at('llm', 'Инструкции, предпочтения и выравнивание'),
+
+  // —— Оценка модели: метрики и валидация (roadmap PDF, Model evaluation) ——
+  node('model-eval', 'Оценка модели', ['metrics', 'validation'], {
+    ...at(ida, 'Методы оценки качества моделей классификации'),
   }),
 
   // —— Трек 2. Классический ML ——
-  node('classical', 'Классический ML', [
-    'ensembles',
-    'metrics',
-    'validation',
-    'regularization',
-    'features',
-  ], {
+  node('classical', 'Классический ML', ['ensembles', 'regularization'], {
     ...at(ida, 'Современные технологии машинного обучения'),
   }),
 
@@ -342,7 +357,7 @@ export const CONCEPTS: Concept[] = [
     ...at(ida, 'Методы оценки качества моделей классификации'),
   }),
   node('validation', 'Валидация', ['holdout', 'kfold', 'leak'], {
-    ...at(ida, 'Цикл обработки данных'),
+    ...at(ida, 'Как отделяют оценку от обучения'),
   }),
   node('holdout', 'Train / val / test', [], {
     ...at(ida, 'Как отделяют оценку от обучения'),
@@ -444,6 +459,11 @@ export const CONCEPTS: Concept[] = [
     ...at('deep-learning', 'Batch Normalization'),
   }),
 
+  // —— NLP и LLM (roadmap PDF: NLP + Transformers block) ——
+  node('nlp-llm', 'NLP и LLM', ['nlp', 'llm'], {
+    ...at('llm', 'Что такое языковая модель'),
+  }),
+
   // —— Трек 4. LLM ——
   node('llm', 'LLM и трансформеры', [
     'tokens',
@@ -479,6 +499,9 @@ export const CONCEPTS: Concept[] = [
   node('alignment', 'Выравнивание', ['rlhf'], {
     ...at('llm', 'Инструкции, предпочтения и выравнивание'),
   }),
+  node('rlhf', 'RLHF / DPO', [], {
+    ...at('llm', 'Инструкции, предпочтения и выравнивание'),
+  }),
   node('finetune', 'Дообучение', ['lora', 'quantize'], {
     ...at('llm', 'Дообучение без полной копии весов. LoRA и квантизация'),
   }),
@@ -509,7 +532,7 @@ export const CONCEPTS: Concept[] = [
 
   // —— Трек 5. Generative ——
   node('generative', 'Generative AI', ['gan', 'diffusion', 'multimodal', 'prompt'], {
-    blurb: 'Диффузия, мультимодальность, prompt engineering.',
+    ...at('deep-learning', 'Генеративная нейронная сеть, GAN'),
   }),
   node('gan', 'GAN', [], {
     ...at('deep-learning', 'Генеративная нейронная сеть, GAN'),
@@ -543,8 +566,8 @@ export const CONCEPTS: Concept[] = [
   }),
 
   // —— Трек 7. Специализация ——
-  node('specialize', 'Специализация', ['vision', 'nlp', 'series', 'recsys', 'safety'], {
-    blurb: 'CV, NLP, ряды, рекомендации, safety — на выбор.',
+  node('specialize', 'Специализация', ['vision', 'series', 'recsys', 'safety'], {
+    blurb: 'CV, ряды, рекомендации, safety — на выбор.',
   }),
   node('vision', 'Computer Vision', [
     'pixels',
@@ -567,7 +590,7 @@ export const CONCEPTS: Concept[] = [
   node('aug', 'Аугментации', [], {
     ...at('computer-vision', 'Аугментации изображений'),
   }),
-  node('nlp', 'NLP', ['bow', 'tfidf', 'w2v', 'bert', 'llm'], {
+  node('nlp', 'NLP', ['bow', 'tfidf', 'w2v', 'bert'], {
     ...at('nlp', 'Мешок слов и N-граммы'),
   }),
   node('bow', 'Мешок слов', [], { ...at('nlp', 'Мешок слов и N-граммы') }),
@@ -589,6 +612,14 @@ export const CONCEPTS: Concept[] = [
   }),
   node('recsys', 'Рекомендательные системы'),
   node('safety', 'Safety и оценка'),
+
+  // —— Explainable AI (roadmap PDF) ——
+  node('xai', 'Explainable AI', ['shap'], {
+    ...at(sq, 'Методы отбора признаков'),
+  }),
+  node('shap', 'SHAP', [], {
+    ...at(sq, 'Методы отбора признаков'),
+  }),
 
   // —— Поиск решения / численные методы ——
   node('search', 'Поиск решения', ['direct', 'iterative', 'complexity'], {
